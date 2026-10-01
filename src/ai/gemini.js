@@ -29,7 +29,7 @@ export function errorMessage(status, body) {
   if (status === 403) return new AiError('A chave não tem permissão para usar o Gemini. Crie uma chave nova no Google AI Studio.', 'key');
   if (status === 429) return new AiError('Limite do plano grátis do Gemini atingido. Espere um minuto e tente de novo.', 'quota');
   if (status === 404) return new AiError(`O modelo não foi encontrado (${msg || 'erro 404'}).`, 'model');
-  if (status >= 500) return new AiError('O Gemini está sobrecarregado ou fora do ar. Tente de novo daqui a pouco.', 'server');
+  if (status >= 500) return new AiError(`O Gemini está sobrecarregado ou fora do ar. Tente de novo daqui a pouco. (${status}${msg ? ': ' + msg : ''})`, 'server');
   return new AiError(`O Gemini recusou o pedido (${status}${msg ? ': ' + msg : ''}).`, 'other');
 }
 
@@ -46,27 +46,32 @@ async function call(url, init, fetchImpl) {
   }
 }
 
-/** Escolhe um modelo "flash" disponível para a chave (quando o padrão não existe mais). */
-export async function pickModel(key, fetchImpl = fetch) {
+/** Modelos "flash" disponíveis para a chave, do mais novo para o mais antigo. */
+export async function listFlashModels(key, fetchImpl = fetch) {
   const res = await call(`${API}/models?pageSize=200`, { headers: { 'x-goog-api-key': key } }, fetchImpl);
   const body = await res.json().catch(() => null);
   if (!res.ok) throw errorMessage(res.status, body);
   const names = (body.models || [])
     .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
     .map(m => m.name.replace(/^models\//, ''))
-    .filter(n => /flash/.test(n) && !/lite|image|tts|audio|live|exp|preview/.test(n));
-  if (!names.length) throw new AiError('Não encontrei um modelo Gemini Flash disponível para esta chave.', 'model');
+    .filter(n => /flash/.test(n) && !/lite|image|tts|audio|live|exp|preview|latest/.test(n));
   // Nome com a maior versão primeiro (ex.: gemini-3-flash antes de gemini-2.5-flash)
   const ver = n => parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || 0);
-  return names.sort((a, b) => ver(b) - ver(a) || a.length - b.length)[0];
+  return names.sort((a, b) => ver(b) - ver(a) || a.length - b.length);
 }
 
-/**
- * Gera uma resposta em JSON seguindo `schema`.
- * @returns {Promise<{ data: object, model: string }>}
- */
-export async function generateJSON({ system, prompt, schema, key = getKey(), model = getModel(), fetchImpl = fetch, retryModel = true }) {
-  if (!key) throw new AiError('Cole sua chave do Gemini primeiro.', 'key');
+/** Escolhe um modelo "flash" disponível para a chave (quando o padrão não existe mais). */
+export async function pickModel(key, fetchImpl = fetch, exclude = []) {
+  const name = (await listFlashModels(key, fetchImpl)).find(n => !exclude.includes(n));
+  if (!name) throw new AiError('Não encontrei um modelo Gemini Flash disponível para esta chave.', 'model');
+  return name;
+}
+
+const wait = ms => new Promise(r => setTimeout(r, ms));
+/** Erros passageiros do lado do Google (sobrecarga, falha interna): vale tentar de novo ou outro modelo. */
+const transient = status => status === 500 || status === 502 || status === 503 || status === 504;
+
+async function request({ system, prompt, schema, key, model, fetchImpl }) {
   const res = await call(`${API}/models/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
@@ -76,17 +81,40 @@ export async function generateJSON({ system, prompt, schema, key = getKey(), mod
       generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0.4 },
     }),
   }, fetchImpl);
-  const body = await res.json().catch(() => null);
-  if (!res.ok) {
-    if (res.status === 404 && retryModel) {
-      const other = await pickModel(key, fetchImpl);
-      if (other !== model) {
-        setModel(other);
-        return generateJSON({ system, prompt, schema, key, model: other, fetchImpl, retryModel: false });
-      }
-    }
-    throw errorMessage(res.status, body);
+  return { status: res.status, ok: res.ok, body: await res.json().catch(() => null) };
+}
+
+/**
+ * Gera uma resposta em JSON seguindo `schema`.
+ * Modelo inexistente (404): troca por outro "flash" e guarda a escolha.
+ * Sobrecarga/erro interno (5xx): tenta de novo e depois até 2 outros modelos "flash" (sem guardar).
+ * @returns {Promise<{ data: object, model: string }>}
+ */
+export async function generateJSON({ system, prompt, schema, key = getKey(), model = getModel(), fetchImpl = fetch, sleep = wait }) {
+  if (!key) throw new AiError('Cole sua chave do Gemini primeiro.', 'key');
+  const args = { system, prompt, schema, key, fetchImpl };
+  const tried = [model];
+  let r = await request({ ...args, model });
+  if (r.status === 404) {
+    model = await pickModel(key, fetchImpl, tried);
+    setModel(model);
+    tried.push(model);
+    r = await request({ ...args, model });
   }
+  if (transient(r.status)) {
+    await sleep(1500);
+    r = await request({ ...args, model });
+  }
+  if (transient(r.status)) {
+    let others = [];
+    try { others = (await listFlashModels(key, fetchImpl)).filter(n => !tried.includes(n)).slice(0, 2); } catch { /* fica com o erro original */ }
+    for (const other of others) {
+      const r2 = await request({ ...args, model: other });
+      if (r2.ok || !transient(r2.status)) { r = r2; model = other; break; }
+    }
+  }
+  if (!r.ok) throw errorMessage(r.status, r.body);
+  const body = r.body;
   const cand = body && body.candidates && body.candidates[0];
   const text = cand && cand.content && (cand.content.parts || []).map(p => p.text || '').join('');
   if (!text) {

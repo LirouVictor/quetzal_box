@@ -127,6 +127,29 @@ suite('IA: cliente do Gemini', () => {
     expect(calls.length).toBe(3);
     expect(await pickModel('K', fetchImpl)).toBe('gemini-3-flash');
   });
+  it('sobrecarga (503): tenta de novo e depois outro modelo, sem guardar a troca', async () => {
+    const calls = [];
+    const fetchImpl = (url) => {
+      calls.push(url.replace('https://generativelanguage.googleapis.com/v1beta/', ''));
+      if (url.includes('/models?')) return json(200, { models: [
+        { name: 'models/gemini-flash-latest', supportedGenerationMethods: ['generateContent'] },
+        { name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent'] },
+      ] });
+      if (url.includes('/gemini-flash-latest:')) return json(503, { error: { code: 503, message: 'The model is overloaded.' } });
+      return ok({ ok: true });
+    };
+    const r = await generateJSON({ system: 's', prompt: 'p', schema: {}, key: 'K', model: 'gemini-flash-latest', fetchImpl, sleep: () => Promise.resolve() });
+    expect(r.model).toBe('gemini-2.5-flash');
+    expect(calls).toEqual(['models/gemini-flash-latest:generateContent', 'models/gemini-flash-latest:generateContent', 'models?pageSize=200', 'models/gemini-2.5-flash:generateContent']);
+    expect(getModel()).toBe('gemini-flash-latest');
+  });
+  it('sobrecarga em todos: mensagem com o detalhe do Google', async () => {
+    const fetchImpl = (url) => url.includes('/models?')
+      ? json(200, { models: [] })
+      : json(503, { error: { code: 503, message: 'The model is overloaded.' } });
+    await expect(generateJSON({ system: '', prompt: '', schema: {}, key: 'K', model: 'm', fetchImpl, sleep: () => Promise.resolve() }))
+      .rejects.toMatchObject({ code: 'server', message: expect.stringContaining('503: The model is overloaded.') });
+  });
   it('sem chave ou sem conexão', async () => {
     await expect(generateJSON({ system: '', prompt: '', schema: {}, key: '' })).rejects.toMatchObject({ code: 'key' });
     const fetchImpl = () => Promise.reject(new TypeError('Failed to fetch'));
