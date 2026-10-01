@@ -13,6 +13,13 @@ function typeChips(types) {
   return `<div class="types">${types.map(t => `<span class="type t-${esc(t)}">${esc(t)}</span>`).join('')}</div>`;
 }
 
+/** Ícone de gênero em pixel art (símbolos #male/#female no index.html). */
+function genderIcon(g) {
+  if (!g || !g.symbol) return '';
+  const f = g.symbol === '♀';
+  return ` <svg class="gender ${f ? 'f' : 'm'}" viewBox="0 0 12 12" width="12" height="12" role="img" aria-label="${esc(g.name)}" shape-rendering="crispEdges"><title>${esc(g.name)}</title><use href="#${f ? 'female' : 'male'}"/></svg>`;
+}
+
 function badge(conf) {
   if (conf === PROBABLE) return ' <span class="badge" title="Identificação provável, ainda não confirmada">provável</span>';
   if (conf === 'desconhecido') return ' <span class="badge" title="ID do Quetzal ainda não mapeado">?</span>';
@@ -115,7 +122,7 @@ function monHeader(m, headingTag = 'h3', idAttr = '') {
   return `<div class="mon-head">
     ${portrait(m)}
     <div>
-      <${headingTag} class="mon-name"${idAttr}>${title}${m.gender && m.gender.symbol ? ` <span class="gender ${m.gender.symbol === '♀' ? 'f' : 'm'}" title="${esc(m.gender.name)}">${m.gender.symbol}</span>` : ''}${m.shiny ? ' <span class="shiny" title="Shiny">★<span class="sr"> shiny</span></span>' : ''}${badge(sp.confidence)}</${headingTag}>
+      <${headingTag} class="mon-name"${idAttr}>${title}${genderIcon(m.gender)}${m.shiny ? ' <span class="shiny" title="Shiny">★<span class="sr"> shiny</span></span>' : ''}${badge(sp.confidence)}</${headingTag}>
       <div class="mon-sub">${sub}${m.level ? ` · <span class="lv"${m.levelFromExp ? ' title="Calculado pela experiência (curva Medium Slow)"' : ''}>Nv. ${m.level}</span>` : ''}</div>
       ${typeChips(sp.types)}
     </div>
@@ -282,15 +289,6 @@ export function searchWin(d, T) {
       <div class="search-row">
         <label class="sr" for="f-type">Tipo</label>
         <select id="f-type"><option value="">Todos os tipos</option>${typeOpts}</select>
-        <label class="sr" for="f-flag">Filtro</label>
-        <select id="f-flag">
-          <option value="">Sem filtro</option>
-          <option value="shiny">Só shiny</option>
-          <option value="hidden">Habilidade oculta</option>
-          <option value="female">Fêmeas</option>
-          <option value="male">Machos</option>
-          <option value="iv31">6 IVs 31</option>
-        </select>
         <label class="sr" for="f-sort">Ordem</label>
         <select id="f-sort">
           <option value="pos">Posição</option>
@@ -298,6 +296,13 @@ export function searchWin(d, T) {
           <option value="name">Nome</option>
           <option value="dex">Nº da espécie</option>
         </select>
+      </div>
+      <div class="flags" role="group" aria-label="Filtros">
+        <button class="btn btn-ghost btn-small flag" type="button" data-flag="shiny" aria-pressed="false">★ Shiny</button>
+        <button class="btn btn-ghost btn-small flag" type="button" data-flag="hidden" aria-pressed="false">Hab. oculta</button>
+        <button class="btn btn-ghost btn-small flag" type="button" data-flag="female" aria-pressed="false"><svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" shape-rendering="crispEdges"><use href="#female"/></svg> Fêmeas</button>
+        <button class="btn btn-ghost btn-small flag" type="button" data-flag="male" aria-pressed="false"><svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" shape-rendering="crispEdges"><use href="#male"/></svg> Machos</button>
+        <button class="btn btn-ghost btn-small flag" type="button" data-flag="iv31" aria-pressed="false">6 IVs 31</button>
       </div>
     </div>
     <p class="hint" id="search-count" role="status"></p>
@@ -309,7 +314,7 @@ export function searchWin(d, T) {
 export function resultRow(m, i) {
   const sp = m.species;
   const where = m.location === 'party' ? `Equipe ${m.slot}` : `${esc(m.where)} · ${m.slot}`;
-  const g = m.gender && m.gender.symbol ? ` <span class="gender ${m.gender.symbol === '♀' ? 'f' : 'm'}">${m.gender.symbol}</span>` : '';
+  const g = genderIcon(m.gender);
   return `<li><button class="result" type="button" data-i="${i}">
     <img data-sprite="1" src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" decoding="async" loading="lazy" crossorigin="anonymous">
     <span class="r-main"><b>${monShort(m)}</b>${g}${m.shiny ? ' <span class="shiny">★</span>' : ''}

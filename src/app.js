@@ -64,11 +64,21 @@ function render() {
   // Busca
   let timer = 0;
   const run = () => { clearTimeout(timer); timer = setTimeout(runSearch, 150); };
-  ['#q', '#f-type', '#f-flag', '#f-sort'].forEach(sel => {
+  ['#q', '#f-type', '#f-sort'].forEach(sel => {
     const el = out.querySelector(sel);
     el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', run);
   });
-  out.querySelector('#more').addEventListener('click', () => showResults(false));
+  // Filtros: um ativo por vez; tocar de novo desliga
+  out.querySelector('.flags').addEventListener('click', e => {
+    const b = e.target.closest('.flag');
+    if (!b) return;
+    const on = b.getAttribute('aria-pressed') !== 'true';
+    out.querySelectorAll('.flag').forEach(x => x.setAttribute('aria-pressed', 'false'));
+    b.setAttribute('aria-pressed', String(on));
+    state.flag = on ? b.dataset.flag : '';
+    runSearch();
+  });
+  out.querySelector('#more').addEventListener('click', () => showResults());
   out.querySelector('#results').addEventListener('click', e => {
     const btn = e.target.closest('.result[data-i]');
     if (btn) openDetail(state.results[+btn.dataset.i], btn);
@@ -78,7 +88,7 @@ function render() {
 
 function runSearch() {
   const v = id => document.getElementById(id).value;
-  const f = { q: v('q'), type: v('f-type'), flag: v('f-flag'), sort: v('f-sort') };
+  const f = { q: v('q'), type: v('f-type'), flag: state.flag || '', sort: v('f-sort') };
   state.results = searchMons(state.all, f);
   state.filtered = !!(f.q.trim() || f.type || f.flag);
   state.shown = 0;
