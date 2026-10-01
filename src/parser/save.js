@@ -1,0 +1,195 @@
+// Leitura "crua" do save do Pokémon Quetzal: devolve apenas números e textos lidos
+// diretamente dos bytes. Nomes de espécie/golpe/item são resolvidos em describe.js.
+// O formato está documentado em CLAUDE.md.
+
+import { decodeText } from './charset.js';
+
+export const SAVE_SIZE = 0x20000;
+export const SECTOR_SIZE = 0x1000;
+export const SECTOR_DATA = 0xFF4;
+export const SECTORS_PER_SLOT = 16;
+export const SIGNATURE = 0x08012025;
+
+export const FOOTER = { id: 0xFF4, checksum: 0xFF6, signature: 0xFF8, saveIndex: 0xFFC };
+
+export const TRAINER = { name: 0x00, nameLen: 7, tid: 0x0A, sid: 0x0C };
+
+export const PARTY = {
+  count: 0x6A4,
+  start: 0x6A8,
+  size: 0x68,
+  max: 6,
+  pid: 0x00, otId: 0x04, nickname: 0x08, nicknameLen: 10, otName: 0x14, otNameLen: 7,
+  species: 0x28, item: 0x2A, exp: 0x2C, friendship: 0x31,
+  moves: 0x34, pp: 0x3C, evs: 0x40, ivs: 0x50, unk54: 0x54, level: 0x58, stats: 0x5A,
+};
+
+export const PC = {
+  firstSection: 5,
+  lastSection: 15,
+  currentBox: 0x00,
+  boxNames: 0x01,
+  boxNameLen: 9,
+  boxCount: 67,
+  wallpapers: 0x25C,
+  monStart: 0x461,
+  monSize: 38,
+  perBox: 30,
+  bits: { species: [0, 11], moves: [48, 58, 68, 78], moveWidth: 10 },
+  pp: 24,
+  nickname: 28,
+  nicknameLen: 10,
+};
+
+/** Ordem em que o jogo guarda EVs, IVs e stats. */
+export const STAT_ORDER = ['hp', 'atk', 'def', 'spe', 'spa', 'spd'];
+
+export class SaveError extends Error {}
+
+const hex = (bytes) => Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+
+/** Checksum de setor: soma u32 LE dos 0xFF4 bytes úteis, dobrada em 16 bits. */
+export function sectorChecksum(dv, offset) {
+  let sum = 0;
+  for (let k = 0; k < SECTOR_DATA; k += 4) sum = (sum + dv.getUint32(offset + k, true)) >>> 0;
+  return ((sum >>> 16) + (sum & 0xFFFF)) & 0xFFFF;
+}
+
+function readSlots(dv) {
+  return [0, 1].map(slot => {
+    const sections = {};
+    let saveIndex = -1, found = 0, badChecksums = [];
+    for (let i = 0; i < SECTORS_PER_SLOT; i++) {
+      const o = (slot * SECTORS_PER_SLOT + i) * SECTOR_SIZE;
+      if (dv.getUint32(o + FOOTER.signature, true) !== SIGNATURE) continue;
+      const id = dv.getUint16(o + FOOTER.id, true);
+      sections[id] = o;
+      found++;
+      saveIndex = Math.max(saveIndex, dv.getUint32(o + FOOTER.saveIndex, true));
+      if (sectorChecksum(dv, o) !== dv.getUint16(o + FOOTER.checksum, true)) badChecksums.push(id);
+    }
+    const usable = found >= 6 && sections[0] !== undefined && sections[1] !== undefined;
+    return { slot, sections, saveIndex, found, badChecksums, usable };
+  });
+}
+
+/**
+ * Lê o save e devolve os dados crus.
+ * @param {ArrayBuffer|Uint8Array} input
+ */
+export function parseSave(input) {
+  const u8 = input instanceof Uint8Array ? input : new Uint8Array(input);
+  if (u8.length < SAVE_SIZE) {
+    throw new SaveError(`O arquivo tem ${u8.length} bytes; um save de GBA do Quetzal tem ${SAVE_SIZE} (128 KB).`);
+  }
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  const warnings = [];
+
+  const slots = readSlots(dv).filter(s => s.usable);
+  if (!slots.length) throw new SaveError('Não encontrei a assinatura de save do GBA neste arquivo. Confira se é o .sav do Quetzal.');
+  // Prefere o slot mais recente com todos os checksums válidos; se nenhum estiver íntegro, usa o mais recente.
+  slots.sort((a, b) => (a.badChecksums.length === 0 ? 0 : 1) - (b.badChecksums.length === 0 ? 0 : 1) || b.saveIndex - a.saveIndex);
+  const active = slots[0];
+  if (active.badChecksums.length) {
+    warnings.push(`Checksum inválido nos setores ${active.badChecksums.join(', ')}; os dados podem estar corrompidos.`);
+  }
+  const S = active.sections;
+
+  // Treinador
+  const s0 = S[0];
+  const trainer = {
+    name: decodeText(u8, s0 + TRAINER.name, TRAINER.nameLen),
+    tid: dv.getUint16(s0 + TRAINER.tid, true),
+    sid: dv.getUint16(s0 + TRAINER.sid, true),
+  };
+
+  // Equipe: registros de 104 bytes sem criptografia
+  const s1 = S[1];
+  const partyCount = Math.min(u8[s1 + PARTY.count], PARTY.max);
+  const party = [];
+  for (let i = 0; i < partyCount; i++) {
+    const r = s1 + PARTY.start + i * PARTY.size;
+    const ivWord = dv.getUint32(r + PARTY.ivs, true);
+    const evs = {}, ivs = {}, stats = {};
+    STAT_ORDER.forEach((k, j) => {
+      evs[k] = u8[r + PARTY.evs + j];
+      ivs[k] = (ivWord >>> (5 * j)) & 31;
+      stats[k] = dv.getUint16(r + PARTY.stats + 2 * j, true);
+    });
+    party.push({
+      slot: i + 1,
+      pid: dv.getUint32(r + PARTY.pid, true),
+      otId: dv.getUint32(r + PARTY.otId, true),
+      nickname: decodeText(u8, r + PARTY.nickname, PARTY.nicknameLen),
+      otName: decodeText(u8, r + PARTY.otName, PARTY.otNameLen),
+      speciesId: dv.getUint16(r + PARTY.species, true),
+      itemId: dv.getUint16(r + PARTY.item, true),
+      exp: dv.getUint32(r + PARTY.exp, true),
+      friendship: u8[r + PARTY.friendship],
+      moves: [0, 1, 2, 3].map(j => ({ id: dv.getUint16(r + PARTY.moves + 2 * j, true), pp: u8[r + PARTY.pp + j] })).filter(m => m.id),
+      evs, ivs, stats,
+      level: u8[r + PARTY.level],
+      unk54: dv.getUint32(r + PARTY.unk54, true),
+      raw: hex(u8.subarray(r, r + PARTY.size)),
+    });
+  }
+
+  // PC: setores 5..15 concatenados (0xFF4 bytes úteis de cada)
+  const parts = [];
+  for (let id = PC.firstSection; id <= PC.lastSection; id++) {
+    if (S[id] === undefined) { warnings.push(`Setor ${id} do PC ausente.`); continue; }
+    parts.push(u8.subarray(S[id], S[id] + SECTOR_DATA));
+  }
+  const pc = new Uint8Array(parts.reduce((a, p) => a + p.length, 0));
+  { let o = 0; for (const p of parts) { pc.set(p, o); o += p.length; } }
+
+  const boxNames = [];
+  for (let b = 0; b < PC.boxCount; b++) {
+    boxNames.push(decodeText(pc, PC.boxNames + b * PC.boxNameLen, PC.boxNameLen) || `BOX${b + 1}`);
+  }
+  const capacity = Math.max(0, Math.floor((pc.length - PC.monStart) / PC.monSize));
+  const readableBoxes = Math.min(PC.boxCount, Math.ceil(capacity / PC.perBox));
+  if (capacity < PC.boxCount * PC.perBox) {
+    warnings.push(`O save tem ${PC.boxCount} nomes de caixa, mas os setores do PC só comportam ${capacity} Pokémon (${(capacity / PC.perBox).toFixed(1).replace('.', ',')} caixas) no formato conhecido. As caixas seguintes não são lidas.`);
+  }
+
+  const boxes = [];
+  for (let b = 0; b < readableBoxes; b++) {
+    const slotsOut = [];
+    for (let s = 0; s < PC.perBox && b * PC.perBox + s < capacity; s++) {
+      const o = PC.monStart + (b * PC.perBox + s) * PC.monSize;
+      const e = pc.subarray(o, o + PC.monSize);
+      if (!e.some(x => x)) continue;
+      const bits = readBits(e, 24);
+      const speciesId = bitField(bits, ...PC.bits.species);
+      if (!speciesId) continue;
+      slotsOut.push({
+        slot: s + 1,
+        speciesId,
+        nickname: decodeText(e, PC.nickname, PC.nicknameLen),
+        moves: PC.bits.moves.map((bit, j) => ({ id: bitField(bits, bit, PC.bits.moveWidth), pp: e[PC.pp + j] })).filter(m => m.id),
+        raw: hex(e),
+      });
+    }
+    boxes.push({ index: b, name: boxNames[b], slots: slotsOut, partial: (b + 1) * PC.perBox > capacity });
+  }
+
+  return {
+    slot: { index: active.slot, saveIndex: active.saveIndex },
+    warnings,
+    trainer,
+    party,
+    pc: { currentBox: pc[PC.currentBox], declaredBoxes: PC.boxCount, capacity, boxes },
+  };
+}
+
+/** Lê os primeiros `n` bytes como inteiro little-endian (BigInt). */
+export function readBits(bytes, n) {
+  let v = 0n;
+  for (let k = n - 1; k >= 0; k--) v = (v << 8n) | BigInt(bytes[k]);
+  return v;
+}
+
+export function bitField(bits, offset, width) {
+  return Number((bits >> BigInt(offset)) & ((1n << BigInt(width)) - 1n));
+}
