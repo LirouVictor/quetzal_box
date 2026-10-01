@@ -7,6 +7,7 @@ import '@fontsource/atkinson-hyperlegible/latin-400.css';
 import '@fontsource/atkinson-hyperlegible/latin-700.css';
 import './styles/main.css';
 import { installImageFallback } from './ui/sprites.js';
+import { rememberSave, loadRememberedSave, forgetSave } from './ui/store.js';
 
 const $ = s => document.querySelector(s);
 const loadApp = () => import('./app.js');
@@ -38,14 +39,35 @@ function showError(msg) {
   el.classList.remove('hidden');
 }
 
+function showSavedNote(name, savedAt) {
+  const when = new Date(savedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  $('#saved-text').textContent = `Mostrando a cópia guardada de "${name}" (aberta em ${when}). Se você jogou depois disso, abra o .sav de novo para atualizar.`;
+  $('#saved-note').classList.remove('hidden');
+}
+
+/**
+ * Abre um save a partir dos bytes.
+ * @param {ArrayBuffer} buf
+ * @param {string} name
+ * @param {{ fromCopy?: number }} [opts] fromCopy = data em que a cópia guardada foi feita
+ */
+async function openBytes(buf, name, opts = {}) {
+  const app = await loadApp();
+  app.openSave(buf, name);
+  $('#intro').classList.add('hidden');
+  $('#reopen').classList.remove('hidden');
+  if (opts.fromCopy) showSavedNote(name, opts.fromCopy);
+  else $('#saved-note').classList.add('hidden');
+  scrollTo(0, 0);
+}
+
 async function load(file) {
   $('#err').classList.add('hidden');
   try {
-    const [buf, app] = await Promise.all([file.arrayBuffer(), loadApp()]);
-    app.openSave(buf, file.name);
-    $('#intro').classList.add('hidden');
-    $('#reopen').classList.remove('hidden');
-    scrollTo(0, 0);
+    const buf = await file.arrayBuffer();
+    await openBytes(buf, file.name);
+    // Guarda uma cópia para abrir automaticamente na próxima visita (só neste aparelho).
+    rememberSave({ name: file.name, bytes: buf });
   } catch (e) {
     console.error(e);
     showError(e && e.name === 'SaveError'
@@ -54,6 +76,22 @@ async function load(file) {
     $('#intro').classList.remove('hidden');
   }
 }
+
+$('#forget').addEventListener('click', async () => {
+  await forgetSave();
+  $('#saved-note').classList.add('hidden');
+  $('#out').classList.add('hidden');
+  $('#out').innerHTML = '';
+  $('#reopen').classList.add('hidden');
+  $('#intro').classList.remove('hidden');
+  scrollTo(0, 0);
+});
+
+// Abre automaticamente a cópia do último save, se houver.
+loadRememberedSave().then(saved => {
+  if (!saved || !$('#out').classList.contains('hidden')) return;
+  openBytes(saved.bytes, saved.name, { fromCopy: saved.savedAt }).catch(() => forgetSave());
+});
 
 $('#file').addEventListener('change', e => {
   const f = e.target.files && e.target.files[0];

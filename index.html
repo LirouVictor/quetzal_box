@@ -34,7 +34,7 @@
   <main id="main">
     <section class="win intro" id="intro">
       <h1 class="pixel">Abra seu save do Quetzal</h1>
-      <p>Veja treinador, equipe e PC, e exporte para planilha, Showdown ou JSON. A leitura acontece no seu aparelho: o arquivo não é enviado para lugar nenhum.</p>
+      <p>Veja treinador, equipe e PC, e exporte para planilha, Showdown ou JSON. A leitura acontece no seu aparelho: o arquivo não é enviado para lugar nenhum. Uma cópia do último save fica guardada neste navegador para abrir sozinha na próxima visita.</p>
       <div class="drop" id="drop">
         <label class="btn btn-big" for="file">
           <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" shape-rendering="crispEdges"><use href="#folder"/></svg>
@@ -45,6 +45,14 @@
         <p class="hint">No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui.</p>
       </div>
       <p class="error hidden" id="err" role="alert"></p>
+    </section>
+
+    <section class="win saved-note hidden" id="saved-note" aria-label="Save guardado">
+      <p id="saved-text" role="status"></p>
+      <div class="export-btns">
+        <label class="btn btn-small" for="file">Abrir save atualizado</label>
+        <button class="btn btn-small btn-ghost" type="button" id="forget">Esquecer este save</button>
+      </div>
     </section>
 
     <div id="out" class="hidden" aria-live="polite"></div>

@@ -168,6 +168,8 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 .status:empty { display: none; }
 
 .warnings { --hi: var(--gold); }
+.saved-note { --hi: var(--accent); }
+.saved-note p { margin: 0 0 8px; font-size: .92rem; }
 #out { display: grid; gap: 20px; }
 #out > section > .win-title { margin: 0 4px 4px; }
 .warnings ul { margin: 0; padding-left: 18px; }
@@ -257,8 +259,10 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 
 /* Folha de detalhes (dialog) */
 .sheet {
+  /* .win define position: relative; o diálogo modal precisa ficar fixo, senão a página rola até ele */
+  position: fixed; inset: 0; margin: auto; height: fit-content;
   width: min(560px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow: auto;
-  border: 0; color: var(--ink); padding: 16px;
+  border: 0; color: var(--ink); padding: 16px; overscroll-behavior: contain;
 }
 .sheet::backdrop { background: rgba(10, 12, 20, .6); }
 .sheet .close { position: absolute; right: 10px; top: 10px; }

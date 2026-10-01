@@ -1,5 +1,5 @@
 {
-  "_doc": "Tabela manual do que difere entre o Quetzal e as fontes geradas. Espécies com ID > 905 têm numeração própria do Quetzal. 'confidence' é 'confirmado' ou 'provável'; 'evidence' diz de onde veio. 'pokeapi' é o identificador da forma na PokeAPI (para sprite e tipos); null = sem correspondência (silhueta). Itens: até 'itemsVerifiedUpTo' a tabela do expansion master foi conferida; entre esse valor e 'itemsDivergeFrom' o nome do master é usado como 'provável'; a partir de 'itemsDivergeFrom' a numeração diverge e itens sem override aparecem como não mapeados.",
+  "_doc": "Tabela manual do que difere entre o Quetzal e as fontes geradas. Espécies com ID > 905 têm numeração própria do Quetzal. 'confidence' é 'confirmado' ou 'provável'; 'evidence' diz de onde veio. 'pokeapi' é o identificador da forma na PokeAPI (para sprite e tipos); null = sem correspondência (silhueta). Itens: até 'itemsVerifiedUpTo' a tabela do expansion master foi conferida; entre esse valor e 'itemsDivergeFrom' o nome do master é usado como 'provável'; a partir de 'itemsDivergeFrom' a numeração diverge e itens sem override aparecem como não mapeados. 'baseDex': espécie base (Dex Nacional) cujos tipos e habilidades são usados como 'provável' quando a forma não tem correspondência na PokeAPI.",
   "species": {
     "951": {
       "name": "Raichu",
@@ -55,7 +55,8 @@
       "showdown": "Pikachu",
       "pokeapi": null,
       "confidence": "confirmado",
-      "evidence": "Conferido no jogo: boné branco/vermelho com símbolo vermelho e jaqueta vermelha, lembrando o treinador Red. Forma própria do Quetzal, sem sprite correspondente na PokeAPI (os bonés oficiais não têm jaqueta)."
+      "evidence": "Conferido no jogo: boné branco/vermelho com símbolo vermelho e jaqueta vermelha, lembrando o treinador Red. Forma própria do Quetzal, sem sprite correspondente na PokeAPI (os bonés oficiais não têm jaqueta).",
+      "baseDex": 25
     }
   },
   "items": {

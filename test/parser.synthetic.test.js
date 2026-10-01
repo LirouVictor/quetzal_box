@@ -114,6 +114,9 @@ suite('describe', () => {
     expect(raichu.ability).toMatchObject({ name: 'Surge Surfer', hidden: true }); // sem oculta: vale a 1ª
     const pika = d.pc.boxes[1].slots[1];
     expect(pika.species.spriteId).toBeNull();
+    // Forma própria sem dados na PokeAPI: tipos e habilidades da espécie base, como "provável"
+    expect(pika.species.types).toEqual(['electric']);
+    expect(pika.ability).toMatchObject({ name: 'Static', confidence: 'provável' });
   });
 
   it('PC sem apelido usa o nome da espécie; stats ficam sem valor', () => {
