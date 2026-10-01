@@ -53,7 +53,7 @@ function movesList(moves) {
 /** Tabela de stats com colunas fixas: rótulo, [valor], barra, IV, EV. */
 function statRows(m, { withStats }) {
   const max = withStats ? Math.max(...SHOWDOWN_ORDER.map(k => m.stats[k]), 1) : 31;
-  const nat = m.statNature || m.nature;
+  const nat = m.nature;
   const rows = SHOWDOWN_ORDER.map(k => {
     const cls = nat && nat.plus === k ? 'plus' : nat && nat.minus === k ? 'minus' : '';
     const mark = cls === 'plus' ? '+' : cls === 'minus' ? '−' : '';
@@ -82,13 +82,11 @@ function ballChip(b) {
   return `<span class="chip"><span class="k">Bola</span><b>${esc(b.name)}</b>${badge(b.confidence)}</span>`;
 }
 
-function natureChip(n, statNature = null) {
+function natureChip(n, pidNature = null) {
   if (!n) return '<span class="chip unread"><span class="k">Natureza</span> não lida</span>';
-  const effOf = x => x.plus ? `+${STAT_LABEL[x.plus]} −${STAT_LABEL[x.minus]}` : 'neutra';
-  if (statNature) {
-    return `<span class="chip" title="Os stats salvos batem com ${esc(statNature.name)}, não com ${esc(n.name)} (efeito de mint?)"><span class="k">Natureza</span><b>${esc(n.name)}</b> <span class="k">stats de ${esc(statNature.name)} (${effOf(statNature)})</span></span>`;
-  }
-  return `<span class="chip"><span class="k">Natureza</span><b>${esc(n.name)}</b> <span class="k">${effOf(n)}</span></span>`;
+  const eff = n.plus ? `+${STAT_LABEL[n.plus]} −${STAT_LABEL[n.minus]}` : 'neutra';
+  const title = pidNature ? ` title="Natureza trocada no jogo (o PID indica ${esc(pidNature.name)})."` : '';
+  return `<span class="chip"${title}><span class="k">Natureza</span><b>${esc(n.name)}</b> <span class="k">${eff}</span></span>`;
 }
 
 function hiddenPowerChip(t) {
@@ -131,7 +129,7 @@ export function partyCard(m) {
       <span>HP</span><span class="meter"><i style="width:100%"></i></span><span>${m.stats.hp}</span>
       <span class="hp-note">HP máximo (o HP atual ainda não é lido)</span>
     </div>
-    <div class="facts">${natureChip(m.nature, m.statNature)}${itemChip(m.item, true)}${abilityChip(m.ability)}${ballChip(m.ball)}${hiddenPowerChip(m.hiddenPower)}</div>
+    <div class="facts">${natureChip(m.nature, m.pidNature)}${itemChip(m.item, true)}${abilityChip(m.ability)}${ballChip(m.ball)}${hiddenPowerChip(m.hiddenPower)}</div>
     ${movesList(m.moves)}
     ${statsTable(m)}
   </article>`;
@@ -227,7 +225,7 @@ export function monDetail(m) {
     ${monHeader(m, 'h2', ' id="detail-title"')}
     <p class="mon-sub">${esc(where)}</p>
     ${sp.evidence ? `<p class="evidence">${esc(sp.evidence)}</p>` : ''}
-    <div class="facts">${natureChip(m.nature, m.statNature)}${itemChip(m.item, true)}${abilityChip(m.ability)}${ballChip(m.ball)}${hiddenPowerChip(m.hiddenPower)}</div>
+    <div class="facts">${natureChip(m.nature, m.pidNature)}${itemChip(m.item, true)}${abilityChip(m.ability)}${ballChip(m.ball)}${hiddenPowerChip(m.hiddenPower)}</div>
     ${movesList(m.moves)}
     ${m.stats ? statsTable(m) : ivEvTable(m)}
     ${note}

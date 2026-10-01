@@ -88,8 +88,9 @@ Contagem em `0x6A4` (u8). Registros a partir de `0x6A8`, **104 bytes (0x68), sem
 | 0x5A | 6×u16 | stats HP/Atk/Def/Spe/SpA/SpD | confirmado |
 | 0x66 | u16 | varia (`0000`, `2202`, `1111`); não é o HP atual | desconhecido |
 
-- Natureza = PID % 25. Os PIDs vistos são pequenos e seguem `225 + natureza` (o jogo escolhe o PID só para fixar a natureza).
-- **Stats** = fórmula padrão das gerações 3+ com os stats base oficiais (PokeAPI): reproduz exatamente os stats salvos de 9 das 10 espécies vistas na equipe. A exceção é o **Serperior** (PID `0x1F0`, PID % 25 = Gentle): os stats batem com **Modest**, como se tivesse usado uma "mint". O campo dessa natureza efetiva não foi localizado; a UI detecta testando as 25 naturezas contra os stats salvos e mostra "Gentle · stats de Modest". Falta conferir no jogo qual natureza o resumo mostra.
+- Natureza = PID % 25, salvo natureza trocada (abaixo). Os PIDs vistos são pequenos e seguem `225 + natureza` (o jogo escolhe o PID só para fixar a natureza).
+- **Stats** = fórmula padrão das gerações 3+ com os stats base oficiais (PokeAPI): reproduz exatamente os stats salvos das 10 espécies vistas na equipe, usando a natureza certa.
+- **Natureza trocada**: o **Serperior** tem PID `0x1F0` (PID % 25 = Gentle), mas o jogo mostra **Modest** (confirmado pelo autor) e os stats batem com Modest. O Quetzal permite trocar a natureza e guarda isso em algum campo ainda não localizado. Como a equipe guarda os stats, o app usa a natureza que reproduz os stats; a do PID fica em `pidNature`. No PC (bits 161–165), a natureza guardada é presumivelmente a mostrada pelo jogo (ainda não conferido com um Pokémon de natureza trocada).
 - **Shiny na equipe: não localizado.** Os PIDs vistos são pequenos (ex.: `0xF0`), então o shiny não sai da fórmula PID/OT da Gen 3; deve haver um bit próprio, ainda não achado (nenhum Pokémon da equipe nos saves é shiny).
 - **HP atual não foi encontrado** no registro; a UI mostra só o HP máximo.
 - Observação: todos os PP observados (equipe e PC) estão no máximo com 3 PP Ups (ex.: Tackle 56 = 35 × 1,6), até em Pokémon recém-capturados. Pode ser regra do Quetzal; não confirmado se o campo é o PP atual.

@@ -23,7 +23,7 @@ suite.skipIf(!has)('save real (fixtures/PokemonQuetzalPtBrAlpha9v0.sav)', () => 
     expect(summary).toEqual([
       ['Dragonite', 149, 100, 'Quiet', null],
       ['Staraptor', 398, 100, 'Mild', null],
-      ['Serperior', 497, 100, 'Gentle', null],
+      ['Serperior', 497, 100, 'Modest', null], // PID diz Gentle; o jogo mostra Modest
       ['Reuniclus', 579, 100, 'Naughty', null],
       ['Basculegion', 1210, 100, 'Jolly', 'Life Orb'],
       ['Lucario', 448, 100, 'Modest', 'Lucarionite Z'],
@@ -46,8 +46,9 @@ suite.skipIf(!has)('save real (fixtures/PokemonQuetzalPtBrAlpha9v0.sav)', () => 
     expect(luc.evs).toEqual({ hp: 4, atk: 0, def: 0, spe: 252, spa: 252, spd: 0 });
     expect(luc.stats).toEqual({ hp: 282, atk: 230, def: 176, spe: 279, spa: 361, spd: 176 });
     expect(luc.item.id).toBe(865);
-    // Stats da equipe: a natureza do PID reproduz os stats, exceto no Serperior (stats batem com Modest)
-    expect(d.party.map(m => m.statNature && m.statNature.name)).toEqual([null, null, 'Modest', null, null, null]);
+    // Serperior: PID % 25 = Gentle, mas o jogo mostra Modest (conferido pelo autor), que é a natureza que reproduz os stats
+    expect(d.party[2].nature.name).toBe('Modest');
+    expect(d.party.map(m => m.pidNature && m.pidNature.name)).toEqual([null, null, 'Gentle', null, null, null]);
     expect(d.party[5].hiddenPower).toBe('dark'); // Lucario, IVs 31 em tudo
     expect(raw.party.map(p => p.misc)).toEqual([0x40000000, 0x40000000, 0x40000000, 0x50000000, 0x50000000, 0x50000000]);
     // Habilidades conferidas pelo autor na tela de resumo do jogo

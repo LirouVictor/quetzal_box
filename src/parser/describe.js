@@ -148,15 +148,17 @@ export function describe(raw, T) {
 
   const party = raw.party.map(p => {
     const sp = R.species(p.speciesId, p.nickname);
-    const nature = natureFromPid(p.pid);
-    // Natureza que vale para os stats: se a do PID não reproduz os stats salvos, procura a que reproduz (mint)
-    let statNature = null;
+    // Natureza: em geral PID % 25. Mas o Quetzal permite trocar a natureza (ex.: Serperior, PID = Gentle,
+    // jogo mostra Modest) e o campo dessa troca não foi localizado. Como a equipe guarda os stats, a natureza
+    // real é a que os reproduz; a do PID fica em pidNature.
+    const pidNature = natureFromPid(p.pid);
+    let nature = pidNature;
     if (sp.baseStats) {
       const ok = naturesMatchingStats(sp.baseStats, p.ivs, p.evs, p.level, p.stats);
-      if (ok.length && !ok.includes(nature.id)) {
+      if (ok.length && !ok.includes(pidNature.id)) {
         const effect = natureFromId(ok[0]);
-        // Naturezas neutras dão os mesmos stats; o que importa é o efeito (+/−)
-        if (!(nature.plus === effect.plus && nature.minus === effect.minus)) statNature = effect;
+        // Naturezas neutras dão os mesmos stats; só troca se o efeito (+/−) for diferente
+        if (!(pidNature.plus === effect.plus && pidNature.minus === effect.minus)) nature = effect;
       }
     }
     return {
@@ -173,7 +175,7 @@ export function describe(raw, T) {
       levelFromExp: false,
       exp: p.exp,
       nature,
-      statNature,
+      pidNature: nature === pidNature ? null : pidNature,
       item: R.item(p.itemId),
       ability: R.ability(sp, p.abilityNum),
       ball: R.ball(p.ballId),
@@ -214,7 +216,7 @@ export function describe(raw, T) {
         levelFromExp: true,
         exp: s.exp,
         nature,
-        statNature: null,
+        pidNature: null,
         item: R.item(s.itemId),
         ability: R.ability(sp, s.abilityNum),
         ball: R.ball(s.ballId),
