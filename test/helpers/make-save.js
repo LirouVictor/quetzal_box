@@ -8,7 +8,7 @@ import {
  * @param {object} o
  * @param {{name:string,tid:number,sid:number}} o.trainer
  * @param {Array<object>} [o.party]
- * @param {Record<number, {species:number, nickname?:string, moves?:Array<[number,number]>}>} [o.pc] índice global do slot -> Pokémon
+ * @param {Record<number, {species:number, nickname?:string, moves?:Array<[number,number]>, item?:number, exp?:number, evs?:number[], ivs?:number[], nature?:number, abilityNum?:number}>} [o.pc] índice global do slot -> Pokémon (EVs/IVs na ordem do save)
  * @param {number} [o.saveIndex]
  * @param {object} [o.olderSlot] dados para o outro slot (save anterior)
  * @param {number} [o.rotate] rotação física dos setores dentro do slot
@@ -48,7 +48,7 @@ function writeSlot(u8, slot, o, saveIndex, rotate) {
     (p.evs || [0, 0, 0, 0, 0, 0]).forEach((v, j) => { s1[r + PARTY.evs + j] = v; });
     const ivs = p.ivs || [0, 0, 0, 0, 0, 0];
     d1.setUint32(r + PARTY.ivs, ivs.reduce((acc, v, j) => acc | (v << (5 * j)), 0) >>> 0, true);
-    d1.setUint32(r + PARTY.unk54, p.unk54 ?? 0x40000000, true);
+    d1.setUint32(r + PARTY.misc, (0x40000000 | ((p.abilityNum ?? 0) << PARTY.abilityShift)) >>> 0, true);
     s1[r + PARTY.level] = p.level ?? 1;
     (p.stats || [0, 0, 0, 0, 0, 0]).forEach((v, j) => d1.setUint16(r + PARTY.stats + 2 * j, v, true));
   });
@@ -56,11 +56,20 @@ function writeSlot(u8, slot, o, saveIndex, rotate) {
   // Seções 5..15: PC (área contínua de 0xFF4 bytes por seção)
   const nSec = PC.lastSection - PC.firstSection + 1;
   const pc = new Uint8Array(nSec * SECTOR_DATA);
-  for (let b = 0; b < PC.boxCount; b++) pc.set(encodeText(`BOX${b + 1}`, PC.boxNameLen), PC.boxNames + b * PC.boxNameLen);
+  for (let b = 0; b < PC.boxNameSlots; b++) pc.set(encodeText(`BOX${b + 1}`, PC.boxNameLen), PC.boxNames + b * PC.boxNameLen);
   for (const [idx, m] of Object.entries(o.pc || {})) {
     const off = PC.monStart + Number(idx) * PC.monSize;
-    let bits = BigInt(m.species);
-    (m.moves || []).forEach(([id], j) => { bits |= BigInt(id) << BigInt(PC.bits.moves[j]); });
+    const B = PC.bits;
+    const put = (value, offset) => { bits |= BigInt(value) << BigInt(offset); };
+    let bits = 0n;
+    put(m.species, B.species[0]);
+    put(m.item ?? 0, B.item[0]);
+    put(Math.floor((m.exp ?? 0) / 10), B.exp10[0]);
+    (m.moves || []).forEach(([id], j) => put(id, B.moves[j]));
+    (m.evs || [0, 0, 0, 0, 0, 0]).forEach((v, j) => put(v >> 2, B.evs + j * B.evWidth));
+    (m.ivs || [0, 0, 0, 0, 0, 0]).forEach((v, j) => put(v, B.ivs + j * B.ivWidth));
+    put(m.nature ?? 0, B.nature[0]);
+    put(m.abilityNum ?? 0, B.ability[0]);
     for (let k = 0; k < 24; k++) pc[off + k] = Number((bits >> BigInt(8 * k)) & 0xFFn);
     (m.moves || []).forEach(([, pp], j) => { pc[off + PC.pp + j] = pp; });
     pc.set(encodeText(m.nickname ?? '', PC.nicknameLen), off + PC.nickname);

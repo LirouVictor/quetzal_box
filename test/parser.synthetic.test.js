@@ -1,5 +1,5 @@
 import { describe as suite, it, expect } from 'vitest';
-import { parseSave, SaveError, describe, natureFromPid } from '../src/parser/index.js';
+import { parseSave, SaveError, describe, natureFromPid, levelFromExp, mediumSlow } from '../src/parser/index.js';
 import { sectorChecksum, SECTOR_SIZE, FOOTER } from '../src/parser/save.js';
 import T from '../src/data/tables.js';
 import { makeSave } from './helpers/make-save.js';
@@ -11,13 +11,14 @@ const base = {
       pid: 15, nickname: 'Sparky', species: 25, item: 479, exp: 1000, friendship: 70, level: 22,
       moves: [[85, 24], [98, 48]], evs: [1, 2, 3, 4, 5, 6], ivs: [31, 0, 15, 30, 1, 2], stats: [50, 40, 30, 60, 45, 35],
     },
-    { pid: 3, nickname: 'Annihilape', species: 1308, item: 865, level: 50, moves: [[889, 16]] },
+    { pid: 3, nickname: 'Annihilape', species: 1308, item: 865, level: 50, moves: [[889, 16]], abilityNum: 2 },
   ],
   pc: {
-    0: { species: 66, nickname: 'SQSR', moves: [[43, 48], [249, 24], [116, 48]] },
-    31: { species: 951, nickname: 'Raichu', moves: [[521, 32], [94, 16]] },
+    0: { species: 66, nickname: 'SQSR', moves: [[43, 48], [249, 24], [116, 48]], exp: 150, nature: 19, ivs: [28, 14, 19, 5, 18, 29], evs: [0, 8, 0, 0, 0, 0] },
+    31: { species: 951, nickname: 'Raichu', moves: [[521, 32], [94, 16]], item: 389, exp: 199100, nature: 15, abilityNum: 2,
+      ivs: [31, 31, 31, 31, 31, 31], evs: [4, 0, 0, 252, 252, 0] },
     45: { species: 1469, nickname: 'Pikachu', moves: [[394, 32]] },
-    1150: { species: 4, nickname: '' },
+    1109: { species: 4, nickname: '', exp: 1059860, abilityNum: 1, nature: 24 },
   },
   olderSlot: { trainer: { name: 'Old', tid: 1, sid: 2 } },
 };
@@ -41,17 +42,24 @@ suite('parseSave (save sintético)', () => {
     expect(p.otId).toBe((12345 | (54321 << 16)) >>> 0);
   });
 
-  it('lê o PC compactado em bits, inclusive a última caixa parcial', () => {
+  it('lê o PC compactado em bits nas 37 caixas', () => {
     const box1 = raw.pc.boxes[0];
     expect(box1.name).toBe('BOX1');
-    expect(box1.slots[0]).toMatchObject({ slot: 1, speciesId: 66, nickname: 'SQSR' });
+    expect(box1.slots[0]).toMatchObject({ slot: 1, speciesId: 66, nickname: 'SQSR', itemId: 0, exp: 150, natureId: 19, abilityNum: 0 });
     expect(box1.slots[0].moves).toEqual([{ id: 43, pp: 48 }, { id: 249, pp: 24 }, { id: 116, pp: 48 }]);
+    expect(box1.slots[0].ivs).toEqual({ hp: 28, atk: 14, def: 19, spe: 5, spa: 18, spd: 29 });
+    expect(box1.slots[0].evs).toEqual({ hp: 0, atk: 8, def: 0, spe: 0, spa: 0, spd: 0 });
     expect(raw.pc.boxes[1].slots.map(s => [s.slot, s.speciesId])).toEqual([[2, 951], [16, 1469]]);
+    expect(raw.pc.boxes[1].slots[0]).toMatchObject({ itemId: 389, exp: 199100, natureId: 15, abilityNum: 2 });
+    expect(raw.pc.boxes[1].slots[0].evs).toEqual({ hp: 4, atk: 0, def: 0, spe: 252, spa: 252, spd: 0 });
     expect(raw.pc.capacity).toBe(1152);
-    expect(raw.pc.boxes).toHaveLength(39);
-    expect(raw.pc.boxes[38].partial).toBe(true);
-    expect(raw.pc.boxes[38].slots).toEqual([expect.objectContaining({ slot: 11, speciesId: 4, nickname: '' })]);
-    expect(raw.warnings.some(w => w.includes('67 nomes de caixa'))).toBe(true);
+    expect(raw.pc.boxes).toHaveLength(37);
+    expect(raw.pc.boxes[36].slots).toEqual([expect.objectContaining({ slot: 30, speciesId: 4, nickname: '', exp: 1059860, abilityNum: 1, natureId: 24 })]);
+    expect(raw.warnings).toEqual([]);
+  });
+
+  it('lê o número da habilidade da equipe (bits 28–29 de 0x54)', () => {
+    expect(raw.party.map(p => p.abilityNum)).toEqual([0, 2]);
   });
 
   it('cai para o slot anterior se o mais recente tiver checksum inválido', () => {
@@ -88,6 +96,7 @@ suite('describe', () => {
     expect(p.item).toMatchObject({ id: 479, name: 'Life Orb', confidence: 'confirmado' });
     expect(p.moves.map(m => [m.name, m.type])).toEqual([['Thunderbolt', 'electric'], ['Quick Attack', 'normal']]);
     expect(p.ot).toEqual({ name: 'Ash', tid: 12345, sid: 54321 });
+    expect(p.ability).toMatchObject({ num: 0, name: 'Static', hidden: false, confidence: 'confirmado' });
   });
 
   it('usa a tabela manual para IDs do Quetzal e item 865', () => {
@@ -95,23 +104,41 @@ suite('describe', () => {
     expect(a.species).toMatchObject({ name: 'Annihilape', confidence: 'provável', spriteId: 979 });
     expect(a.hasNickname).toBe(false);
     expect(a.item).toMatchObject({ name: 'Lucarionite', confidence: 'provável' });
+    expect(a.ability).toMatchObject({ num: 2, name: 'Defiant', hidden: true, confidence: 'provável' });
     const raichu = d.pc.boxes[1].slots[0];
     expect(raichu.species).toMatchObject({ name: 'Raichu', form: 'Alola', showdown: 'Raichu-Alola', spriteId: 10100 });
     expect(raichu.species.types).toEqual(['electric', 'psychic']);
+    expect(raichu).toMatchObject({ level: 58, levelFromExp: true, exp: 199100 });
+    expect(raichu.nature.name).toBe('Modest');
+    expect(raichu.item.name).toBe('Aloraichium Z');
+    expect(raichu.ability).toMatchObject({ name: 'Surge Surfer', hidden: true }); // sem oculta: vale a 1ª
     const pika = d.pc.boxes[1].slots[1];
     expect(pika.species.spriteId).toBeNull();
   });
 
-  it('PC sem apelido usa o nome da espécie e marca campos não lidos', () => {
-    const c = d.pc.boxes[38].slots[0];
+  it('PC sem apelido usa o nome da espécie; stats ficam sem valor', () => {
+    const c = d.pc.boxes[36].slots[0];
     expect(c.nickname).toBe('Charmander');
-    expect(c).toMatchObject({ complete: false, level: null, nature: null, item: null, ivs: null });
+    expect(c).toMatchObject({ complete: false, level: 100, item: null, stats: null, friendship: null });
+    expect(c.nature.name).toBe('Quirky');
+    expect(c.ability.name).toBe('Blaze'); // sem 2ª habilidade, vale a 1ª
   });
 
   it('IDs desconhecidos usam o apelido', () => {
     const raw = parseSave(makeSave({ trainer: base.trainer, party: [{ pid: 0, nickname: 'Mystery', species: 1999 }] }));
     const m = describe(raw, T).party[0];
     expect(m.species).toMatchObject({ name: 'Mystery', confidence: 'desconhecido', spriteId: null });
+  });
+});
+
+suite('levelFromExp (Medium Slow)', () => {
+  it('converte experiência em nível', () => {
+    expect(levelFromExp(0)).toBe(1);
+    expect(levelFromExp(135)).toBe(5);
+    expect(levelFromExp(134)).toBe(4);
+    expect(levelFromExp(1059860)).toBe(100);
+    expect(levelFromExp(2_000_000)).toBe(100);
+    expect(mediumSlow(100)).toBe(1059860);
   });
 });
 

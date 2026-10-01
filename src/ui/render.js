@@ -37,6 +37,20 @@ function movesList(moves) {
     </li>`).join('')}</ul>`;
 }
 
+function ivEvTable(m) {
+  const rows = SHOWDOWN_ORDER.map(k => {
+    const cls = m.nature && m.nature.plus === k ? 'plus' : m.nature && m.nature.minus === k ? 'minus' : '';
+    const mark = cls === 'plus' ? '+' : cls === 'minus' ? '−' : '';
+    const iv = m.ivs[k];
+    return `<tr>
+      <th class="${cls}" scope="row">${STAT_LABEL[k]}${mark}</th>
+      <td><div class="bar"><i style="width:${Math.round(iv / 31 * 100)}%"></i></div></td>
+      <td class="ivev"><span class="${iv === 31 ? 'max' : ''}">IV ${iv}</span> · EV ${m.evs[k]}</td>
+    </tr>`;
+  }).join('');
+  return `<table class="stats"><caption>Barras = IV (0–31). Stats não são guardados no PC.</caption>${rows}</table>`;
+}
+
 function statsTable(m) {
   const max = Math.max(...SHOWDOWN_ORDER.map(k => m.stats[k]), 1);
   const rows = SHOWDOWN_ORDER.map(k => {
@@ -67,7 +81,7 @@ function itemChip(item, complete) {
 
 function abilityChip(ab) {
   if (!ab) return '<span class="chip unread"><span class="k">Habilidade</span> não lida</span>';
-  return `<span class="chip"><span class="k">Habilidade</span><b>${esc(ab.name)}</b>${badge(ab.confidence)}</span>`;
+  return `<span class="chip"><span class="k">Habilidade</span><b>${esc(ab.name)}</b>${ab.hidden ? ' <span class="k">oculta</span>' : ''}${badge(ab.confidence)}</span>`;
 }
 
 function monHeader(m, headingTag = 'h3', idAttr = '') {
@@ -81,7 +95,7 @@ function monHeader(m, headingTag = 'h3', idAttr = '') {
     ${portrait(m)}
     <div>
       <${headingTag} class="mon-name"${idAttr}>${title}${badge(sp.confidence)}</${headingTag}>
-      <div class="mon-sub">${sub}${m.level ? ` · <span class="lv">Nv. ${m.level}</span>` : ''}</div>
+      <div class="mon-sub">${sub}${m.level ? ` · <span class="lv"${m.levelFromExp ? ' title="Calculado pela experiência (curva Medium Slow)"' : ''}>Nv. ${m.level}</span>` : ''}</div>
       ${typeChips(sp.types)}
     </div>
   </div>`;
@@ -156,7 +170,7 @@ export function pcWin(d) {
       <button class="btn btn-ghost btn-icon" type="button" data-box-step="1" aria-label="Próxima caixa">▶</button>
     </div>
     <div class="box-grid" id="box-grid" role="grid" aria-label="Pokémon na caixa"></div>
-    <p class="box-meta">Toque num Pokémon para ver os detalhes. <span class="legend-q" aria-hidden="true"></span> = espécie provável (ID próprio do Quetzal). No PC, por enquanto só são lidos espécie, apelido e golpes.</p>
+    <p class="box-meta">Toque num Pokémon para ver os detalhes. <span class="legend-q" aria-hidden="true"></span> = espécie com identificação provável.</p>
   </section>`;
 }
 
@@ -185,9 +199,10 @@ export function pcDetail(m) {
     ${monHeader(m, 'h2', ' id="detail-title"')}
     <p class="mon-sub">${esc(m.where)}, posição ${m.slot}</p>
     ${sp.evidence ? `<p class="evidence">${esc(sp.evidence)}</p>` : ''}
+    <div class="facts">${natureChip(m.nature)}${itemChip(m.item, true)}${abilityChip(m.ability)}</div>
     ${movesList(m.moves)}
-    <div class="facts">${natureChip(null)}${itemChip(null, false)}${abilityChip(null)}</div>
-    <p class="unread-list">Ainda não lidos no PC: nível, experiência, item, natureza, habilidade, IVs, EVs e stats.</p>
+    ${ivEvTable(m)}
+    <p class="unread-list">No PC, o nível é calculado pela experiência (${m.exp.toLocaleString('pt-BR')} exp). Amizade e treinador original não são guardados no registro do PC.</p>
     <div class="export-btns"><button class="btn btn-ghost" type="button" data-copy="mon">Copiar (Showdown)</button></div>
     <details><summary>Bytes do registro</summary><p class="raw">${esc(m.raw)}</p></details>
   </div>`;
@@ -198,11 +213,10 @@ export function notesWin() {
     <details>
       <summary id="notes-h">O que ainda não dá para ler</summary>
       <ul>
-        <li>Habilidade (equipe e PC).</li>
-        <li>No PC: nível, item, natureza, IVs, EVs e stats.</li>
         <li>HP atual da equipe (a barra mostra o HP máximo).</li>
-        <li>Espécies com ID acima de 905 (numeração própria do Quetzal) são identificadas por uma tabela manual e aparecem como "provável".</li>
-        <li>O save tem 67 nomes de caixa, mas só cerca de 38 caixas cabem nos setores do PC no formato conhecido.</li>
+        <li>No PC: stats (o jogo recalcula ao tirar da caixa), amizade e treinador original não são guardados.</li>
+        <li>O nível no PC é calculado pela experiência, que é guardada dividida por 10, usando a curva Medium Slow (a única observada no Quetzal).</li>
+        <li>Espécies com ID acima de 905 (numeração própria do Quetzal) vêm de uma tabela manual; as ainda não conferidas no jogo aparecem como "provável".</li>
       </ul>
     </details>
   </section>`;

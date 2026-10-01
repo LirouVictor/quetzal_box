@@ -21,7 +21,9 @@ export const PARTY = {
   max: 6,
   pid: 0x00, otId: 0x04, nickname: 0x08, nicknameLen: 10, otName: 0x14, otNameLen: 7,
   species: 0x28, item: 0x2A, exp: 0x2C, friendship: 0x31,
-  moves: 0x34, pp: 0x3C, evs: 0x40, ivs: 0x50, unk54: 0x54, level: 0x58, stats: 0x5A,
+  moves: 0x34, pp: 0x3C, evs: 0x40, ivs: 0x50, misc: 0x54, level: 0x58, stats: 0x5A,
+  /** Bits 28–29 do u32 em 0x54: número da habilidade (0 = 1ª, 1 = 2ª, 2 = oculta). */
+  abilityShift: 28,
 };
 
 export const PC = {
@@ -30,12 +32,25 @@ export const PC = {
   currentBox: 0x00,
   boxNames: 0x01,
   boxNameLen: 9,
-  boxCount: 67,
+  /** Nomes de caixa guardados no save (o jogo só usa as primeiras `boxCount`). */
+  boxNameSlots: 67,
+  /** Caixas que o jogo mostra (confirmado no jogo pelo autor). */
+  boxCount: 37,
   wallpapers: 0x25C,
   monStart: 0x461,
   monSize: 38,
   perBox: 30,
-  bits: { species: [0, 11], moves: [48, 58, 68, 78], moveWidth: 10 },
+  // Posições em bits (little-endian a partir do byte 0 do registro): [início, largura]
+  bits: {
+    species: [0, 11],
+    item: [11, 10],
+    exp10: [21, 17], // experiência ÷ 10
+    moves: [48, 58, 68, 78], moveWidth: 10,
+    evs: 88, evWidth: 6, // EV ÷ 4, ordem HP/Atk/Def/Spe/SpA/SpD
+    ivs: 124, ivWidth: 5,
+    nature: [161, 5],
+    ability: [166, 2],
+  },
   pp: 24,
   nickname: 28,
   nicknameLen: 10,
@@ -131,7 +146,8 @@ export function parseSave(input) {
       moves: [0, 1, 2, 3].map(j => ({ id: dv.getUint16(r + PARTY.moves + 2 * j, true), pp: u8[r + PARTY.pp + j] })).filter(m => m.id),
       evs, ivs, stats,
       level: u8[r + PARTY.level],
-      unk54: dv.getUint32(r + PARTY.unk54, true),
+      abilityNum: (dv.getUint32(r + PARTY.misc, true) >>> PARTY.abilityShift) & 3,
+      misc: dv.getUint32(r + PARTY.misc, true),
       raw: hex(u8.subarray(r, r + PARTY.size)),
     });
   }
@@ -146,13 +162,13 @@ export function parseSave(input) {
   { let o = 0; for (const p of parts) { pc.set(p, o); o += p.length; } }
 
   const boxNames = [];
-  for (let b = 0; b < PC.boxCount; b++) {
+  for (let b = 0; b < PC.boxNameSlots; b++) {
     boxNames.push(decodeText(pc, PC.boxNames + b * PC.boxNameLen, PC.boxNameLen) || `BOX${b + 1}`);
   }
   const capacity = Math.max(0, Math.floor((pc.length - PC.monStart) / PC.monSize));
   const readableBoxes = Math.min(PC.boxCount, Math.ceil(capacity / PC.perBox));
   if (capacity < PC.boxCount * PC.perBox) {
-    warnings.push(`O save tem ${PC.boxCount} nomes de caixa, mas os setores do PC só comportam ${capacity} Pokémon (${(capacity / PC.perBox).toFixed(1).replace('.', ',')} caixas) no formato conhecido. As caixas seguintes não são lidas.`);
+    warnings.push(`Os setores do PC só comportam ${capacity} Pokémon; o esperado eram ${PC.boxCount * PC.perBox}. As caixas que não couberam não são lidas.`);
   }
 
   const boxes = [];
@@ -163,13 +179,24 @@ export function parseSave(input) {
       const e = pc.subarray(o, o + PC.monSize);
       if (!e.some(x => x)) continue;
       const bits = readBits(e, 24);
-      const speciesId = bitField(bits, ...PC.bits.species);
+      const B = PC.bits;
+      const speciesId = bitField(bits, ...B.species);
       if (!speciesId) continue;
+      const evs = {}, ivs = {};
+      STAT_ORDER.forEach((k, j) => {
+        evs[k] = bitField(bits, B.evs + j * B.evWidth, B.evWidth) * 4;
+        ivs[k] = bitField(bits, B.ivs + j * B.ivWidth, B.ivWidth);
+      });
       slotsOut.push({
         slot: s + 1,
         speciesId,
         nickname: decodeText(e, PC.nickname, PC.nicknameLen),
-        moves: PC.bits.moves.map((bit, j) => ({ id: bitField(bits, bit, PC.bits.moveWidth), pp: e[PC.pp + j] })).filter(m => m.id),
+        itemId: bitField(bits, ...B.item),
+        exp: bitField(bits, ...B.exp10) * 10,
+        natureId: bitField(bits, ...B.nature),
+        abilityNum: bitField(bits, ...B.ability),
+        evs, ivs,
+        moves: B.moves.map((bit, j) => ({ id: bitField(bits, bit, B.moveWidth), pp: e[PC.pp + j] })).filter(m => m.id),
         raw: hex(e),
       });
     }
@@ -181,7 +208,7 @@ export function parseSave(input) {
     warnings,
     trainer,
     party,
-    pc: { currentBox: pc[PC.currentBox], declaredBoxes: PC.boxCount, capacity, boxes },
+    pc: { currentBox: pc[PC.currentBox], boxCount: PC.boxCount, capacity, boxes },
   };
 }
 

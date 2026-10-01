@@ -3,7 +3,6 @@ import types from './types.json';
 import species from './species.json';
 import moves from './moves.json';
 import items from './items.json';
-import abilities from './abilities.json';
 import forms from './forms.json';
 import overrides from './quetzal-overrides.json';
 
@@ -12,7 +11,8 @@ export default {
   species: species.species,
   moves: moves.moves,
   items: items.items,
-  abilities: abilities.abilities,
+  speciesAbilities: species.abilities,
+  abilityNames: species.abilityNames,
   forms,
   overrides,
 };

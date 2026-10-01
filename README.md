@@ -19,11 +19,13 @@ Visualizador de saves de **Pokémon Quetzal** (ROM hack de GBA). Abra o `.sav` d
 | | Equipe | PC |
 |---|---|---|
 | Espécie, apelido, golpes, PP | ✅ | ✅ |
-| Nível, experiência, natureza, item | ✅ | ainda não |
-| IVs, EVs, stats | ✅ | ainda não |
-| Habilidade | ainda não | ainda não |
+| Natureza, item, habilidade, IVs, EVs | ✅ | ✅ |
+| Experiência | ✅ | ✅ (o jogo guarda ÷ 10) |
+| Nível | ✅ | calculado pela experiência |
+| Stats | ✅ | não são guardados no PC |
+| HP atual | ainda não | — |
 
-Espécies com ID acima de 905 usam numeração própria do Quetzal. Elas são identificadas por uma tabela manual e aparecem como **provável** até serem confirmadas. Os detalhes técnicos estão em [`CLAUDE.md`](CLAUDE.md).
+Espécies com ID acima de 905 usam numeração própria do Quetzal. Elas são identificadas por uma tabela manual, e as que ainda não foram conferidas no jogo aparecem como **provável**. Itens a partir do ID 829 (megapedras novas) têm numeração diferente da tabela de referência e aparecem como "não mapeados" até serem conferidos. Os detalhes técnicos estão em [`CLAUDE.md`](CLAUDE.md).
 
 ## Desenvolvimento
 
@@ -39,7 +41,7 @@ npm run preview    # serve dist/ (com service worker) em http://localhost:4173
 
 ### Testes com um save real
 
-Saves reais **não** são versionados. Para rodar também os testes contra um save real, coloque o arquivo em `fixtures/PokemonQuetzalPtBrAlpha9v0.sav` (ou defina `QUETZAL_SAVE=/caminho/do/arquivo.sav`). Sem ele, esses testes são pulados e os testes com saves sintéticos rodam normalmente.
+Saves reais **não** são versionados. Para rodar também os testes contra saves reais, coloque os arquivos em `fixtures/PokemonQuetzalPtBrAlpha9v0.sav` e `fixtures/PokemonQuetzalPtBrAlpha9v0-pc.sav` (ou defina `QUETZAL_SAVE` / `QUETZAL_SAVE_PC`). Sem ele, esses testes são pulados e os testes com saves sintéticos rodam normalmente.
 
 ### Tabelas de nomes e tipos
 

@@ -8,7 +8,7 @@ export const allMons = d => [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
 /** CSV com BOM e separador ';' (padrão do Excel em português). */
 export function toCSV(d) {
   const head = ['Local', 'Posição', 'Espécie', 'Forma', 'ID espécie', 'Espécie confirmada?', 'Apelido', 'Tipo 1', 'Tipo 2',
-    'Nível', 'Natureza', 'Item', 'Habilidade',
+    'Nível', 'Experiência', 'Natureza', 'Item', 'Habilidade',
     'Golpe 1', 'Golpe 2', 'Golpe 3', 'Golpe 4', 'PP 1', 'PP 2', 'PP 3', 'PP 4',
     ...SHOWDOWN_ORDER.map(k => STAT_LABEL[k]), ...SHOWDOWN_ORDER.map(k => 'IV ' + STAT_LABEL[k]), ...SHOWDOWN_ORDER.map(k => 'EV ' + STAT_LABEL[k]),
     'Amizade', 'Treinador original', 'TID original'];
@@ -21,8 +21,8 @@ export function toCSV(d) {
     return [
       m.where, m.slot, m.species.name, m.species.form || '', m.speciesId, m.species.confidence, m.nickname,
       m.species.types[0] || '', m.species.types[1] || '',
-      m.level ?? '', m.nature ? m.nature.name : '', m.item ? m.item.name + (m.item.confidence === 'provável' ? ' (provável)' : '') : '',
-      m.ability ? m.ability.name : '',
+      m.level ?? '', m.exp ?? '', m.nature ? m.nature.name : '', m.item ? m.item.name + (m.item.confidence === 'provável' ? ' (provável)' : '') : '',
+      m.ability ? m.ability.name + (m.ability.hidden ? ' (oculta)' : '') : '',
       ...[0, 1, 2, 3].map(i => m.moves[i]?.name || ''), ...[0, 1, 2, 3].map(i => m.moves[i]?.pp ?? ''),
       ...per(m.stats), ...per(m.ivs), ...per(m.evs),
       m.friendship ?? '', m.ot ? m.ot.name : '', m.ot ? String(m.ot.tid).padStart(5, '0') : '',
@@ -34,9 +34,9 @@ export function toCSV(d) {
 function showdownBlock(m) {
   const sp = m.species.showdown || m.species.name;
   let first = m.hasNickname ? `${m.nickname} (${sp})` : sp;
-  if (m.item) first += ` @ ${m.item.name}`;
+  if (m.item && m.item.confidence !== 'desconhecido') first += ` @ ${m.item.name}`;
   const lines = [first];
-  if (m.ability) lines.push('Ability: ' + m.ability.name);
+  if (m.ability && m.ability.confidence !== 'desconhecido') lines.push('Ability: ' + m.ability.name);
   if (m.level) lines.push('Level: ' + m.level);
   if (m.evs) {
     const evs = SHOWDOWN_ORDER.filter(k => m.evs[k]).map(k => `${m.evs[k]} ${STAT_LABEL[k]}`);

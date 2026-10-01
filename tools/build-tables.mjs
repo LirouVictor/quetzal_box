@@ -2,10 +2,11 @@
 // Gera as tabelas estáticas em src/data/*.json.
 //
 // Fontes:
-//   - rh-hideout/pokeemerald-expansion (master): IDs e nomes de golpes, itens e habilidades
+//   - rh-hideout/pokeemerald-expansion (master): IDs e nomes de golpes e itens
 //     (é a numeração que o Quetzal usa nesses campos).
-//   - PokeAPI/pokeapi (CSV do repositório): nomes de espécies 1–905, tipos de espécies
-//     e de golpes, e as formas referenciadas em src/data/quetzal-overrides.json.
+//   - PokeAPI/pokeapi (CSV do repositório): nomes de espécies 1–905, tipos e habilidades
+//     (1ª, 2ª, oculta) das espécies, tipos de golpes e as formas referenciadas em
+//     src/data/quetzal-overrides.json.
 //
 // Uso: npm run tables   (precisa de rede; o resultado é versionado no git)
 
@@ -120,13 +121,13 @@ function denseArray(map, max, fallback) {
 
 async function main() {
   console.log('Baixando fontes…');
-  const [movesH, movesInfo, itemsH, itemsInfo, abilH, abilInfo,
-    pTypes, pPokemon, pSpeciesNames, pPokemonTypes, pMoves] = await Promise.all([
+  const [movesH, movesInfo, itemsH, itemsInfo,
+    pTypes, pPokemon, pSpeciesNames, pPokemonTypes, pMoves, pPokemonAbilities, pAbilityNames] = await Promise.all([
     get(`${EXP}/include/constants/moves.h`), get(`${EXP}/src/data/moves_info.h`),
     get(`${EXP}/include/constants/items.h`), get(`${EXP}/src/data/items.h`),
-    get(`${EXP}/include/constants/abilities.h`), get(`${EXP}/src/data/abilities.h`),
     get(`${PAPI}/types.csv`), get(`${PAPI}/pokemon.csv`), get(`${PAPI}/pokemon_species_names.csv`),
     get(`${PAPI}/pokemon_types.csv`), get(`${PAPI}/moves.csv`),
+    get(`${PAPI}/pokemon_abilities.csv`), get(`${PAPI}/ability_names.csv`),
   ]);
 
   // Tipos (índice = type_id da PokeAPI, 0 = nenhum)
@@ -145,10 +146,26 @@ async function main() {
     if (!pokemonTypes.has(id)) pokemonTypes.set(id, []);
     pokemonTypes.get(id)[+r.slot - 1] = +r.type_id;
   }
+  // Habilidades por Pokémon: [slot 1, slot 2, oculta], como índices em abilityNames (0 = nenhuma)
+  const papiAbilityName = new Map(csv(pAbilityNames).filter(r => +r.local_language_id === ENGLISH).map(r => [+r.ability_id, r.name]));
+  const abilityNames = [null];
+  const abilityIndex = new Map();
+  const nameIdx = name => {
+    if (!abilityIndex.has(name)) { abilityIndex.set(name, abilityNames.length); abilityNames.push(name); }
+    return abilityIndex.get(name);
+  };
+  const pokemonAbilities = new Map();
+  for (const r of csv(pPokemonAbilities)) {
+    const id = +r.pokemon_id;
+    if (!pokemonAbilities.has(id)) pokemonAbilities.set(id, [0, 0, 0]);
+    pokemonAbilities.get(id)[+r.slot - 1] = nameIdx(papiAbilityName.get(+r.ability_id));
+  }
+  const speciesAbilities = [null];
   const species = [null];
   for (let id = 1; id <= MAX_DEX; id++) {
     if (!speciesNames.has(id)) throw new Error(`Sem nome para a espécie ${id}`);
     species.push([speciesNames.get(id), ...(pokemonTypes.get(id) || [])]);
+    speciesAbilities.push(pokemonAbilities.get(id) || [0, 0, 0]);
   }
 
   // Formas referenciadas na tabela manual
@@ -163,6 +180,7 @@ async function main() {
     forms[entry.pokeapi] = {
       id: pid,
       types: pokemonTypes.get(pid) || [],
+      abilities: (pokemonAbilities.get(pid) || [0, 0, 0]).map(i => abilityNames[i]),
       icon: pid <= 898 || await exists(`${SPRITES}/versions/generation-viii/icons/${pid}.png`),
     };
   }
@@ -201,16 +219,6 @@ async function main() {
     items.push(name);
   }
 
-  // Habilidades
-  const abilEnum = byValue(parseEnum(abilH, 'Ability'), 'ABILITY_');
-  const abilInfoMap = parseInfo(abilInfo);
-  const maxAbil = Math.max(...abilEnum.keys());
-  const abilities = [];
-  for (let id = 0; id <= maxAbil; id++) {
-    const c = abilEnum.get(id);
-    if (!c || id === 0) { abilities.push(null); continue; }
-    abilities.push((abilInfoMap.get(c) || {}).name || titleCase(c.slice(8)));
-  }
 
   const meta = {
     generatedAt: new Date().toISOString().slice(0, 10),
@@ -218,13 +226,12 @@ async function main() {
   };
   const write = (file, data) => writeFile(path.join(OUT, file), JSON.stringify(data) + '\n');
   await write('types.json', types);
-  await write('species.json', { meta, species });
+  await write('species.json', { meta, species, abilities: speciesAbilities, abilityNames });
   await write('moves.json', { meta, moves });
   await write('items.json', { meta, items });
-  await write('abilities.json', { meta, abilities });
   await write('forms.json', forms);
 
-  console.log(`types ${types.length - 1}, species ${species.length - 1}, moves ${maxMove}, items ${maxItem}, abilities ${maxAbil}, forms ${Object.keys(forms).length}`);
+  console.log(`types ${types.length - 1}, species ${species.length - 1}, moves ${maxMove}, items ${maxItem}, forms ${Object.keys(forms).length}`);
   if (moveTypeFallback.length) console.log(`Golpes sem par na PokeAPI (tipo tirado do expansion): ${moveTypeFallback.length}: ${moveTypeFallback.slice(0, 20).join(', ')}${moveTypeFallback.length > 20 ? '…' : ''}`);
 }
 
