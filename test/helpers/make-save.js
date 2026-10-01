@@ -68,6 +68,7 @@ function writeSlot(u8, slot, o, saveIndex, rotate) {
     put(Math.floor((m.exp ?? 0) / 10), B.exp10[0]);
     put(m.ball ?? 1, B.ball[0]);
     put(m.shiny ? 1 : 0, B.shiny[0]);
+    put(m.female ? 1 : 0, B.female[0]);
     (m.moves || []).forEach(([id], j) => put(id, B.moves[j]));
     (m.evs || [0, 0, 0, 0, 0, 0]).forEach((v, j) => put(v >> 2, B.evs + j * B.evWidth));
     (m.ivs || [0, 0, 0, 0, 0, 0]).forEach((v, j) => put(v, B.ivs + j * B.ivWidth));

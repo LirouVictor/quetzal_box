@@ -251,6 +251,9 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 .slot.empty::after { content: ""; width: 6px; height: 6px; background: var(--hi); }
 .slot .q { position: absolute; right: 2px; top: 2px; width: 8px; height: 8px; background: var(--gold); }
 .slot .star { position: absolute; left: 2px; top: 0; font-size: .8rem; line-height: 1; color: var(--gold); text-shadow: 1px 1px 0 var(--edge); }
+.gender { font-weight: 700; }
+.gender.m { color: var(--minus); }
+.gender.f { color: var(--plus); }
 .shiny { color: var(--gold); text-shadow: 1px 1px 0 var(--edge); }
 .slot .lbl { position: absolute; left: 0; right: 0; bottom: 0; font: .52rem/1.1 var(--pixel); text-transform: uppercase; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; }
 .box-meta { margin: 10px 0 0; color: var(--muted); font-size: .85rem; }

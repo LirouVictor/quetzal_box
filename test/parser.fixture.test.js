@@ -96,7 +96,12 @@ suite.skipIf(!has)('save real (fixtures/PokemonQuetzalPtBrAlpha9v0.sav)', () => 
     expect([9, 17, 18, 30].map(ball)).toEqual(['Great Ball', 'Great Ball', 'Great Ball', 'Great Ball']);
     expect([19, 22].map(ball)).toEqual(['Ultra Ball', 'Ultra Ball']);
     expect(ball(27)).toBe('Premier Ball');
-    expect(bySlot[10].ball).toMatchObject({ id: 25, name: 'Radiante', confidence: 'provável' });
+    expect(bySlot[10].ball).toMatchObject({ id: 25, name: 'Radiant Ball', confidence: 'confirmado' });
+    // Gênero conferido no jogo pelo autor (bit 160)
+    const g = n => bySlot[n].gender.name;
+    expect([1, 10, 27, 28, 29, 30].map(g)).toEqual(Array(6).fill('macho'));
+    expect([12, 13, 17, 20, 22, 25].map(g)).toEqual(Array(6).fill('fêmea'));
+    expect(g(15)).toBe('sem gênero'); // Golett
     expect(bySlot[1].evs).toEqual({ hp: 0, atk: 8, def: 0, spe: 0, spa: 0, spd: 0 });
   });
 });

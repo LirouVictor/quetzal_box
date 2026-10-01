@@ -62,6 +62,7 @@ export function makeResolver(T) {
           : base ? T.species[base].slice(1).map(typeName).filter(Boolean) : [],
         abilities: form ? form.abilities
           : base ? (T.speciesAbilities[base] || [0, 0, 0]).map(abilityName) : [null, null, null],
+        genderRate: form ? form.genderRate : base ? T.genderRates[base] : null,
         traitsFromBase: !!base,
       };
     }
@@ -71,6 +72,7 @@ export function makeResolver(T) {
         name, form: null, showdown: showdownSpecies(name), confidence: CONFIRMED, evidence: null,
         spriteId: id, hasIcon: id <= LAST_GEN8_ICON, types: types.map(typeName).filter(Boolean),
         abilities: (T.speciesAbilities[id] || [0, 0, 0]).map(abilityName),
+        genderRate: T.genderRates[id] ?? null,
       };
     }
     return {
@@ -79,7 +81,7 @@ export function makeResolver(T) {
       showdown: nickname || null,
       confidence: UNKNOWN,
       evidence: nickname ? 'ID próprio do Quetzal ainda não mapeado; nome tirado do apelido.' : 'ID próprio do Quetzal ainda não mapeado.',
-      spriteId: null, hasIcon: false, types: [], abilities: [null, null, null],
+      spriteId: null, hasIcon: false, types: [], abilities: [null, null, null], genderRate: null,
     };
   }
 
@@ -122,7 +124,20 @@ export function makeResolver(T) {
       : { id, name, confidence: PROBABLE, evidence: 'Nome da tabela do pokeemerald-expansion; ainda não conferido no jogo.' };
   }
 
-  return { species, move, item, ability, ball };
+  /**
+   * Gênero: espécies sem gênero ou de gênero fixo seguem a espécie; as demais, o bit do save.
+   * @returns {{ symbol: '♂'|'♀'|null, name: string, confidence: string }|null}
+   */
+  function gender(sp, femaleBit) {
+    if (femaleBit === null || femaleBit === undefined) return null;
+    const r = sp.genderRate;
+    const conf = r === null || r === undefined ? PROBABLE : CONFIRMED;
+    if (r === -1) return { symbol: null, name: 'sem gênero', confidence: conf };
+    const female = r === 8 ? true : r === 0 ? false : femaleBit === 1;
+    return { symbol: female ? '♀' : '♂', name: female ? 'fêmea' : 'macho', confidence: conf };
+  }
+
+  return { species, move, item, ability, ball, gender };
 }
 
 const SHOWDOWN_NAMES = { 'Nidoran♀': 'Nidoran-F', 'Nidoran♂': 'Nidoran-M' };
@@ -157,6 +172,7 @@ export function describe(raw, T) {
       ability: R.ability(sp, p.abilityNum),
       ball: R.ball(p.ballId),
       shiny: null, // ainda não localizado no registro da equipe
+      gender: null, // idem
       friendship: p.friendship,
       ot: { name: p.otName, tid: p.otId & 0xFFFF, sid: p.otId >>> 16 },
       pid: p.pid,
@@ -191,6 +207,7 @@ export function describe(raw, T) {
         ability: R.ability(sp, s.abilityNum),
         ball: R.ball(s.ballId),
         shiny: s.shiny,
+        gender: R.gender(sp, s.femaleBit),
         friendship: null, ot: null, pid: null,
         moves: s.moves.map(R.move),
         stats: null, ivs: s.ivs, evs: s.evs,

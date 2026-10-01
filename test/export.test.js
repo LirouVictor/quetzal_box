@@ -28,11 +28,11 @@ suite('Showdown', () => {
     expect(txt).toContain('Lucario @ Lucarionite Z\nAbility: Steadfast\nLevel: 100\nEVs: 4 HP / 252 SpA / 252 Spe\nModest Nature\nIVs: 0 Atk\n- Aura Sphere');
   });
   it('PC com nível, natureza, item e habilidade; formas usam o nome do Showdown', () => {
-    expect(txt).toContain('=== PC: BOX1 ===\n\nSQSR (Machop)\nAbility: No Guard\nLevel: 5\nRash Nature\n- Leer\n\n');
-    expect(txt).toContain('Raichu-Alola @ Aloraichium Z\nAbility: Surge Surfer\nLevel: 58\nShiny: Yes\nEVs: 4 HP / 252 SpA / 252 Spe\nModest Nature\n- Psychic\n');
+    expect(txt).toContain('=== PC: BOX1 ===\n\nSQSR (Machop) (M)\nAbility: No Guard\nLevel: 5\nRash Nature\n- Leer\n\n');
+    expect(txt).toContain('Raichu-Alola (M) @ Aloraichium Z\nAbility: Surge Surfer\nLevel: 58\nShiny: Yes\nEVs: 4 HP / 252 SpA / 252 Spe\nModest Nature\n- Psychic\n');
   });
   it('item não mapeado não vai para o Showdown', () => {
-    expect(txt).toContain('Raichu\nAbility: Static\nLevel: 100\nHardy Nature\nIVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\n- Thunderbolt');
+    expect(txt).toContain('Raichu (M)\nAbility: Static\nLevel: 100\nHardy Nature\nIVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\n- Thunderbolt');
     expect(toShowdown(d, { includePC: false })).not.toContain('PC:');
   });
 });

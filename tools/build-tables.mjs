@@ -5,7 +5,7 @@
 //   - rh-hideout/pokeemerald-expansion (master): IDs e nomes de golpes, itens e Poké Balls
 //     (é a numeração que o Quetzal usa nesses campos).
 //   - PokeAPI/pokeapi (CSV do repositório): nomes de espécies 1–905, tipos e habilidades
-//     (1ª, 2ª, oculta) das espécies, tipos de golpes e as formas referenciadas em
+//     (1ª, 2ª, oculta) e taxa de gênero das espécies, tipos de golpes e as formas referenciadas em
 //     src/data/quetzal-overrides.json.
 //
 // Uso: npm run tables   (precisa de rede; o resultado é versionado no git)
@@ -123,13 +123,14 @@ function denseArray(map, max, fallback) {
 async function main() {
   console.log('Baixando fontes…');
   const [movesH, movesInfo, itemsH, itemsInfo, ballsH,
-    pTypes, pPokemon, pSpeciesNames, pPokemonTypes, pMoves, pPokemonAbilities, pAbilityNames] = await Promise.all([
+    pTypes, pPokemon, pSpeciesNames, pPokemonTypes, pMoves, pPokemonAbilities, pAbilityNames, pSpecies] = await Promise.all([
     get(`${EXP}/include/constants/moves.h`), get(`${EXP}/src/data/moves_info.h`),
     get(`${EXP}/include/constants/items.h`), get(`${EXP}/src/data/items.h`),
     get(`${EXP}/include/constants/pokeball.h`),
     get(`${PAPI}/types.csv`), get(`${PAPI}/pokemon.csv`), get(`${PAPI}/pokemon_species_names.csv`),
     get(`${PAPI}/pokemon_types.csv`), get(`${PAPI}/moves.csv`),
     get(`${PAPI}/pokemon_abilities.csv`), get(`${PAPI}/ability_names.csv`),
+    get(`${PAPI}/pokemon_species.csv`),
   ]);
 
   // Tipos (índice = type_id da PokeAPI, 0 = nenhum)
@@ -162,12 +163,16 @@ async function main() {
     if (!pokemonAbilities.has(id)) pokemonAbilities.set(id, [0, 0, 0]);
     pokemonAbilities.get(id)[+r.slot - 1] = nameIdx(papiAbilityName.get(+r.ability_id));
   }
+  // Taxa de gênero por espécie (PokeAPI gender_rate: -1 = sem gênero, 0 = só macho, 8 = só fêmea, 1–7 = oitavos de fêmea)
+  const genderRate = new Map(csv(pSpecies).map(r => [+r.id, +r.gender_rate]));
+  const speciesGender = [null];
   const speciesAbilities = [null];
   const species = [null];
   for (let id = 1; id <= MAX_DEX; id++) {
     if (!speciesNames.has(id)) throw new Error(`Sem nome para a espécie ${id}`);
     species.push([speciesNames.get(id), ...(pokemonTypes.get(id) || [])]);
     speciesAbilities.push(pokemonAbilities.get(id) || [0, 0, 0]);
+    speciesGender.push(genderRate.get(id) ?? null);
   }
 
   // Formas referenciadas na tabela manual
@@ -183,6 +188,7 @@ async function main() {
       id: pid,
       types: pokemonTypes.get(pid) || [],
       abilities: (pokemonAbilities.get(pid) || [0, 0, 0]).map(i => abilityNames[i]),
+      genderRate: genderRate.get(+row.species_id) ?? null,
       icon: pid <= 898 || await exists(`${SPRITES}/versions/generation-viii/icons/${pid}.png`),
     };
   }
@@ -228,7 +234,7 @@ async function main() {
   };
   const write = (file, data) => writeFile(path.join(OUT, file), JSON.stringify(data) + '\n');
   await write('types.json', types);
-  await write('species.json', { meta, species, abilities: speciesAbilities, abilityNames });
+  await write('species.json', { meta, species, abilities: speciesAbilities, abilityNames, genderRates: speciesGender });
   await write('moves.json', { meta, moves });
   // Poké Balls (enum PokeBall; nome = item ITEM_<X>_BALL)
   const ballEnum = byValue(parseEnum(ballsH, 'PokeBall'), 'BALL_');

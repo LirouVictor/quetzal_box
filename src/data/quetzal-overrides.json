@@ -91,9 +91,9 @@
   ],
   "balls": {
     "25": {
-      "name": "Radiante",
-      "confidence": "provável",
-      "evidence": "Bola do Charizard shiny (PC, posição 10), descrita pelo autor como \"pokébola radiante\", que parece ser exclusiva do Quetzal. No expansion, o 25 é a Park Ball. Nome exato no jogo ainda não conferido."
+      "name": "Radiant Ball",
+      "confidence": "confirmado",
+      "evidence": "Bola própria do Quetzal (\"Radiant\", conferido no jogo pelo autor). No expansion, o 25 é a Park Ball."
     }
   }
 }
