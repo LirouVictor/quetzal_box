@@ -5,4 +5,3 @@ dist/
 # Saves reais ficam só na máquina local (os testes com save real pulam se não houver arquivo).
 fixtures/*.sav
 fixtures/*.srm
-.wrangler/

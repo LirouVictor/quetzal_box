@@ -71,7 +71,7 @@ Os ícones do app (esfera em pixel art nas cores do quetzal com uma lupa; desenh
 
 O build é estático e fica em `dist/`. Os caminhos são relativos (`base: './'`), então o mesmo build funciona na raiz de um domínio ou numa subpasta.
 
-### Opção A: integração com o GitHub (recomendada, sem tokens)
+### Opção A: integração com o GitHub (recomendada, sem tokens; é como o site está publicado hoje, em https://quetzal-box.pages.dev)
 
 1. No painel da Cloudflare: **Workers & Pages → Create → Pages → Connect to Git** e escolha este repositório.
 2. Configuração de build:
@@ -82,10 +82,6 @@ O build é estático e fica em `dist/`. Os caminhos são relativos (`base: './'`
 3. Salve. Cada push na `main` publica o site, e os outros branches geram URLs de prévia.
 
 A Cloudflare lê a versão do Node em `.node-version`. Se precisar, defina `NODE_VERSION=22` em *Settings → Environment variables*.
-
-### Opção C: Cloudflare Workers (é como o site está publicado hoje)
-
-O `wrangler.jsonc` na raiz define o Worker `quetzal-box`, que serve os arquivos de `dist/`. Com ele, tanto o deploy de produção (`npx wrangler deploy`) quanto as prévias de PR (`npx wrangler versions upload`) funcionam sem argumentos extras. No painel: **Build command** `npm run build`. Se você renomear o Worker no painel, troque o `name` no arquivo também.
 
 ### Opção B: upload direto com o Wrangler
 
