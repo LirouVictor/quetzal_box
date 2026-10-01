@@ -5,13 +5,18 @@ import T from './data/tables.js';
 import { toCSV, toShowdown, toJSON, fileBase } from './export.js';
 import { download, copyText } from './ui/io.js';
 import * as R from './ui/render.js';
+import { searchMons } from './search.js';
+
+const PAGE = 60;
+let moveText = null; // descrições dos golpes, carregadas na primeira vez que um golpe é aberto
 
 let state = null;
 
 export function openSave(buffer, fileName) {
   const data = describe(parseSave(buffer), T);
   const firstFilled = data.pc.boxes.findIndex(b => b.slots.length);
-  state = { data, fileName, box: firstFilled >= 0 ? firstFilled : 0 };
+  const all = [...data.party, ...data.pc.boxes.flatMap(b => b.slots)];
+  state = { data, fileName, box: firstFilled >= 0 ? firstFilled : 0, all, results: [], shown: 0 };
   render();
   return data;
 }
@@ -23,7 +28,9 @@ function render() {
     <div class="top-grid">${R.trainerWin(data, fileName)}${R.exportWin()}</div>
     ${R.warningsWin(data.warnings)}
     ${R.partyWin(data)}
+    ${R.analysisWin(data, T)}
     ${R.pcWin(data)}
+    ${R.searchWin(data, T)}
     ${R.notesWin()}`;
   out.classList.remove('hidden');
   renderBox();
@@ -42,9 +49,65 @@ function render() {
   }));
   out.querySelector('#box-grid').addEventListener('click', e => {
     const btn = e.target.closest('.slot[data-slot]');
-    if (btn) openDetail(+btn.dataset.slot, btn);
+    if (!btn) return;
+    const m = state.data.pc.boxes[state.box].slots.find(s => s.slot === +btn.dataset.slot);
+    if (m) openDetail(m, btn);
   });
+
+  // Análise: tocar no número mostra quem é fraco/resiste/imune
+  const typetab = out.querySelector('.typetab');
+  if (typetab) typetab.addEventListener('click', e => {
+    const b = e.target.closest('.cnt[data-info]');
+    if (b) document.getElementById('type-info').textContent = b.dataset.info;
+  });
+
+  // Busca
+  let timer = 0;
+  const run = () => { clearTimeout(timer); timer = setTimeout(runSearch, 150); };
+  ['#q', '#f-type', '#f-flag', '#f-sort'].forEach(sel => {
+    const el = out.querySelector(sel);
+    el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', run);
+  });
+  out.querySelector('#more').addEventListener('click', () => showResults(false));
+  out.querySelector('#results').addEventListener('click', e => {
+    const btn = e.target.closest('.result[data-i]');
+    if (btn) openDetail(state.results[+btn.dataset.i], btn);
+  });
+  runSearch();
 }
+
+function runSearch() {
+  const v = id => document.getElementById(id).value;
+  const f = { q: v('q'), type: v('f-type'), flag: v('f-flag'), sort: v('f-sort') };
+  state.results = searchMons(state.all, f);
+  state.filtered = !!(f.q.trim() || f.type || f.flag);
+  state.shown = 0;
+  document.getElementById('results').innerHTML = '';
+  showResults();
+}
+
+function showResults() {
+  const list = document.getElementById('results');
+  const next = state.results.slice(state.shown, state.shown + PAGE);
+  list.insertAdjacentHTML('beforeend', next.map((m, j) => R.resultRow(m, state.shown + j)).join(''));
+  state.shown += next.length;
+  const total = state.results.length;
+  document.getElementById('search-count').textContent = state.filtered
+    ? `${total} resultado${total === 1 ? '' : 's'}.`
+    : `${total} Pokémon na equipe e no PC.`;
+  document.getElementById('more').classList.toggle('hidden', state.shown >= total);
+}
+
+// Descrição do golpe: carrega o arquivo de textos na primeira vez que um golpe é aberto
+document.addEventListener('toggle', async e => {
+  const det = e.target;
+  if (!(det instanceof HTMLDetailsElement) || !det.open || !det.classList.contains('move')) return;
+  const p = det.querySelector('.move-desc');
+  if (!p || p.dataset.loaded) return;
+  if (!moveText) moveText = (await import('./data/move-text.json')).default;
+  p.textContent = moveText[+p.dataset.move] || '';
+  p.dataset.loaded = '1';
+}, true);
 
 function renderBox() {
   const { data } = state;
@@ -57,11 +120,9 @@ function renderBox() {
   document.getElementById('pc-count').textContent = `${total} Pokémon no total`;
 }
 
-function openDetail(slot, opener) {
-  const m = state.data.pc.boxes[state.box].slots.find(s => s.slot === slot);
-  if (!m) return;
+function openDetail(m, opener) {
   const dlg = document.getElementById('detail');
-  dlg.innerHTML = R.pcDetail(m);
+  dlg.innerHTML = R.monDetail(m);
   dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
   dlg.querySelector('[data-copy="mon"]').addEventListener('click', async e => {
     const ok = await copyText(toShowdown({ party: [m], pc: { boxes: [] } }, { includePC: false }).replace(/^=== Equipe ===\n\n/, ''));

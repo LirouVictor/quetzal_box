@@ -132,10 +132,12 @@ suite('describe', () => {
     expect(d.pc.boxes[1].slots[3].gender).toMatchObject({ symbol: '♂' });
   });
 
-  it('PC sem apelido usa o nome da espécie; stats ficam sem valor', () => {
+  it('PC sem apelido usa o nome da espécie; stats são calculados pelos stats base', () => {
     const c = d.pc.boxes[36].slots[0];
     expect(c.nickname).toBe('Charmander');
-    expect(c).toMatchObject({ complete: false, level: 100, item: null, stats: null, friendship: null });
+    expect(c).toMatchObject({ complete: false, level: 100, item: null, statsCalculated: true, friendship: null });
+    // Charmander nv. 100, IVs/EVs 0, Quirky (neutra): base 39/52/43/60/50/65
+    expect(c.stats).toEqual({ hp: 188, atk: 109, def: 91, spa: 125, spd: 105, spe: 135 });
     expect(c.nature.name).toBe('Quirky');
     expect(c.ability.name).toBe('Blaze'); // sem 2ª habilidade, vale a 1ª
   });

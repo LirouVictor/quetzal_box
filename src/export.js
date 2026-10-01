@@ -11,7 +11,7 @@ export function toCSV(d) {
     'Nível', 'Experiência', 'Natureza', 'Item', 'Habilidade', 'Bola', 'Shiny', 'Gênero',
     'Golpe 1', 'Golpe 2', 'Golpe 3', 'Golpe 4', 'PP 1', 'PP 2', 'PP 3', 'PP 4',
     ...SHOWDOWN_ORDER.map(k => STAT_LABEL[k]), ...SHOWDOWN_ORDER.map(k => 'IV ' + STAT_LABEL[k]), ...SHOWDOWN_ORDER.map(k => 'EV ' + STAT_LABEL[k]),
-    'Amizade', 'Treinador original', 'TID original'];
+    'Stats', 'Hidden Power', 'Amizade', 'Treinador original', 'TID original'];
   const q = v => {
     const s = v === null || v === undefined ? '' : String(v);
     return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
@@ -28,6 +28,7 @@ export function toCSV(d) {
       m.gender ? m.gender.name : '',
       ...[0, 1, 2, 3].map(i => m.moves[i]?.name || ''), ...[0, 1, 2, 3].map(i => m.moves[i]?.pp ?? ''),
       ...per(m.stats), ...per(m.ivs), ...per(m.evs),
+      m.stats ? (m.statsCalculated ? 'calculados' : 'salvos') : '', m.hiddenPower || '',
       m.friendship ?? '', m.ot ? m.ot.name : '', m.ot ? String(m.ot.tid).padStart(5, '0') : '',
     ].map(q).join(';');
   });

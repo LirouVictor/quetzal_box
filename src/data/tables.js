@@ -5,6 +5,7 @@ import moves from './moves.json';
 import items from './items.json';
 import balls from './balls.json';
 import forms from './forms.json';
+import typechart from './typechart.json';
 import overrides from './quetzal-overrides.json';
 
 export default {
@@ -16,6 +17,9 @@ export default {
   speciesAbilities: species.abilities,
   abilityNames: species.abilityNames,
   genderRates: species.genderRates,
+  baseStats: species.baseStats,
+  moveDetails: moves.details,
   forms,
+  typechart,
   overrides,
 };
