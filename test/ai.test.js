@@ -1,6 +1,6 @@
 import { describe as suite, it, expect, beforeEach } from 'vitest';
 import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt } from '../src/ai/prompt.js';
-import { generateJSON, errorMessage, pickModel, setModel, getModel } from '../src/ai/gemini.js';
+import { generateJSON, errorMessage, pickModel, listFlashModels, setModel, getModel } from '../src/ai/gemini.js';
 import { analysisView, buildView } from '../src/ai/view.js';
 import T from '../src/data/tables.js';
 
@@ -142,6 +142,18 @@ suite('IA: cliente do Gemini', () => {
     expect(r.model).toBe('gemini-2.5-flash');
     expect(calls).toEqual(['models/gemini-flash-latest:generateContent', 'models/gemini-flash-latest:generateContent', 'models?pageSize=200', 'models/gemini-2.5-flash:generateContent']);
     expect(getModel()).toBe('gemini-flash-latest');
+  });
+  it('ordem dos modelos: estáveis, depois lite, depois preview', async () => {
+    const names = ['gemini-3-flash-preview', 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-image', 'gemini-3-flash-lite-preview', 'gemini-2.0-flash'];
+    const fetchImpl = () => json(200, { models: names.map(n => ({ name: 'models/' + n, supportedGenerationMethods: ['generateContent'] })) });
+    expect(await listFlashModels('K', fetchImpl)).toEqual(['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite', 'gemini-3-flash-preview', 'gemini-3-flash-lite-preview']);
+  });
+  it('sobrecarga em todos os modelos: avisa quais foram tentados', async () => {
+    const fetchImpl = (url) => url.includes('/models?')
+      ? json(200, { models: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'].map(n => ({ name: 'models/' + n, supportedGenerationMethods: ['generateContent'] })) })
+      : json(503, { error: { code: 503, message: 'This model is currently experiencing high demand.' } });
+    await expect(generateJSON({ system: '', prompt: '', schema: {}, key: 'K', model: 'gemini-flash-latest', fetchImpl, sleep: () => Promise.resolve() }))
+      .rejects.toMatchObject({ code: 'server', message: expect.stringContaining('Modelos tentados: gemini-flash-latest, gemini-2.5-flash, gemini-2.5-flash-lite.') });
   });
   it('sobrecarga em todos: mensagem com o detalhe do Google', async () => {
     const fetchImpl = (url) => url.includes('/models?')

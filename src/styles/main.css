@@ -345,6 +345,8 @@ button.cnt:focus-visible { outline-offset: 1px; }
 .ai-settings { margin-top: 8px; }
 .ai-settings > summary { font-size: .9rem; color: var(--muted); }
 .ai-settings .ai-form { margin-bottom: 6px; }
+#ai-models-out:empty { display: none; }
+#ai-models-out { margin: 4px 0 8px; overflow-wrap: anywhere; }
 .ai-out:empty { display: none; }
 .ai-out { margin-top: 12px; scroll-margin-top: 84px; }
 .ai-wait { margin: 0; padding: 14px; text-align: center; background: var(--win-2); }
