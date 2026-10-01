@@ -65,7 +65,7 @@ npm run diff-saves -- save.sav --pc 1 5               # mostra o registro em hex
 
 ### Ícones
 
-Os ícones do app (esfera em pixel art nas cores do quetzal com uma pena; desenho original, sem copiar a Poké Ball) são gerados por `node tools/make-icons.mjs` em `public/icons/`. O script também imprime os `<path>` do logo para o `<symbol id="logo">` do `index.html`.
+Os ícones do app (esfera em pixel art nas cores do quetzal com uma lupa; desenho original, sem copiar a Poké Ball) são gerados por `node tools/make-icons.mjs` em `public/icons/`. O script também imprime os `<path>` do logo para o `<symbol id="logo">` do `index.html`.
 
 ## Deploy no Cloudflare Pages
 
@@ -85,7 +85,7 @@ A Cloudflare lê a versão do Node em `.node-version`. Se precisar, defina `NODE
 
 ### Opção C: Cloudflare Workers (é como o site está publicado hoje)
 
-O `wrangler.jsonc` na raiz define o Worker `quetzal-pkhex`, que serve os arquivos de `dist/`. Com ele, tanto o deploy de produção (`npx wrangler deploy`) quanto as prévias de PR (`npx wrangler versions upload`) funcionam sem argumentos extras. No painel: **Build command** `npm run build`. Se você renomear o Worker no painel, troque o `name` no arquivo também.
+O `wrangler.jsonc` na raiz define o Worker `quetzal-box`, que serve os arquivos de `dist/`. Com ele, tanto o deploy de produção (`npx wrangler deploy`) quanto as prévias de PR (`npx wrangler versions upload`) funcionam sem argumentos extras. No painel: **Build command** `npm run build`. Se você renomear o Worker no painel, troque o `name` no arquivo também.
 
 ### Opção B: upload direto com o Wrangler
 
