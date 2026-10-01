@@ -13,7 +13,7 @@ Site estático (Vite + JS puro) que lê saves `.sav` de **Pokémon Quetzal** (RO
 
 - `src/parser/save.js`: leitura crua (só números/textos). Offsets em constantes exportadas (`PARTY`, `PC`, ...).
 - `src/parser/describe.js`: resolve nomes, tipos, natureza, habilidade, nível (pela exp) e marca a confiança de cada dado.
-- `src/parser/stats.js`: stats pela fórmula (stats base da PokeAPI), detecção de natureza efetiva ("mint") e Hidden Power. `src/parser/natures.js`: tabela de naturezas.
+- `src/parser/stats.js`: stats pela fórmula (stats base da PokeAPI), detecção da natureza real quando ela foi trocada no jogo (PID % 25 diferente) e Hidden Power. `src/parser/natures.js`: tabela de naturezas.
 - `src/analysis.js`: fraquezas/resistências e cobertura da equipe (tabela de tipos em `src/data/typechart.json`).
 - `src/search.js`: busca e filtros sobre equipe + PC.
 - `src/parser/charset.js`: tabela de caracteres Gen 3.
@@ -130,7 +130,7 @@ Registro de 38 bytes. Bits contados em little-endian a partir do byte 0 (bit *n*
 | bytes 28–37 | | apelido (vazio = usar nome da espécie) | confirmado |
 
 - "Cruzado" = Pokémon que aparece na equipe de um save e no PC de outro (Lucario, Basculegion, Arcanine, Baxcalibur, Corviknight, Rillaboom): item, exp, natureza, habilidade, IVs e EVs batem exatamente. O teste `equipe → PC` cobre isso.
-- O registro do PC **não tem** PID, OT, amizade nem stats. O app calcula os stats pela mesma fórmula (nos 6 Pokémon cruzados, os stats calculados no PC são iguais aos salvos na equipe). Para um Pokémon com "mint", a natureza do PC (bits 161–165) pode não ser a que vale para os stats; ainda não visto.
+- O registro do PC **não tem** PID, OT, amizade nem stats. O app calcula os stats pela mesma fórmula (nos 6 Pokémon cruzados, os stats calculados no PC são iguais aos salvos na equipe).
 - **Nível**: não é guardado; vem da experiência. Todos os Pokémon nível 100 vistos (inclusive espécies "Slow", como Dragonite e Baxcalibur, e "Medium Fast", como Basculegion) têm exatamente 1 059 860 de exp, o máximo da curva **Medium Slow**: o Quetzal usa essa curva para todas as espécies. **Confirmado** no jogo pelo autor com níveis calculados do PC (Scizor 59, Blaziken 92, Pelipper 26).
 - EVs ÷ 4: o PC só guarda múltiplos de 4.
 - Com 11 bits, o PC só representa espécies até 2047.
