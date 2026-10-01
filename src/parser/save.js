@@ -44,7 +44,9 @@ export const PC = {
 /** Ordem em que o jogo guarda EVs, IVs e stats. */
 export const STAT_ORDER = ['hp', 'atk', 'def', 'spe', 'spa', 'spd'];
 
-export class SaveError extends Error {}
+export class SaveError extends Error {
+  constructor(msg) { super(msg); this.name = 'SaveError'; }
+}
 
 const hex = (bytes) => Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
 
