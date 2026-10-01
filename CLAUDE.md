@@ -110,13 +110,14 @@ Registro de 38 bytes. Bits contados em little-endian a partir do byte 0 (bit *n*
 | 0–10 | 11 | espécie | confirmado |
 | 11–20 | 10 | item | confirmado |
 | 21–37 | 17 | **experiência ÷ 10** | confirmado (6 Pokémon cruzados com a equipe) |
-| 38–43 | 6 | **Poké Ball** (enum `PokeBall`: 1 Poké, 2 Great, 3 Ultra, 5 Premier conferidos no jogo; 25 = bola "radiante" própria do Quetzal). Bit 43 sempre 0; a largura pode ser 5 | confirmado |
+| 38–43 | 6 | **Poké Ball** (enum `PokeBall`: 1 Poké, 2 Great, 3 Ultra, 5 Premier conferidos no jogo; 25 = **Radiant Ball**, própria do Quetzal). Bit 43 sempre 0; a largura pode ser 5 | confirmado |
 | 44 | 1 | **shiny** | confirmado (os 3 shinys da BOX1, e só eles) |
 | 45–47 | 3 | desconhecido | pendente |
 | 48–87 | 4×10 | golpes | confirmado |
 | 88–123 | 6×6 | **EVs ÷ 4**, ordem HP/Atk/Def/Spe/SpA/SpD | confirmado (6 Pokémon) |
 | 124–153 | 6×5 | IVs, mesma ordem | confirmado (6 Pokémon) |
-| 154–160 | 7 | desconhecido. Bit 160 = 0 em todos os machos conferidos e 1 em vários Pokémon selvagens: candidato a gênero (falta conferir fêmeas) | pendente |
+| 154–159 | 6 | desconhecido (só o Arcanine tem um bit ligado: 155) | pendente |
+| 160 | 1 | **fêmea** (1) / macho (0). Ignorado em espécies sem gênero ou de gênero fixo (o Golett, sem gênero, tem 1); o app usa a taxa de gênero da espécie (PokeAPI) nesses casos | confirmado (12 Pokémon: 6 machos e 6 fêmeas) |
 | 161–165 | 5 | natureza (0–24, mesma ordem de PID % 25) | confirmado (6 Pokémon) |
 | 166–167 | 2 | número da habilidade (0/1/2), igual a `0x54` da equipe | confirmado (6 Pokémon + sets coerentes) |
 | 168–191 | 24 | desconhecido | pendente |
@@ -151,11 +152,11 @@ Registro de 38 bytes. Bits contados em little-endian a partir do byte 0 (bit *n*
 
 ## Pendências de engenharia reversa
 
-Resolvidas: habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade no PC, número de caixas (37), curva de nível (Medium Slow para todas as espécies), Poké Ball (equipe e PC) e shiny (PC).
+Resolvidas: habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade no PC, número de caixas (37), curva de nível (Medium Slow para todas as espécies), Poké Ball (equipe e PC), shiny e gênero (PC).
 
 1. Tabela de itens: achar onde começa o deslocamento (faixa 480–860) e mapear os itens ≥ 829.
 2. Tabela de espécies > 905 (hipótese Gen 9 = Nacional + 329 ainda não testada).
-3. PC: bits 45–47, 154–160 e 168–191 (candidatos: gênero — bit 160?, local/nível de captura). Equipe: bit de shiny.
-4. HP atual da equipe; significado de `0x59`, `0x66` e do bit 30 de `0x54`.
+3. PC: bits 45–47, 154–159 e 168–191 (candidatos: local/nível de captura). Equipe: shiny e gênero.
+4. Significado de `0x59`, `0x66` e do bit 30 de `0x54`. (HP atual da equipe: o autor dispensou; a UI mostra só o HP máximo.)
 
 Método: saves pareados com uma única mudança no jogo + `tools/diff-saves.mjs`.

@@ -8,7 +8,7 @@ export const allMons = d => [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
 /** CSV com BOM e separador ';' (padrão do Excel em português). */
 export function toCSV(d) {
   const head = ['Local', 'Posição', 'Espécie', 'Forma', 'ID espécie', 'Espécie confirmada?', 'Apelido', 'Tipo 1', 'Tipo 2',
-    'Nível', 'Experiência', 'Natureza', 'Item', 'Habilidade', 'Bola', 'Shiny',
+    'Nível', 'Experiência', 'Natureza', 'Item', 'Habilidade', 'Bola', 'Shiny', 'Gênero',
     'Golpe 1', 'Golpe 2', 'Golpe 3', 'Golpe 4', 'PP 1', 'PP 2', 'PP 3', 'PP 4',
     ...SHOWDOWN_ORDER.map(k => STAT_LABEL[k]), ...SHOWDOWN_ORDER.map(k => 'IV ' + STAT_LABEL[k]), ...SHOWDOWN_ORDER.map(k => 'EV ' + STAT_LABEL[k]),
     'Amizade', 'Treinador original', 'TID original'];
@@ -25,6 +25,7 @@ export function toCSV(d) {
       m.ability ? m.ability.name + (m.ability.hidden ? ' (oculta)' : '') : '',
       m.ball ? m.ball.name + (m.ball.confidence === 'provável' ? ' (provável)' : '') : '',
       m.shiny === null || m.shiny === undefined ? '' : (m.shiny ? 'sim' : 'não'),
+      m.gender ? m.gender.name : '',
       ...[0, 1, 2, 3].map(i => m.moves[i]?.name || ''), ...[0, 1, 2, 3].map(i => m.moves[i]?.pp ?? ''),
       ...per(m.stats), ...per(m.ivs), ...per(m.evs),
       m.friendship ?? '', m.ot ? m.ot.name : '', m.ot ? String(m.ot.tid).padStart(5, '0') : '',
@@ -36,6 +37,7 @@ export function toCSV(d) {
 function showdownBlock(m) {
   const sp = m.species.showdown || m.species.name;
   let first = m.hasNickname ? `${m.nickname} (${sp})` : sp;
+  if (m.gender && m.gender.symbol && m.species.genderRate > 0 && m.species.genderRate < 8) first += m.gender.symbol === '♀' ? ' (F)' : ' (M)';
   if (m.item && m.item.confidence !== 'desconhecido') first += ` @ ${m.item.name}`;
   const lines = [first];
   if (m.ability && m.ability.confidence !== 'desconhecido') lines.push('Ability: ' + m.ability.name);

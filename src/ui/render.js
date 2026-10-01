@@ -95,7 +95,7 @@ function monHeader(m, headingTag = 'h3', idAttr = '') {
   return `<div class="mon-head">
     ${portrait(m)}
     <div>
-      <${headingTag} class="mon-name"${idAttr}>${title}${m.shiny ? ' <span class="shiny" title="Shiny">★<span class="sr"> shiny</span></span>' : ''}${badge(sp.confidence)}</${headingTag}>
+      <${headingTag} class="mon-name"${idAttr}>${title}${m.gender && m.gender.symbol ? ` <span class="gender ${m.gender.symbol === '♀' ? 'f' : 'm'}" title="${esc(m.gender.name)}">${m.gender.symbol}</span>` : ''}${m.shiny ? ' <span class="shiny" title="Shiny">★<span class="sr"> shiny</span></span>' : ''}${badge(sp.confidence)}</${headingTag}>
       <div class="mon-sub">${sub}${m.level ? ` · <span class="lv"${m.levelFromExp ? ' title="Calculado pela experiência (curva Medium Slow)"' : ''}>Nv. ${m.level}</span>` : ''}</div>
       ${typeChips(sp.types)}
     </div>
@@ -216,7 +216,7 @@ export function notesWin() {
       <summary id="notes-h">O que ainda não dá para ler</summary>
       <ul>
         <li>HP atual da equipe (a barra mostra o HP máximo).</li>
-        <li>Shiny e gênero na equipe; gênero no PC.</li>
+        <li>Shiny e gênero na equipe.</li>
         <li>No PC: stats (o jogo recalcula ao tirar da caixa), amizade e treinador original não são guardados.</li>
         <li>O nível no PC é calculado pela experiência (guardada dividida por 10) com a curva Medium Slow, que o Quetzal usa para todas as espécies.</li>
         <li>Itens com ID acima de 479 ainda não foram todos conferidos e aparecem como "provável"; a partir de 829 (megapedras novas) a numeração é própria do Quetzal e só os itens já conferidos têm nome.</li>

@@ -17,7 +17,9 @@ const base = {
     0: { species: 66, nickname: 'SQSR', moves: [[43, 48], [249, 24], [116, 48]], exp: 150, nature: 19, ivs: [28, 14, 19, 5, 18, 29], evs: [0, 8, 0, 0, 0, 0] },
     31: { species: 951, nickname: 'Raichu', moves: [[521, 32], [94, 16]], item: 389, exp: 199100, nature: 15, abilityNum: 2, ball: 25, shiny: true,
       ivs: [31, 31, 31, 31, 31, 31], evs: [4, 0, 0, 252, 252, 0] },
-    45: { species: 1469, nickname: 'Pikachu', moves: [[394, 32]] },
+    45: { species: 1469, nickname: 'Pikachu', moves: [[394, 32]], female: true },
+    46: { species: 622, nickname: 'Golett', female: true },
+    47: { species: 128, nickname: 'Tauros', female: true },
     1109: { species: 4, nickname: '', exp: 1059860, abilityNum: 1, nature: 24 },
   },
   olderSlot: { trainer: { name: 'Old', tid: 1, sid: 2 } },
@@ -49,7 +51,7 @@ suite('parseSave (save sintético)', () => {
     expect(box1.slots[0].moves).toEqual([{ id: 43, pp: 48 }, { id: 249, pp: 24 }, { id: 116, pp: 48 }]);
     expect(box1.slots[0].ivs).toEqual({ hp: 28, atk: 14, def: 19, spe: 5, spa: 18, spd: 29 });
     expect(box1.slots[0].evs).toEqual({ hp: 0, atk: 8, def: 0, spe: 0, spa: 0, spd: 0 });
-    expect(raw.pc.boxes[1].slots.map(s => [s.slot, s.speciesId])).toEqual([[2, 951], [16, 1469]]);
+    expect(raw.pc.boxes[1].slots.map(s => [s.slot, s.speciesId])).toEqual([[2, 951], [16, 1469], [17, 622], [18, 128]]);
     expect(raw.pc.boxes[1].slots[0]).toMatchObject({ itemId: 389, exp: 199100, natureId: 15, abilityNum: 2, ballId: 25, shiny: true });
     expect(box1.slots[0]).toMatchObject({ ballId: 1, shiny: false });
     expect(raw.pc.boxes[1].slots[0].evs).toEqual({ hp: 4, atk: 0, def: 0, spe: 252, spa: 252, spd: 0 });
@@ -114,7 +116,9 @@ suite('describe', () => {
     expect(raichu.item.name).toBe('Aloraichium Z');
     expect(raichu.ability).toMatchObject({ name: 'Surge Surfer', hidden: true }); // sem oculta: vale a 1ª
     expect(raichu.shiny).toBe(true);
-    expect(raichu.ball).toMatchObject({ id: 25, name: 'Radiante', confidence: 'provável' });
+    expect(raichu.ball).toMatchObject({ id: 25, name: 'Radiant Ball', confidence: 'confirmado' });
+    expect(raichu.gender).toMatchObject({ symbol: '♂', name: 'macho' });
+    expect(d.party[0].gender).toBeNull();
     expect(d.party[0].ball).toMatchObject({ id: 1, name: 'Poké Ball', confidence: 'confirmado' });
     expect(d.party[0].shiny).toBeNull();
     const pika = d.pc.boxes[1].slots[1];
@@ -122,6 +126,10 @@ suite('describe', () => {
     // Forma própria sem dados na PokeAPI: tipos e habilidades da espécie base, como "provável"
     expect(pika.species.types).toEqual(['electric']);
     expect(pika.ability).toMatchObject({ name: 'Static', confidence: 'provável' });
+    expect(pika.gender).toMatchObject({ symbol: '♀', confidence: 'confirmado' });
+    // Gênero fixo da espécie vence o bit: Golett sem gênero, Tauros só macho
+    expect(d.pc.boxes[1].slots[2].gender).toMatchObject({ symbol: null, name: 'sem gênero' });
+    expect(d.pc.boxes[1].slots[3].gender).toMatchObject({ symbol: '♂' });
   });
 
   it('PC sem apelido usa o nome da espécie; stats ficam sem valor', () => {

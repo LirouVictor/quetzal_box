@@ -15,6 +15,7 @@ export default {
   balls: balls.balls,
   speciesAbilities: species.abilities,
   abilityNames: species.abilityNames,
+  genderRates: species.genderRates,
   forms,
   overrides,
 };

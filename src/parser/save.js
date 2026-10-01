@@ -47,6 +47,7 @@ export const PC = {
     exp10: [21, 17], // experiência ÷ 10
     ball: [38, 6], // Poké Ball (enum PokeBall do expansion; bit 43 sempre 0 nos saves vistos)
     shiny: [44, 1],
+    female: [160, 1], // 1 = fêmea (ignorado pelo jogo em espécies sem gênero ou de gênero fixo)
     moves: [48, 58, 68, 78], moveWidth: 10,
     evs: 88, evWidth: 6, // EV ÷ 4, ordem HP/Atk/Def/Spe/SpA/SpD
     ivs: 124, ivWidth: 5,
@@ -198,6 +199,7 @@ export function parseSave(input) {
         exp: bitField(bits, ...B.exp10) * 10,
         ballId: bitField(bits, ...B.ball),
         shiny: bitField(bits, ...B.shiny) === 1,
+        femaleBit: bitField(bits, ...B.female),
         natureId: bitField(bits, ...B.nature),
         abilityNum: bitField(bits, ...B.ability),
         evs, ivs,
