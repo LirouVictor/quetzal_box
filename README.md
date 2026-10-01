@@ -46,7 +46,7 @@ Espécies com ID acima de 905 usam numeração própria do Quetzal. Elas são id
 3. **Analisar minha equipe** ou **Montar equipe**. O campo **Pedido** aceita um desejo livre ("quero usar o Lucario", "sem lendários").
 
 Como funciona (`src/ai/`):
-- O navegador chama a API do Gemini direto (`gemini.js`), com a chave do usuário. O modelo padrão é `gemini-flash-latest`; se ele deixar de existir, o app escolhe outro "flash" disponível para a chave e guarda a escolha (dá para trocar em **Configurações da IA**).
+- O navegador chama a API do Gemini direto (`gemini.js`), com a chave do usuário. O modelo padrão é `gemini-flash-latest`; se ele deixar de existir, o app escolhe outro "flash" disponível para a chave e guarda a escolha (dá para trocar em **Configurações da IA**). Se o Google responder com sobrecarga ou erro interno (5xx), o app tenta de novo e depois até dois outros modelos "flash" (sem guardar a troca); a mensagem de erro mostra o código e o texto do Google.
 - O pedido (`prompt.js`) leva uma linha por Pokémon: referência (`E1` = equipe 1, `C3-12` = caixa 3, posição 12), espécie, tipos, habilidade, item, natureza, stats base, IVs e golpes (tipo, categoria e poder). **Sem nível**, porque o jogador pode treinar qualquer um. Vão a equipe inteira e até 250 Pokémon do PC (maior total de stats base primeiro, no máximo 2 da mesma espécie).
 - A resposta vem em JSON (schema fixo) e é conferida: trocas, dicas e membros que citam referências inexistentes são descartados e avisados; a equipe montada não repete espécie. As telas (`view.js`) desenham os Pokémon com os dados do save, e a equipe montada passa também pela análise de tipos do próprio app.
 - No plano grátis, o Google pode usar o que recebe para melhorar os produtos dele (o app avisa isso).
