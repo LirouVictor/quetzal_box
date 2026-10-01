@@ -103,7 +103,7 @@ suite('describe', () => {
     const a = d.party[1];
     expect(a.species).toMatchObject({ name: 'Annihilape', confidence: 'provável', spriteId: 979 });
     expect(a.hasNickname).toBe(false);
-    expect(a.item).toMatchObject({ name: 'Lucarionite', confidence: 'provável' });
+    expect(a.item).toMatchObject({ name: 'Lucarionite Z', confidence: 'confirmado' });
     expect(a.ability).toMatchObject({ num: 2, name: 'Defiant', hidden: true, confidence: 'provável' });
     const raichu = d.pc.boxes[1].slots[0];
     expect(raichu.species).toMatchObject({ name: 'Raichu', form: 'Alola', showdown: 'Raichu-Alola', spriteId: 10100 });
@@ -122,6 +122,13 @@ suite('describe', () => {
     expect(c).toMatchObject({ complete: false, level: 100, item: null, stats: null, friendship: null });
     expect(c.nature.name).toBe('Quirky');
     expect(c.ability.name).toBe('Blaze'); // sem 2ª habilidade, vale a 1ª
+  });
+
+  it('confiança do item depende da faixa de ID', () => {
+    const items = describe(parseSave(makeSave({ trainer: base.trainer, party: [
+      { pid: 0, species: 25, item: 479 }, { pid: 0, species: 25, item: 600 }, { pid: 0, species: 25, item: 866 },
+    ] })), T).party.map(m => [m.item.name, m.item.confidence]);
+    expect(items).toEqual([['Life Orb', 'confirmado'], [T.items[600], 'provável'], ['Item 866', 'desconhecido']]);
   });
 
   it('IDs desconhecidos usam o apelido', () => {

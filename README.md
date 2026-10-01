@@ -21,11 +21,11 @@ Visualizador de saves de **Pokémon Quetzal** (ROM hack de GBA). Abra o `.sav` d
 | Espécie, apelido, golpes, PP | ✅ | ✅ |
 | Natureza, item, habilidade, IVs, EVs | ✅ | ✅ |
 | Experiência | ✅ | ✅ (o jogo guarda ÷ 10) |
-| Nível | ✅ | calculado pela experiência |
+| Nível | ✅ | calculado pela experiência (curva conferida no jogo) |
 | Stats | ✅ | não são guardados no PC |
 | HP atual | ainda não | — |
 
-Espécies com ID acima de 905 usam numeração própria do Quetzal. Elas são identificadas por uma tabela manual, e as que ainda não foram conferidas no jogo aparecem como **provável**. Itens a partir do ID 829 (megapedras novas) têm numeração diferente da tabela de referência e aparecem como "não mapeados" até serem conferidos. Os detalhes técnicos estão em [`CLAUDE.md`](CLAUDE.md).
+Espécies com ID acima de 905 usam numeração própria do Quetzal. Elas são identificadas por uma tabela manual, e as que ainda não foram conferidas no jogo aparecem como **provável**. Itens com ID acima de 479 ainda não foram todos conferidos e aparecem como **provável**; a partir do 829 (megapedras novas) a numeração do Quetzal é diferente da tabela de referência, e só os itens já conferidos têm nome. Os detalhes técnicos estão em [`CLAUDE.md`](CLAUDE.md).
 
 ## Desenvolvimento
 

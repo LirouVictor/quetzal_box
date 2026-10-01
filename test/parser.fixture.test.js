@@ -26,7 +26,7 @@ suite.skipIf(!has)('save real (fixtures/PokemonQuetzalPtBrAlpha9v0.sav)', () => 
       ['Serperior', 497, 100, 'Gentle', null],
       ['Reuniclus', 579, 100, 'Naughty', null],
       ['Basculegion', 1210, 100, 'Jolly', 'Life Orb'],
-      ['Lucario', 448, 100, 'Modest', 'Lucarionite'],
+      ['Lucario', 448, 100, 'Modest', 'Lucarionite Z'],
     ]);
     const drag = d.party[0];
     expect(drag.moves.map(m => `${m.name}/${m.pp}`)).toEqual(['Hyper Beam/8', 'Brutal Swing/32', 'Dragon Rush/16', 'Safeguard/40']);
@@ -82,8 +82,12 @@ suite.skipIf(!has)('save real (fixtures/PokemonQuetzalPtBrAlpha9v0.sav)', () => 
     expect(row(8)).toEqual([58, 'Modest', 'Aloraichium Z', 'Surge Surfer']);
     expect(row(10)).toEqual([93, 'Modest', 'Charizardite Y', 'Solar Power']);
     expect(row(30)).toEqual([100, 'Jolly', 'Choice Band', 'Rock Head']);
-    expect(bySlot[16].item).toMatchObject({ name: 'Golisopite', confidence: 'provável' });
-    expect(bySlot[29].item).toMatchObject({ name: 'Baxcalibrite', confidence: 'provável' });
+    // Itens conferidos no jogo pelo autor
+    expect(bySlot[11].item).toMatchObject({ name: 'Raichunite Y', confidence: 'confirmado' });
+    expect(bySlot[16].item).toMatchObject({ name: 'Golisopite', confidence: 'confirmado' });
+    expect(bySlot[29].item).toMatchObject({ name: 'Baxcalibrite', confidence: 'confirmado' });
+    // Níveis calculados pela exp, conferidos no jogo pelo autor
+    expect([bySlot[2].level, bySlot[4].level, bySlot[19].level]).toEqual([59, 92, 26]);
     expect(bySlot[1].evs).toEqual({ hp: 0, atk: 8, def: 0, spe: 0, spa: 0, spd: 0 });
   });
 });

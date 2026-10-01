@@ -120,7 +120,7 @@ Registro de 38 bytes. Bits contados em little-endian a partir do byte 0 (bit *n*
 
 - "Cruzado" = Pokémon que aparece na equipe de um save e no PC de outro (Lucario, Basculegion, Arcanine, Baxcalibur, Corviknight, Rillaboom): item, exp, natureza, habilidade, IVs e EVs batem exatamente. O teste `equipe → PC` cobre isso.
 - O registro do PC **não tem** PID, OT, amizade nem stats. Os stats são recalculados pelo jogo ao tirar da caixa.
-- **Nível**: não é guardado; vem da experiência. Todos os Pokémon nível 100 vistos (inclusive espécies "Slow", como Dragonite e Baxcalibur, e "Medium Fast", como Basculegion) têm exatamente 1 059 860 de exp, que é o máximo da curva **Medium Slow**. Hipótese adotada: o Quetzal usa Medium Slow para todas as espécies. Os níveis calculados assim são plausíveis (Machop 5, Charmander 7, Pelipper 26), mas ainda não foram conferidos no jogo.
+- **Nível**: não é guardado; vem da experiência. Todos os Pokémon nível 100 vistos (inclusive espécies "Slow", como Dragonite e Baxcalibur, e "Medium Fast", como Basculegion) têm exatamente 1 059 860 de exp, o máximo da curva **Medium Slow**: o Quetzal usa essa curva para todas as espécies. **Confirmado** no jogo pelo autor com níveis calculados do PC (Scizor 59, Blaziken 92, Pelipper 26).
 - EVs ÷ 4: o PC só guarda múltiplos de 4.
 - Com 11 bits, o PC só representa espécies até 2047.
 
@@ -137,21 +137,20 @@ Registro de 38 bytes. Bits contados em little-endian a partir do byte 0 (bit *n*
   | 1224 | Arcanine (Hisui) | **confirmado no jogo** |
   | 1308 | Annihilape | apelido padrão + Rage Fist |
   | 1327 | Baxcalibur | apelido padrão + Glaive Rush |
-  | 1469 | Pikachu de boné vermelho | confirmado no jogo; qual boné, não determinado (sem sprite) |
+  | 1469 | Pikachu "estilo Red" (boné branco/vermelho e jaqueta vermelha) | confirmado no jogo; forma própria do Quetzal, sem sprite na PokeAPI (silhueta) |
 
   **Hipótese a testar**: Annihilape (Nacional 979) = 1308 e Baxcalibur (998) = 1327 → a Gen 9 pode estar em `Nacional + 329`. Não aplicada no código.
-- **Golpes e itens** = enums do `rh-hideout/pokeemerald-expansion` (master). Golpes validados pelo autor; itens conferidos até 479 (Scizorite 309, Blazikenite 314, Charizardite Y 294, Aloraichium Z 389, Miracle Seed 429, Choice Band 442, Leftovers 472, Life Orb 479 — todos coerentes com quem segura).
-- **Itens ≥ 829 divergem do master.** A partir do bloco de megapedras de Legends Z-A (829 = Clefablite no master), a ordem do Quetzal é outra e a diferença cresce: Raichu segura 860 (master: Raichunite X/Y = 858/859), Lucario 865 (Lucarionite Z = 864), Golisopod 871 (Golisopite = 868), Baxcalibur 877 (Baxcalibrite = 871). O código marca itens a partir de `itemsDivergeFrom` (829) como não mapeados, exceto os registrados à mão em `quetzal-overrides.json` como "provável". Entre 480 e 828 ainda não houve conferência.
+- **Golpes e itens** = enums do `rh-hideout/pokeemerald-expansion` (master). Golpes validados pelo autor. Itens **conferidos até 479** (Pretty Feather 156, Charizardite Y 294, Scizorite 309, Blazikenite 314, Aloraichium Z 389, Miracle Seed 429, Choice Band 442, Leftovers 472, Life Orb 479 — todos coerentes com quem segura). Entre 480 e 828 o nome do master é usado como "provável" (`itemsVerifiedUpTo` = 479).
+- **Itens ≥ 829 divergem do master** (confirmado no jogo): Raichunite Y = 860 (master 859), Lucarionite Z = 865 (master 864), Golisopite = 871 (master 868), Baxcalibrite = 877 (master 871). O deslocamento é −1 até pelo menos o 865 e depois cresce (o Quetzal tem itens extras entre Lucarionite Z e Golisopite, e entre Golisopite e Baxcalibrite). Como Raichunite Y já está deslocada, o deslocamento começa em algum ponto **≤ 860**, possivelmente antes de 829; por isso a faixa 480–828 fica como "provável". A partir de `itemsDivergeFrom` (829), itens sem override aparecem como não mapeados. Para fechar: conferir no jogo um item entre 480 e 828 (ex.: uma megapedra antiga ou um item de batalha comum).
 - **Habilidades**: o save guarda só o número (1ª/2ª/oculta). O nome vem da tabela da espécie (PokeAPI, `pokemon_abilities.csv`). Se o slot estiver vazio, vale a primeira habilidade existente (como no expansion). Conferido com as 6 habilidades da equipe informadas pelo autor.
 
 ## Pendências de engenharia reversa
 
-Resolvidas: habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade no PC, número de caixas (37).
+Resolvidas: habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade no PC, número de caixas (37), curva de nível (Medium Slow para todas as espécies).
 
-1. Confirmar no jogo alguns níveis do PC calculados pela curva Medium Slow.
-2. Tabela de itens ≥ 829 (pedir ao autor o nome dos itens segurados por Raichu, Lucario, Golisopod e Baxcalibur) e conferir a faixa 480–828.
-3. Tabela de espécies > 905 (hipótese Gen 9 = Nacional + 329 ainda não testada).
-4. PC: bits 38–47, 154–160 e 168–191 (candidatos: gênero, shiny, Poké Ball, local/nível de captura, amizade).
-5. HP atual da equipe; significado de `0x59`, `0x66` e do bit 30 de `0x54`.
+1. Tabela de itens: achar onde começa o deslocamento (faixa 480–860) e mapear os itens ≥ 829.
+2. Tabela de espécies > 905 (hipótese Gen 9 = Nacional + 329 ainda não testada).
+3. PC: bits 38–47, 154–160 e 168–191 (candidatos: gênero, shiny, Poké Ball, local/nível de captura, amizade).
+4. HP atual da equipe; significado de `0x59`, `0x66` e do bit 30 de `0x54`.
 
 Método: saves pareados com uma única mudança no jogo + `tools/diff-saves.mjs`.

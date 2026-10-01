@@ -1,5 +1,5 @@
 {
-  "_doc": "Tabela manual do que difere entre o Quetzal e as fontes geradas. Espécies com ID > 905 têm numeração própria do Quetzal. 'confidence' é 'confirmado' ou 'provável'; 'evidence' diz de onde veio. 'pokeapi' é o identificador da forma na PokeAPI (para sprite e tipos); null = sem correspondência (silhueta). 'itemsDivergeFrom': a partir deste ID a numeração de itens do Quetzal diverge do expansion master; itens sem override nessa faixa aparecem como não mapeados.",
+  "_doc": "Tabela manual do que difere entre o Quetzal e as fontes geradas. Espécies com ID > 905 têm numeração própria do Quetzal. 'confidence' é 'confirmado' ou 'provável'; 'evidence' diz de onde veio. 'pokeapi' é o identificador da forma na PokeAPI (para sprite e tipos); null = sem correspondência (silhueta). Itens: até 'itemsVerifiedUpTo' a tabela do expansion master foi conferida; entre esse valor e 'itemsDivergeFrom' o nome do master é usado como 'provável'; a partir de 'itemsDivergeFrom' a numeração diverge e itens sem override aparecem como não mapeados.",
   "species": {
     "951": {
       "name": "Raichu",
@@ -51,34 +51,35 @@
     },
     "1469": {
       "name": "Pikachu",
-      "form": "boné vermelho",
+      "form": "estilo Red",
       "showdown": "Pikachu",
       "pokeapi": null,
-      "confidence": "provável",
-      "evidence": "Confirmado no jogo pelo autor como Pikachu de boné vermelho; qual dos bonés ainda não foi determinado, então fica sem sprite."
+      "confidence": "confirmado",
+      "evidence": "Conferido no jogo: boné branco/vermelho com símbolo vermelho e jaqueta vermelha, lembrando o treinador Red. Forma própria do Quetzal, sem sprite correspondente na PokeAPI (os bonés oficiais não têm jaqueta)."
     }
   },
   "items": {
     "860": {
-      "name": "Raichunite",
-      "confidence": "provável",
-      "evidence": "Segurado pelo Raichu (ID 26). No master, Raichunite X/Y = 858/859; X ou Y não determinado."
+      "name": "Raichunite Y",
+      "confidence": "confirmado",
+      "evidence": "Conferido no jogo (Raichu, ID 26). No master é 859."
     },
     "865": {
-      "name": "Lucarionite",
-      "confidence": "provável",
-      "evidence": "Segurado pelo Lucario. No master, Lucarionite = 334 e Lucarionite Z = 864; qual das duas não foi determinado."
+      "name": "Lucarionite Z",
+      "confidence": "confirmado",
+      "evidence": "Conferido no jogo (Lucario). No master é 864."
     },
     "871": {
       "name": "Golisopite",
-      "confidence": "provável",
-      "evidence": "Segurado pelo Golisopod. No master, Golisopite = 868."
+      "confidence": "confirmado",
+      "evidence": "Conferido no jogo (Golisopod). No master é 868."
     },
     "877": {
       "name": "Baxcalibrite",
-      "confidence": "provável",
-      "evidence": "Segurado pelo Baxcalibur. No master, Baxcalibrite = 871."
+      "confidence": "confirmado",
+      "evidence": "Conferido no jogo (Baxcalibur). No master é 871."
     }
   },
-  "itemsDivergeFrom": 829
+  "itemsDivergeFrom": 829,
+  "itemsVerifiedUpTo": 479
 }

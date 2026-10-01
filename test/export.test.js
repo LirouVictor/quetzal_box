@@ -25,7 +25,7 @@ suite('Showdown', () => {
     expect(txt).toContain([
       'Fishy (Basculegion) @ Life Orb', 'Ability: Adaptability', 'Level: 100', 'EVs: 252 Atk / 4 Def / 252 Spe', 'Jolly Nature', '- Wave Crash', '- Agility',
     ].join('\n'));
-    expect(txt).toContain('Lucario @ Lucarionite\nAbility: Steadfast\nLevel: 100\nEVs: 4 HP / 252 SpA / 252 Spe\nModest Nature\nIVs: 0 Atk\n- Aura Sphere');
+    expect(txt).toContain('Lucario @ Lucarionite Z\nAbility: Steadfast\nLevel: 100\nEVs: 4 HP / 252 SpA / 252 Spe\nModest Nature\nIVs: 0 Atk\n- Aura Sphere');
   });
   it('PC com nível, natureza, item e habilidade; formas usam o nome do Showdown', () => {
     expect(txt).toContain('=== PC: BOX1 ===\n\nSQSR (Machop)\nAbility: No Guard\nLevel: 5\nRash Nature\n- Leer\n\n');
@@ -46,7 +46,7 @@ suite('CSV', () => {
     expect(lines[0].split(';').slice(0, 4)).toEqual(['Local', 'Posição', 'Espécie', 'Forma']);
   });
   it('marca dados prováveis e deixa vazio o que não é guardado', () => {
-    expect(lines[2]).toContain('Lucarionite (provável)');
+    expect(lines[2]).toContain(';Lucarionite Z;');
     const raichu = lines[4].split(';');
     expect(raichu.slice(0, 14)).toEqual(['BOX1', '4', 'Raichu', 'Alola', '951', 'confirmado', 'Raichu', 'electric', 'psychic',
       '58', '199100', 'Modest', 'Aloraichium Z', 'Surge Surfer']);

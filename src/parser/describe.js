@@ -28,7 +28,7 @@ export const UNKNOWN = 'desconhecido';
 const MAX_DEX = 905;
 const LAST_GEN8_ICON = 898;
 
-/** Curva Medium Slow (a única observada no Quetzal: todo Pokémon nível 100 tem 1 059 860 de exp). */
+/** Curva Medium Slow: no Quetzal vale para todas as espécies (níveis do PC conferidos no jogo). */
 export const mediumSlow = n => (n <= 1 ? 0 : Math.floor((6 * n ** 3) / 5) - 15 * n * n + 100 * n - 140);
 
 export function levelFromExp(exp) {
@@ -100,7 +100,11 @@ export function makeResolver(T) {
       return { id, name: `Item ${id}`, confidence: UNKNOWN, evidence: 'Nesta faixa de IDs a tabela de itens do Quetzal diverge do pokeemerald-expansion.' };
     }
     const name = T.items[id];
-    return name ? { id, name, confidence: CONFIRMED, evidence: null } : { id, name: `Item ${id}`, confidence: UNKNOWN, evidence: null };
+    if (!name) return { id, name: `Item ${id}`, confidence: UNKNOWN, evidence: null };
+    if (id > T.overrides.itemsVerifiedUpTo) {
+      return { id, name, confidence: PROBABLE, evidence: 'Nome da tabela do pokeemerald-expansion; nesta faixa de IDs a numeração do Quetzal ainda não foi conferida.' };
+    }
+    return { id, name, confidence: CONFIRMED, evidence: null };
   }
 
   return { species, move, item, ability };
