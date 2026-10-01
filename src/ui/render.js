@@ -37,35 +37,29 @@ function movesList(moves) {
     </li>`).join('')}</ul>`;
 }
 
-function ivEvTable(m) {
+/** Tabela de stats com colunas fixas: rótulo, [valor], barra, IV, EV. */
+function statRows(m, { withStats }) {
+  const max = withStats ? Math.max(...SHOWDOWN_ORDER.map(k => m.stats[k]), 1) : 31;
   const rows = SHOWDOWN_ORDER.map(k => {
     const cls = m.nature && m.nature.plus === k ? 'plus' : m.nature && m.nature.minus === k ? 'minus' : '';
     const mark = cls === 'plus' ? '+' : cls === 'minus' ? '−' : '';
     const iv = m.ivs[k];
+    const value = withStats ? m.stats[k] : iv;
     return `<tr>
       <th class="${cls}" scope="row">${STAT_LABEL[k]}${mark}</th>
-      <td><div class="bar"><i style="width:${Math.round(iv / 31 * 100)}%"></i></div></td>
-      <td class="ivev"><span class="${iv === 31 ? 'max' : ''}">IV ${iv}</span> · EV ${m.evs[k]}</td>
+      ${withStats ? `<td class="num">${m.stats[k]}</td>` : ''}
+      <td><div class="bar"><i style="width:${Math.round(value / max * 100)}%"></i></div></td>
+      <td class="iv${iv === 31 ? ' max' : ''}">${iv}</td>
+      <td class="ev">${m.evs[k]}</td>
     </tr>`;
   }).join('');
-  return `<table class="stats"><caption>Barras = IV (0–31). Stats não são guardados no PC.</caption>${rows}</table>`;
+  const head = `<thead><tr><td></td>${withStats ? '<td></td>' : ''}<td></td><th scope="col" class="iv">IV</th><th scope="col" class="ev">EV</th></tr></thead>`;
+  const caption = withStats ? 'Barras relativas ao maior stat deste Pokémon.' : 'Barras = IV (0–31). Stats não são guardados no PC.';
+  return `<table class="stats"><caption>${caption}</caption>${head}<tbody>${rows}</tbody></table>`;
 }
 
-function statsTable(m) {
-  const max = Math.max(...SHOWDOWN_ORDER.map(k => m.stats[k]), 1);
-  const rows = SHOWDOWN_ORDER.map(k => {
-    const cls = m.nature && m.nature.plus === k ? 'plus' : m.nature && m.nature.minus === k ? 'minus' : '';
-    const mark = cls === 'plus' ? '+' : cls === 'minus' ? '−' : '';
-    const iv = m.ivs[k];
-    return `<tr>
-      <th class="${cls}" scope="row">${STAT_LABEL[k]}${mark}</th>
-      <td class="num">${m.stats[k]}</td>
-      <td><div class="bar"><i style="width:${Math.round(m.stats[k] / max * 100)}%"></i></div></td>
-      <td class="ivev"><span class="${iv === 31 ? 'max' : ''}">IV ${iv}</span> · EV ${m.evs[k]}</td>
-    </tr>`;
-  }).join('');
-  return `<table class="stats"><caption>Barras relativas ao maior stat deste Pokémon.</caption>${rows}</table>`;
-}
+const ivEvTable = m => statRows(m, { withStats: false });
+const statsTable = m => statRows(m, { withStats: true });
 
 function natureChip(n) {
   if (!n) return '<span class="chip unread"><span class="k">Natureza</span> não lida</span>';
