@@ -6,7 +6,7 @@ import { toCSV, toShowdown, toJSON, fileBase } from './export.js';
 import { download, copyText } from './ui/io.js';
 import * as R from './ui/render.js';
 import { searchMons } from './search.js';
-import * as Gemini from './ai/gemini.js';
+import { PROVIDERS, provider, providerId, setProviderId } from './ai/providers.js';
 
 const PAGE = 60;
 let moveText = null; // descrições dos golpes, carregadas na primeira vez que um golpe é aberto
@@ -30,7 +30,7 @@ function render() {
     ${R.warningsWin(data.warnings)}
     ${R.partyWin(data)}
     ${R.analysisWin(data, T)}
-    ${R.aiWin(data, { hasKey: !!Gemini.getKey(), model: Gemini.getModel() })}
+    ${R.aiWin(data, Object.values(PROVIDERS))}
     ${R.pcWin(data)}
     ${R.searchWin(data, T)}
     ${R.notesWin()}`;
@@ -94,34 +94,55 @@ function render() {
 function setupAi(out) {
   const $ = s => out.querySelector(s);
   const aiOut = $('#ai-out');
-  const showMain = on => { $('#ai-setup').classList.toggle('hidden', on); $('#ai-main').classList.toggle('hidden', !on); };
+  // Mostra os textos e a tela (chave ou botões) do serviço escolhido
+  const sync = () => {
+    const P = provider();
+    $('#ai-provider').value = P.id;
+    $('#ai-svc').textContent = `IA · ${P.service}`;
+    const link = $('#ai-key-link');
+    link.href = P.keyUrl;
+    link.textContent = P.keyUrl.replace(/^https:\/\//, '');
+    $('#ai-key-steps').innerHTML = P.keySteps;
+    $('#ai-key').placeholder = P.keyPlaceholder;
+    $('#ai-privacy').textContent = `Ao tocar, a lista dos seus Pokémon (espécie, tipos, golpes, habilidade, item, natureza e IVs) é enviada ao ${P.service}. O arquivo .sav não é enviado.${P.privacy ? ' ' + P.privacy : ''}`;
+    $('#ai-model').value = P.getModel();
+    $('#ai-models').innerHTML = '';
+    $('#ai-models-out').textContent = '';
+    const hasKey = !!P.getKey();
+    $('#ai-setup').classList.toggle('hidden', hasKey);
+    $('#ai-main').classList.toggle('hidden', !hasKey);
+  };
+  sync();
+  $('#ai-provider').addEventListener('change', e => { setProviderId(e.target.value); aiOut.innerHTML = ''; sync(); });
   $('#ai-save').addEventListener('click', () => {
     const v = $('#ai-key').value.trim();
     if (!v) { aiOut.innerHTML = '<p class="error">Cole a chave antes de salvar.</p>'; return; }
-    Gemini.setKey(v);
+    provider().setKey(v);
     $('#ai-key').value = '';
     aiOut.innerHTML = '';
-    showMain(true);
+    sync();
   });
   $('#ai-forget').addEventListener('click', () => {
-    Gemini.setKey('');
+    provider().setKey('');
     aiOut.innerHTML = '';
-    showMain(false);
+    sync();
   });
   $('#ai-model-save').addEventListener('click', () => {
-    Gemini.setModel($('#ai-model').value);
-    $('#ai-model').value = Gemini.getModel();
-    $('#ai-models-out').textContent = `Modelo salvo: ${Gemini.getModel()}.`;
+    const P = provider();
+    P.setModel($('#ai-model').value);
+    $('#ai-model').value = P.getModel();
+    $('#ai-models-out').textContent = P.getModel() ? `Modelo salvo: ${P.getModel()}.` : 'Modelo automático.';
   });
   $('#ai-list').addEventListener('click', async () => {
+    const P = provider();
     const info = $('#ai-models-out');
     info.textContent = 'Buscando…';
     try {
-      const names = await Gemini.listFlashModels(Gemini.getKey());
+      const names = await P.listModels(P.getKey());
       $('#ai-models').innerHTML = names.map(n => `<option value="${R.esc(n)}"></option>`).join('');
       info.textContent = names.length
         ? `Disponíveis (do mais indicado ao menos): ${names.join(', ')}. Toque no campo Modelo para escolher.`
-        : 'Nenhum modelo Gemini Flash disponível para esta chave.';
+        : 'Nenhum modelo disponível para esta chave.';
     } catch (e) {
       info.textContent = e && e.name === 'AiError' ? e.message : 'Não consegui buscar os modelos.';
     }
@@ -130,6 +151,7 @@ function setupAi(out) {
   buttons.forEach(b => b.addEventListener('click', async () => {
     const disabled = [...buttons].map(x => x.disabled);
     buttons.forEach(x => { x.disabled = true; });
+    $('#ai-provider').disabled = true;
     aiOut.innerHTML = `<p class="ai-wait"><span class="pixel">${b.dataset.ai === 'analyze' ? 'Analisando a equipe' : 'Montando a equipe'}</span><span class="dots" aria-hidden="true"></span><br><small>Pode levar até um minuto.</small></p>`;
     try {
       const ai = await import('./ai/index.js');
@@ -137,14 +159,15 @@ function setupAi(out) {
       state.ai = res;
       aiOut.innerHTML = res.html;
       aiOut.scrollIntoView({ block: 'start' });
-      $('#ai-model').value = Gemini.getModel();
+      $('#ai-model').value = provider().getModel();
     } catch (e) {
       console.error(e);
-      const msg = e && e.name === 'AiError' ? e.message : 'Algo deu errado ao falar com o Gemini. Tente de novo.';
+      const msg = e && e.name === 'AiError' ? e.message : `Algo deu errado ao falar com o ${provider().service}. Tente de novo.`;
       aiOut.innerHTML = `<p class="error">${R.esc(msg)}</p>`;
-      if (e && e.code === 'key') showMain(false);
+      if (e && e.code === 'key') { $('#ai-setup').classList.remove('hidden'); $('#ai-main').classList.add('hidden'); }
     } finally {
       buttons.forEach((x, i) => { x.disabled = disabled[i]; });
+      $('#ai-provider').disabled = false;
     }
   }));
   aiOut.addEventListener('click', async e => {

@@ -1,6 +1,8 @@
 import { describe as suite, it, expect, beforeEach } from 'vitest';
-import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt } from '../src/ai/prompt.js';
-import { generateJSON, errorMessage, pickModel, listFlashModels, setModel, getModel } from '../src/ai/gemini.js';
+import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt, schemaHint, ANALYSIS_SCHEMA, BUILD_SCHEMA } from '../src/ai/prompt.js';
+import * as groq from '../src/ai/groq.js';
+import { provider, providerId, setProviderId } from '../src/ai/providers.js';
+import { generateJSON, errorMessage, pickModel, listFlashModels, fallbackOrder, setModel, getModel } from '../src/ai/gemini.js';
 import { analysisView, buildView } from '../src/ai/view.js';
 import T from '../src/data/tables.js';
 
@@ -167,5 +169,77 @@ suite('IA: cliente do Gemini', () => {
     const fetchImpl = () => Promise.reject(new TypeError('Failed to fetch'));
     await expect(generateJSON({ system: '', prompt: '', schema: {}, key: 'K', model: 'm', fetchImpl })).rejects.toMatchObject({ code: 'network' });
     setModel('models/x'); expect(getModel()).toBe('x');
+  });
+});
+
+suite('IA: Groq e formato da resposta em texto', () => {
+  const store = new Map();
+  beforeEach(() => {
+    store.clear();
+    globalThis.localStorage = { getItem: k => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) };
+  });
+  const json = (status, body) => Promise.resolve({ ok: status < 400, status, json: () => Promise.resolve(body) });
+  const models = ids => json(200, { data: ids.map(id => ({ id, active: true, context_window: 131072 })) });
+  const answer = obj => json(200, { choices: [{ message: { content: JSON.stringify(obj) }, finish_reason: 'stop' }] });
+
+  it('schemaHint: exemplo do objeto e observações dos campos', () => {
+    const h = schemaHint(BUILD_SCHEMA);
+    expect(h).toContain('"membros":[{"ref":"...","papel":"...","motivo":"..."}]');
+    expect(h).toContain('- membros: Exatamente 6 Pokémon diferentes');
+    expect(schemaHint(ANALYSIS_SCHEMA)).toContain('"nota":0');
+  });
+  it('escolhe o melhor modelo da chave, guarda e manda Bearer + modo JSON', async () => {
+    let req;
+    const fetchImpl = (url, init) => {
+      if (url.endsWith('/models')) return models(['whisper-large-v3', 'llama-3.1-8b-instant', 'openai/gpt-oss-120b', 'meta-llama/llama-guard-4-12b']);
+      req = { url, init };
+      return answer({ nota: 7 });
+    };
+    const r = await groq.generateJSON({ system: 'S', prompt: 'P', schema: ANALYSIS_SCHEMA, key: 'gsk_x', model: '', fetchImpl });
+    expect(r).toEqual({ data: { nota: 7 }, model: 'openai/gpt-oss-120b' });
+    expect(groq.getModel()).toBe('openai/gpt-oss-120b');
+    expect(req.url).toBe('https://api.groq.com/openai/v1/chat/completions');
+    expect(req.init.headers.authorization).toBe('Bearer gsk_x');
+    const body = JSON.parse(req.init.body);
+    expect(body.response_format).toEqual({ type: 'json_object' });
+    expect(body.reasoning_effort).toBe('low');
+    expect(body.messages[0].content).toMatch(/^S\n\nResponda APENAS com um objeto JSON/);
+    expect(body.messages[1]).toEqual({ role: 'user', content: 'P' });
+  });
+  it('modelo desativado: troca pelo próximo da lista', async () => {
+    const fetchImpl = (url, init) => {
+      if (url.endsWith('/models')) return models(['llama-3.3-70b-versatile', 'qwen/qwen3-32b']);
+      const m = JSON.parse(init.body).model;
+      if (m === 'velho') return json(400, { error: { code: 'model_decommissioned', message: 'decommissioned' } });
+      return answer({ ok: m });
+    };
+    const r = await groq.generateJSON({ system: '', prompt: '', schema: {}, key: 'K', model: 'velho', fetchImpl });
+    expect(r).toEqual({ data: { ok: 'llama-3.3-70b-versatile' }, model: 'llama-3.3-70b-versatile' });
+  });
+  it('erros do Groq', () => {
+    expect(groq.errorMessage(401, { error: { code: 'invalid_api_key' } }).code).toBe('key');
+    expect(groq.errorMessage(429, { error: { message: 'Rate limit reached' } }).code).toBe('quota');
+    expect(groq.errorMessage(413, { error: { message: 'Request too large for model' } }).message).toContain('grande demais');
+    expect(groq.errorMessage(503, { error: { message: 'over capacity' } }).message).toContain('503: over capacity');
+  });
+  it('resposta com cercas de código ainda é lida', async () => {
+    const fetchImpl = () => json(200, { choices: [{ message: { content: '```json\n{"a":1}\n```' } }] });
+    expect((await groq.generateJSON({ system: '', prompt: '', schema: {}, key: 'K', model: 'm', fetchImpl })).data).toEqual({ a: 1 });
+  });
+  it('serviço escolhido fica guardado; desconhecido volta ao Gemini', () => {
+    expect(providerId()).toBe('gemini');
+    setProviderId('groq'); expect(provider().id).toBe('groq');
+    setProviderId('xyz'); expect(providerId()).toBe('gemini');
+  });
+  it('Groq manda menos Pokémon do PC (limite de tokens por minuto)', () => {
+    const many = Array.from({ length: 100 }, (_, i) => mon({ sp: 'Mon' + i, id: i + 1, box: 1 + Math.floor(i / 30), slot: 1 + (i % 30), types: ['normal'], base: [50, 50, 50, 50, 50, 50] }));
+    expect(buildPrompt(many, T, '', groq.maxCandidates)).toContain(`DISPONÍVEIS (${groq.maxCandidates}):`);
+  });
+});
+
+suite('IA: reservas do Gemini', () => {
+  it('melhor de cada grupo primeiro (estável, lite, preview)', () => {
+    expect(fallbackOrder(['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.8-flash-lite', 'gemini-3.9-flash-preview']))
+      .toEqual(['gemini-3.8-flash', 'gemini-3.8-flash-lite', 'gemini-3.9-flash-preview', 'gemini-3.7-flash']);
   });
 });

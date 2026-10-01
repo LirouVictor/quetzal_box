@@ -1,24 +1,31 @@
 // Cliente mínimo da API do Gemini (Google AI Studio), chamado direto do navegador.
 // A chave é do próprio usuário e fica só neste aparelho (localStorage).
 
+import { AiError, store, call as httpCall, wait, transient } from './http.js';
+
+export { AiError };
 export const API = 'https://generativelanguage.googleapis.com/v1beta';
 export const DEFAULT_MODEL = 'gemini-flash-latest';
-const TIMEOUT = 120000;
 
 const KEY = 'gemini-key';
 const MODEL = 'gemini-model';
 
-const get = k => { try { return localStorage.getItem(k) || ''; } catch { return ''; } };
-const set = (k, v) => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch { /* armazenamento indisponível */ } };
+export const id = 'gemini';
+export const label = 'Gemini (Google)';
+export const service = 'Gemini';
+export const keyUrl = 'https://aistudio.google.com/apikey';
+export const keySteps = 'toque em <b>Create API key</b>';
+export const keyPlaceholder = 'Chave do Gemini (AIza…)';
+export const privacy = 'No plano grátis, o Google pode usar o que recebe para melhorar os produtos dele.';
+/** Contexto grande: cabe a equipe + boa parte do PC. */
+export const maxCandidates = 250;
 
-export const getKey = () => get(KEY);
-export const setKey = v => set(KEY, (v || '').trim());
-export const getModel = () => get(MODEL) || DEFAULT_MODEL;
-export const setModel = v => set(MODEL, (v || '').trim().replace(/^models\//, ''));
+export const getKey = () => store.get(KEY);
+export const setKey = v => store.set(KEY, (v || '').trim());
+export const getModel = () => store.get(MODEL) || DEFAULT_MODEL;
+export const setModel = v => store.set(MODEL, (v || '').trim().replace(/^models\//, ''));
 
-export class AiError extends Error {
-  constructor(msg, code) { super(msg); this.name = 'AiError'; this.code = code; }
-}
+const call = (url, init, fetchImpl) => httpCall(url, init, fetchImpl, service);
 
 /** Traduz a resposta de erro da API numa mensagem para o usuário. */
 export function errorMessage(status, body) {
@@ -33,25 +40,12 @@ export function errorMessage(status, body) {
   return new AiError(`O Gemini recusou o pedido (${status}${msg ? ': ' + msg : ''}).`, 'other');
 }
 
-async function call(url, init, fetchImpl) {
-  const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), TIMEOUT);
-  try {
-    return await fetchImpl(url, { ...init, signal: ctl.signal });
-  } catch (e) {
-    if (e && e.name === 'AbortError') throw new AiError('O Gemini demorou demais para responder. Tente de novo.', 'timeout');
-    throw new AiError('Sem conexão com o Gemini. Confira a internet.', 'network');
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 /**
  * Modelos "flash" disponíveis para a chave, na ordem de preferência:
  * estáveis, depois "lite" (mais leves, costumam estar menos disputados), depois "preview".
  * Dentro de cada grupo, a maior versão primeiro (ex.: gemini-3-flash antes de gemini-2.5-flash).
  */
-export async function listFlashModels(key, fetchImpl = fetch) {
+export async function listFlashModels(key, fetchImpl = (...a) => fetch(...a)) {
   const res = await call(`${API}/models?pageSize=200`, { headers: { 'x-goog-api-key': key } }, fetchImpl);
   const body = await res.json().catch(() => null);
   if (!res.ok) throw errorMessage(res.status, body);
@@ -64,16 +58,22 @@ export async function listFlashModels(key, fetchImpl = fetch) {
   return names.sort((a, b) => tier(a) - tier(b) || ver(b) - ver(a) || a.length - b.length);
 }
 
+export const listModels = listFlashModels;
+
+/** Reservas para sobrecarga: o melhor de cada grupo (estável, lite, preview) primeiro, depois os demais. */
+export function fallbackOrder(names) {
+  const tier = n => (/preview/.test(n) ? 2 : /lite/.test(n) ? 1 : 0);
+  const heads = [0, 1, 2].map(t => names.find(n => tier(n) === t)).filter(Boolean);
+  return [...heads, ...names.filter(n => !heads.includes(n))];
+}
+
 /** Escolhe um modelo "flash" disponível para a chave (quando o padrão não existe mais). */
-export async function pickModel(key, fetchImpl = fetch, exclude = []) {
+export async function pickModel(key, fetchImpl = (...a) => fetch(...a), exclude = []) {
   const name = (await listFlashModels(key, fetchImpl)).find(n => !exclude.includes(n));
   if (!name) throw new AiError('Não encontrei um modelo Gemini Flash disponível para esta chave.', 'model');
   return name;
 }
 
-const wait = ms => new Promise(r => setTimeout(r, ms));
-/** Erros passageiros do lado do Google (sobrecarga, falha interna): vale tentar de novo ou outro modelo. */
-const transient = status => status === 500 || status === 502 || status === 503 || status === 504;
 
 async function request({ system, prompt, schema, key, model, fetchImpl }) {
   const res = await call(`${API}/models/${encodeURIComponent(model)}:generateContent`, {
@@ -94,7 +94,7 @@ async function request({ system, prompt, schema, key, model, fetchImpl }) {
  * Sobrecarga/erro interno (5xx): tenta de novo e depois até 3 outros modelos "flash" (sem guardar).
  * @returns {Promise<{ data: object, model: string }>}
  */
-export async function generateJSON({ system, prompt, schema, key = getKey(), model = getModel(), fetchImpl = fetch, sleep = wait }) {
+export async function generateJSON({ system, prompt, schema, key = getKey(), model = getModel(), fetchImpl = (...a) => fetch(...a), sleep = wait }) {
   if (!key) throw new AiError('Cole sua chave do Gemini primeiro.', 'key');
   const args = { system, prompt, schema, key, fetchImpl };
   const tried = [model];
@@ -111,7 +111,7 @@ export async function generateJSON({ system, prompt, schema, key = getKey(), mod
   }
   if (transient(r.status)) {
     let others = [];
-    try { others = (await listFlashModels(key, fetchImpl)).filter(n => !tried.includes(n)).slice(0, 3); } catch { /* fica com o erro original */ }
+    try { others = fallbackOrder((await listFlashModels(key, fetchImpl)).filter(n => !tried.includes(n))).slice(0, 3); } catch { /* fica com o erro original */ }
     for (const other of others) {
       tried.push(other);
       const r2 = await request({ ...args, model: other });

@@ -1,4 +1,4 @@
-// Monta o que é enviado ao Gemini (só dados dos Pokémon, nunca o .sav) e confere a resposta:
+// Monta o que é enviado à IA (só dados dos Pokémon, nunca o .sav) e confere a resposta:
 // a IA só pode citar Pokémon que existem no save, pelas referências (E1 = equipe 1, C3-12 = caixa 3, posição 12).
 
 import { STAT_LABEL, SHOWDOWN_ORDER } from '../export.js';
@@ -119,6 +119,26 @@ export const BUILD_SCHEMA = {
   required: ['nome', 'resumo', 'membros', 'pontos_fortes', 'pontos_fracos', 'dicas'],
 };
 
+/**
+ * Formato da resposta em texto, para serviços sem "schema" nativo (ex.: Groq em modo JSON):
+ * um exemplo do objeto e as observações de cada campo.
+ */
+export function schemaHint(schema) {
+  const notes = [];
+  const example = (s, path) => {
+    if (s.description) notes.push(`- ${path}: ${s.description}`);
+    if (s.type === 'OBJECT') return Object.fromEntries(Object.entries(s.properties).map(([k, v]) => [k, example(v, path ? `${path}.${k}` : k)]));
+    if (s.type === 'ARRAY') return [example(s.items, `${path}[]`)];
+    return s.type === 'INTEGER' ? 0 : '...';
+  };
+  const ex = example(schema, '');
+  return [
+    'Responda APENAS com um objeto JSON válido, sem texto antes ou depois, neste formato:',
+    JSON.stringify(ex),
+    ...(notes.length ? ['Observações sobre os campos:', ...notes] : []),
+  ].join('\n');
+}
+
 function typeSummary(party, T) {
   const a = analyzeTeam(party, { types: T.types, chart: T.typechart });
   const weak = a.defense.filter(r => r.alert).map(r => `${cap(r.type)} (${r.weak.length} fracos, ${r.resist.length + r.immune.length} resistem/imunes)`);
@@ -130,9 +150,9 @@ function typeSummary(party, T) {
 
 const wish = text => (text && text.trim() ? `\nPedido do jogador: ${text.trim().slice(0, 300)}\n` : '');
 
-export function analysisPrompt(all, T, note = '') {
+export function analysisPrompt(all, T, note = '', max = MAX_CANDIDATES) {
   const party = all.filter(m => m.location === 'party');
-  const pool = candidates(all).filter(m => m.location !== 'party');
+  const pool = candidates(all, max).filter(m => m.location !== 'party');
   return [
     'Avalie a EQUIPE ATUAL: sinergia, fraquezas em comum, cobertura de golpes, papéis e itens. Dê uma nota de 0 a 10.',
     'Sugira até 3 trocas com Pokémon do PC que melhorem a equipe (só se valer a pena) e dicas por membro.',
@@ -148,8 +168,8 @@ export function analysisPrompt(all, T, note = '') {
   ].join('\n');
 }
 
-export function buildPrompt(all, T, note = '') {
-  const pool = candidates(all);
+export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES) {
+  const pool = candidates(all, max);
   return [
     'Monte a MELHOR EQUIPE de 6 Pokémon com os disponíveis abaixo (equipe atual + PC), sem repetir espécie.',
     'Busque boa sinergia de tipos, cobertura de golpes, papéis variados e no máximo um Pokémon com megapedra.',

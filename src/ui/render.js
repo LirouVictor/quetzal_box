@@ -278,37 +278,46 @@ export function analysisWin(d, T) {
   </section>`;
 }
 
-/** Assistente com IA (Gemini): a chave é do usuário e fica só neste aparelho. */
-export function aiWin(d, { hasKey, model }) {
+/**
+ * Assistente com IA: a chave é do usuário e fica só neste aparelho.
+ * Os textos que dependem do serviço (link da chave, aviso de privacidade…) são preenchidos em app.js.
+ */
+export function aiWin(d, providers) {
   const noParty = !d.party.length;
+  const opts = providers.map(p => `<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
   return `<section class="win" aria-labelledby="ai-h">
-    <div class="win-title"><h2 id="ai-h">Assistente</h2><small>IA · Gemini</small></div>
-    <div id="ai-setup"${hasKey ? ' class="hidden"' : ''}>
-      <p class="ai-intro">A IA avalia sua equipe e monta uma equipe com os Pokémon que você tem. Para usar, crie uma chave grátis do Gemini (precisa de uma conta Google):</p>
+    <div class="win-title"><h2 id="ai-h">Assistente</h2><small id="ai-svc">IA</small></div>
+    <p class="ai-intro">A IA avalia sua equipe e monta uma equipe com os Pokémon que você tem.</p>
+    <div class="ai-form ai-provider">
+      <label class="ai-label" for="ai-provider">Serviço de IA</label>
+      <select id="ai-provider" class="ai-input">${opts}</select>
+    </div>
+    <div id="ai-setup" class="hidden">
+      <p class="ai-intro">Para usar, crie uma chave grátis:</p>
       <ol class="ai-steps">
-        <li>Abra <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> e toque em <b>Create API key</b>.</li>
+        <li>Abra <a id="ai-key-link" href="#" target="_blank" rel="noopener"></a> e <span id="ai-key-steps"></span>.</li>
         <li>Copie a chave e cole abaixo.</li>
       </ol>
       <div class="ai-form">
-        <label class="sr" for="ai-key">Chave do Gemini</label>
-        <input id="ai-key" type="password" autocomplete="off" spellcheck="false" placeholder="Chave do Gemini (AIza…)">
+        <label class="sr" for="ai-key">Chave</label>
+        <input id="ai-key" type="password" autocomplete="off" spellcheck="false">
         <button class="btn" type="button" id="ai-save">Salvar chave</button>
       </div>
       <p class="hint">A chave fica guardada só neste aparelho.</p>
     </div>
-    <div id="ai-main"${hasKey ? '' : ' class="hidden"'}>
+    <div id="ai-main" class="hidden">
       <label class="ai-label" for="ai-note">Pedido (opcional)</label>
       <input id="ai-note" class="ai-input" type="text" maxlength="300" autocomplete="off" placeholder="Ex.: quero usar o Lucario; sem lendários">
       <div class="export-btns ai-actions">
         <button class="btn" type="button" data-ai="analyze"${noParty ? ' disabled' : ''}>Analisar minha equipe</button>
         <button class="btn" type="button" data-ai="build">Montar equipe</button>
       </div>
-      <p class="hint">Ao tocar, a lista dos seus Pokémon (espécie, tipos, golpes, habilidade, item, natureza e IVs) é enviada ao Gemini, do Google. O arquivo .sav não é enviado. No plano grátis, o Google pode usar o que recebe para melhorar os produtos dele.</p>
+      <p class="hint" id="ai-privacy"></p>
       <details class="ai-settings">
         <summary>Configurações da IA</summary>
         <div class="ai-form">
           <label class="ai-label" for="ai-model">Modelo</label>
-          <input id="ai-model" class="ai-input" type="text" autocomplete="off" spellcheck="false" list="ai-models" value="${esc(model)}">
+          <input id="ai-model" class="ai-input" type="text" autocomplete="off" spellcheck="false" list="ai-models" placeholder="automático">
           <button class="btn btn-ghost btn-small" type="button" id="ai-model-save">Salvar modelo</button>
           <datalist id="ai-models"></datalist>
         </div>
