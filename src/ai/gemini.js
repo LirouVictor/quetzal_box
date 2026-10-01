@@ -46,7 +46,11 @@ async function call(url, init, fetchImpl) {
   }
 }
 
-/** Modelos "flash" disponíveis para a chave, do mais novo para o mais antigo. */
+/**
+ * Modelos "flash" disponíveis para a chave, na ordem de preferência:
+ * estáveis, depois "lite" (mais leves, costumam estar menos disputados), depois "preview".
+ * Dentro de cada grupo, a maior versão primeiro (ex.: gemini-3-flash antes de gemini-2.5-flash).
+ */
 export async function listFlashModels(key, fetchImpl = fetch) {
   const res = await call(`${API}/models?pageSize=200`, { headers: { 'x-goog-api-key': key } }, fetchImpl);
   const body = await res.json().catch(() => null);
@@ -54,10 +58,10 @@ export async function listFlashModels(key, fetchImpl = fetch) {
   const names = (body.models || [])
     .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
     .map(m => m.name.replace(/^models\//, ''))
-    .filter(n => /flash/.test(n) && !/lite|image|tts|audio|live|exp|preview|latest/.test(n));
-  // Nome com a maior versão primeiro (ex.: gemini-3-flash antes de gemini-2.5-flash)
+    .filter(n => /^gemini-.*flash/.test(n) && !/image|tts|audio|live|exp|latest|thinking/.test(n));
+  const tier = n => (/preview/.test(n) ? 2 : /lite/.test(n) ? 1 : 0);
   const ver = n => parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || 0);
-  return names.sort((a, b) => ver(b) - ver(a) || a.length - b.length);
+  return names.sort((a, b) => tier(a) - tier(b) || ver(b) - ver(a) || a.length - b.length);
 }
 
 /** Escolhe um modelo "flash" disponível para a chave (quando o padrão não existe mais). */
@@ -87,7 +91,7 @@ async function request({ system, prompt, schema, key, model, fetchImpl }) {
 /**
  * Gera uma resposta em JSON seguindo `schema`.
  * Modelo inexistente (404): troca por outro "flash" e guarda a escolha.
- * Sobrecarga/erro interno (5xx): tenta de novo e depois até 2 outros modelos "flash" (sem guardar).
+ * Sobrecarga/erro interno (5xx): tenta de novo e depois até 3 outros modelos "flash" (sem guardar).
  * @returns {Promise<{ data: object, model: string }>}
  */
 export async function generateJSON({ system, prompt, schema, key = getKey(), model = getModel(), fetchImpl = fetch, sleep = wait }) {
@@ -102,18 +106,23 @@ export async function generateJSON({ system, prompt, schema, key = getKey(), mod
     r = await request({ ...args, model });
   }
   if (transient(r.status)) {
-    await sleep(1500);
+    await sleep(2000);
     r = await request({ ...args, model });
   }
   if (transient(r.status)) {
     let others = [];
-    try { others = (await listFlashModels(key, fetchImpl)).filter(n => !tried.includes(n)).slice(0, 2); } catch { /* fica com o erro original */ }
+    try { others = (await listFlashModels(key, fetchImpl)).filter(n => !tried.includes(n)).slice(0, 3); } catch { /* fica com o erro original */ }
     for (const other of others) {
+      tried.push(other);
       const r2 = await request({ ...args, model: other });
       if (r2.ok || !transient(r2.status)) { r = r2; model = other; break; }
     }
   }
-  if (!r.ok) throw errorMessage(r.status, r.body);
+  if (!r.ok) {
+    const err = errorMessage(r.status, r.body);
+    if (transient(r.status) && tried.length > 1) err.message += ` Modelos tentados: ${tried.join(', ')}.`;
+    throw err;
+  }
   const body = r.body;
   const cand = body && body.candidates && body.candidates[0];
   const text = cand && cand.content && (cand.content.parts || []).map(p => p.text || '').join('');

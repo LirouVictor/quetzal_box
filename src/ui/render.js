@@ -308,9 +308,12 @@ export function aiWin(d, { hasKey, model }) {
         <summary>Configurações da IA</summary>
         <div class="ai-form">
           <label class="ai-label" for="ai-model">Modelo</label>
-          <input id="ai-model" class="ai-input" type="text" autocomplete="off" spellcheck="false" value="${esc(model)}">
+          <input id="ai-model" class="ai-input" type="text" autocomplete="off" spellcheck="false" list="ai-models" value="${esc(model)}">
           <button class="btn btn-ghost btn-small" type="button" id="ai-model-save">Salvar modelo</button>
+          <datalist id="ai-models"></datalist>
         </div>
+        <button class="btn btn-ghost btn-small" type="button" id="ai-list">Ver modelos da chave</button>
+        <p class="hint" id="ai-models-out" role="status"></p>
         <button class="btn btn-ghost btn-small" type="button" id="ai-forget">Apagar chave deste aparelho</button>
       </details>
     </div>

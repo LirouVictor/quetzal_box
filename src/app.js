@@ -111,6 +111,20 @@ function setupAi(out) {
   $('#ai-model-save').addEventListener('click', () => {
     Gemini.setModel($('#ai-model').value);
     $('#ai-model').value = Gemini.getModel();
+    $('#ai-models-out').textContent = `Modelo salvo: ${Gemini.getModel()}.`;
+  });
+  $('#ai-list').addEventListener('click', async () => {
+    const info = $('#ai-models-out');
+    info.textContent = 'Buscando…';
+    try {
+      const names = await Gemini.listFlashModels(Gemini.getKey());
+      $('#ai-models').innerHTML = names.map(n => `<option value="${R.esc(n)}"></option>`).join('');
+      info.textContent = names.length
+        ? `Disponíveis (do mais indicado ao menos): ${names.join(', ')}. Toque no campo Modelo para escolher.`
+        : 'Nenhum modelo Gemini Flash disponível para esta chave.';
+    } catch (e) {
+      info.textContent = e && e.name === 'AiError' ? e.message : 'Não consegui buscar os modelos.';
+    }
   });
   const buttons = out.querySelectorAll('[data-ai]');
   buttons.forEach(b => b.addEventListener('click', async () => {
