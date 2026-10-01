@@ -12,8 +12,9 @@ export const spriteUrl = id => `${SPRITE_BASE}/${id}.png`;
 export const iconUrl = id => `${SPRITE_BASE}/versions/generation-viii/icons/${id}.png`;
 
 /** Sprite grande (96×96) para a espécie; silhueta se não houver correspondência. */
-export function spriteSrc(sp) {
-  return sp.spriteId ? spriteUrl(sp.spriteId) : SILHOUETTE;
+export function spriteSrc(sp, shiny = false) {
+  if (!sp.spriteId) return SILHOUETTE;
+  return shiny ? `${SPRITE_BASE}/shiny/${sp.spriteId}.png` : spriteUrl(sp.spriteId);
 }
 
 /** Ícone de menu para o PC: ícone da Gen 8 quando existe, senão o sprite reduzido. */

@@ -21,6 +21,8 @@ Visualizador de saves de **Pokémon Quetzal** (ROM hack de GBA). Abra o `.sav` d
 |---|---|---|
 | Espécie, apelido, golpes, PP | ✅ | ✅ |
 | Natureza, item, habilidade, IVs, EVs | ✅ | ✅ |
+| Poké Ball | ✅ | ✅ |
+| Shiny | ainda não | ✅ |
 | Experiência | ✅ | ✅ (o jogo guarda ÷ 10) |
 | Nível | ✅ | calculado pela experiência (curva conferida no jogo) |
 | Stats | ✅ | não são guardados no PC |

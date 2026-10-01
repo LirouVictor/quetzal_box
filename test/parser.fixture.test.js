@@ -87,7 +87,16 @@ suite.skipIf(!has)('save real (fixtures/PokemonQuetzalPtBrAlpha9v0.sav)', () => 
     expect(bySlot[16].item).toMatchObject({ name: 'Golisopite', confidence: 'confirmado' });
     expect(bySlot[29].item).toMatchObject({ name: 'Baxcalibrite', confidence: 'confirmado' });
     // Níveis calculados pela exp, conferidos no jogo pelo autor
-    expect([bySlot[2].level, bySlot[4].level, bySlot[19].level]).toEqual([59, 92, 26]);
+    expect([bySlot[2].level, bySlot[4].level, bySlot[19].level, bySlot[10].level]).toEqual([59, 92, 26, 93]);
+    // Bola e shiny conferidos no jogo pelo autor
+    const shinies = d.pc.boxes[0].slots.filter(s => s.shiny).map(s => s.slot);
+    expect(shinies).toEqual([9, 10, 12]); // Scorbunny, Charizard, Tyranitar
+    const ball = n => bySlot[n].ball.name;
+    expect([1, 28, 29].map(ball)).toEqual(['Poké Ball', 'Poké Ball', 'Poké Ball']);
+    expect([9, 17, 18, 30].map(ball)).toEqual(['Great Ball', 'Great Ball', 'Great Ball', 'Great Ball']);
+    expect([19, 22].map(ball)).toEqual(['Ultra Ball', 'Ultra Ball']);
+    expect(ball(27)).toBe('Premier Ball');
+    expect(bySlot[10].ball).toMatchObject({ id: 25, name: 'Radiante', confidence: 'provável' });
     expect(bySlot[1].evs).toEqual({ hp: 0, atk: 8, def: 0, spe: 0, spa: 0, spd: 0 });
   });
 });
@@ -111,6 +120,7 @@ suite.skipIf(!hasPc)('equipe → PC (fixtures/PokemonQuetzalPtBrAlpha9v0-pc.sav)
       expect(c.nature).toEqual(p.nature);
       expect(c.item).toEqual(p.item);
       expect(c.ability).toEqual(p.ability);
+      expect(c.ball).toEqual(p.ball); // byte 0x32 da equipe = bits 38–43 do PC
       expect(c.ivs).toEqual(p.ivs);
       expect(c.evs).toEqual(p.evs);
       expect(c.moves).toEqual(p.moves);

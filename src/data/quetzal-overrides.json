@@ -1,5 +1,5 @@
 {
-  "_doc": "Tabela manual do que difere entre o Quetzal e as fontes geradas. Espécies com ID > 905 têm numeração própria do Quetzal. 'confidence' é 'confirmado' ou 'provável'; 'evidence' diz de onde veio. 'pokeapi' é o identificador da forma na PokeAPI (para sprite e tipos); null = sem correspondência (silhueta). Itens: até 'itemsVerifiedUpTo' a tabela do expansion master foi conferida; entre esse valor e 'itemsDivergeFrom' o nome do master é usado como 'provável'; a partir de 'itemsDivergeFrom' a numeração diverge e itens sem override aparecem como não mapeados. 'baseDex': espécie base (Dex Nacional) cujos tipos e habilidades são usados como 'provável' quando a forma não tem correspondência na PokeAPI.",
+  "_doc": "Tabela manual do que difere entre o Quetzal e as fontes geradas. Espécies com ID > 905 têm numeração própria do Quetzal. 'confidence' é 'confirmado' ou 'provável'; 'evidence' diz de onde veio. 'pokeapi' é o identificador da forma na PokeAPI (para sprite e tipos); null = sem correspondência (silhueta). Itens: até 'itemsVerifiedUpTo' a tabela do expansion master foi conferida; entre esse valor e 'itemsDivergeFrom' o nome do master é usado como 'provável'; a partir de 'itemsDivergeFrom' a numeração diverge e itens sem override aparecem como não mapeados. 'baseDex': espécie base (Dex Nacional) cujos tipos e habilidades são usados como 'provável' quando a forma não tem correspondência na PokeAPI. Poké Balls: IDs em 'ballsVerified' foram conferidos no jogo; os demais usam o nome do expansion como 'provável'; 'balls' tem as bolas próprias do Quetzal.",
   "species": {
     "951": {
       "name": "Raichu",
@@ -82,5 +82,18 @@
     }
   },
   "itemsDivergeFrom": 829,
-  "itemsVerifiedUpTo": 479
+  "itemsVerifiedUpTo": 479,
+  "ballsVerified": [
+    1,
+    2,
+    3,
+    5
+  ],
+  "balls": {
+    "25": {
+      "name": "Radiante",
+      "confidence": "provável",
+      "evidence": "Bola do Charizard shiny (PC, posição 10), descrita pelo autor como \"pokébola radiante\", que parece ser exclusiva do Quetzal. No expansion, o 25 é a Park Ball. Nome exato no jogo ainda não conferido."
+    }
+  }
 }

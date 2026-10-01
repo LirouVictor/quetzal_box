@@ -14,7 +14,7 @@ const d = describe(parseSave(makeSave({
   ],
   pc: {
     2: { species: 66, nickname: 'SQSR', moves: [[43, 48]], exp: 150, nature: 19, ivs: [31, 31, 31, 31, 31, 31], abilityNum: 1 },
-    3: { species: 951, nickname: 'Raichu', moves: [[94, 16]], item: 389, exp: 199100, nature: 15, ivs: [31, 31, 31, 31, 31, 31], evs: [4, 0, 0, 252, 252, 0] },
+    3: { species: 951, nickname: 'Raichu', moves: [[94, 16]], item: 389, exp: 199100, nature: 15, ivs: [31, 31, 31, 31, 31, 31], evs: [4, 0, 0, 252, 252, 0], ball: 2, shiny: true },
     4: { species: 26, moves: [[85, 24]], item: 866, exp: 1059860 },
   },
 })), T);
@@ -29,7 +29,7 @@ suite('Showdown', () => {
   });
   it('PC com nível, natureza, item e habilidade; formas usam o nome do Showdown', () => {
     expect(txt).toContain('=== PC: BOX1 ===\n\nSQSR (Machop)\nAbility: No Guard\nLevel: 5\nRash Nature\n- Leer\n\n');
-    expect(txt).toContain('Raichu-Alola @ Aloraichium Z\nAbility: Surge Surfer\nLevel: 58\nEVs: 4 HP / 252 SpA / 252 Spe\nModest Nature\n- Psychic\n');
+    expect(txt).toContain('Raichu-Alola @ Aloraichium Z\nAbility: Surge Surfer\nLevel: 58\nShiny: Yes\nEVs: 4 HP / 252 SpA / 252 Spe\nModest Nature\n- Psychic\n');
   });
   it('item não mapeado não vai para o Showdown', () => {
     expect(txt).toContain('Raichu\nAbility: Static\nLevel: 100\nHardy Nature\nIVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\n- Thunderbolt');
@@ -50,7 +50,8 @@ suite('CSV', () => {
     const raichu = lines[4].split(';');
     expect(raichu.slice(0, 14)).toEqual(['BOX1', '4', 'Raichu', 'Alola', '951', 'confirmado', 'Raichu', 'electric', 'psychic',
       '58', '199100', 'Modest', 'Aloraichium Z', 'Surge Surfer']);
-    expect(raichu[22]).toBe(''); // HP (stats não são guardados no PC)
+    expect(raichu.slice(14, 16)).toEqual(['Great Ball', 'sim']); // bola e shiny
+    expect(raichu[24]).toBe(''); // HP (stats não são guardados no PC)
     expect(lines[5].split(';')[12]).toBe('Item 866');
   });
 });

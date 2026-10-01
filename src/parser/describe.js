@@ -112,7 +112,17 @@ export function makeResolver(T) {
     return { id, name, confidence: CONFIRMED, evidence: null };
   }
 
-  return { species, move, item, ability };
+  function ball(id) {
+    const ov = T.overrides.balls[id];
+    if (ov) return { id, name: ov.name, confidence: ov.confidence, evidence: ov.evidence || null };
+    const name = T.balls[id];
+    if (!name) return { id, name: `Bola ${id}`, confidence: UNKNOWN, evidence: null };
+    return T.overrides.ballsVerified.includes(id)
+      ? { id, name, confidence: CONFIRMED, evidence: null }
+      : { id, name, confidence: PROBABLE, evidence: 'Nome da tabela do pokeemerald-expansion; ainda não conferido no jogo.' };
+  }
+
+  return { species, move, item, ability, ball };
 }
 
 const SHOWDOWN_NAMES = { 'Nidoran♀': 'Nidoran-F', 'Nidoran♂': 'Nidoran-M' };
@@ -145,6 +155,8 @@ export function describe(raw, T) {
       nature: natureFromPid(p.pid),
       item: R.item(p.itemId),
       ability: R.ability(sp, p.abilityNum),
+      ball: R.ball(p.ballId),
+      shiny: null, // ainda não localizado no registro da equipe
       friendship: p.friendship,
       ot: { name: p.otName, tid: p.otId & 0xFFFF, sid: p.otId >>> 16 },
       pid: p.pid,
@@ -177,6 +189,8 @@ export function describe(raw, T) {
         nature: natureFromId(s.natureId),
         item: R.item(s.itemId),
         ability: R.ability(sp, s.abilityNum),
+        ball: R.ball(s.ballId),
+        shiny: s.shiny,
         friendship: null, ot: null, pid: null,
         moves: s.moves.map(R.move),
         stats: null, ivs: s.ivs, evs: s.evs,

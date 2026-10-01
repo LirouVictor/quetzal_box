@@ -25,7 +25,9 @@ function speciesLabel(sp) {
 function portrait(m, size = 96) {
   const sp = m.species;
   const t = sp.types[0] ? ` t-${esc(sp.types[0])}` : '';
-  return `<div class="portrait${t}"><img data-sprite="1" src="${esc(spriteSrc(sp))}" width="${size}" height="${size}" alt="" decoding="async" loading="lazy" crossorigin="anonymous"></div>`;
+  // Sprite shiny com o normal como alternativa, se a versão shiny não existir
+  const next = m.shiny && sp.spriteId ? ` data-next="${esc(spriteSrc(sp))}"` : '';
+  return `<div class="portrait${t}"><img data-sprite="1"${next} src="${esc(spriteSrc(sp, m.shiny))}" width="${size}" height="${size}" alt="" decoding="async" loading="lazy" crossorigin="anonymous"></div>`;
 }
 
 function movesList(moves) {
@@ -61,6 +63,11 @@ function statRows(m, { withStats }) {
 const ivEvTable = m => statRows(m, { withStats: false });
 const statsTable = m => statRows(m, { withStats: true });
 
+function ballChip(b) {
+  if (!b) return '<span class="chip unread"><span class="k">Bola</span> não lida</span>';
+  return `<span class="chip"><span class="k">Bola</span><b>${esc(b.name)}</b>${badge(b.confidence)}</span>`;
+}
+
 function natureChip(n) {
   if (!n) return '<span class="chip unread"><span class="k">Natureza</span> não lida</span>';
   const eff = n.plus ? ` <span class="k">+${STAT_LABEL[n.plus]} −${STAT_LABEL[n.minus]}</span>` : ' <span class="k">neutra</span>';
@@ -88,7 +95,7 @@ function monHeader(m, headingTag = 'h3', idAttr = '') {
   return `<div class="mon-head">
     ${portrait(m)}
     <div>
-      <${headingTag} class="mon-name"${idAttr}>${title}${badge(sp.confidence)}</${headingTag}>
+      <${headingTag} class="mon-name"${idAttr}>${title}${m.shiny ? ' <span class="shiny" title="Shiny">★<span class="sr"> shiny</span></span>' : ''}${badge(sp.confidence)}</${headingTag}>
       <div class="mon-sub">${sub}${m.level ? ` · <span class="lv"${m.levelFromExp ? ' title="Calculado pela experiência (curva Medium Slow)"' : ''}>Nv. ${m.level}</span>` : ''}</div>
       ${typeChips(sp.types)}
     </div>
@@ -102,7 +109,7 @@ export function partyCard(m) {
       <span>HP</span><span class="meter"><i style="width:100%"></i></span><span>${m.stats.hp}</span>
       <span class="hp-note">HP máximo (o HP atual ainda não é lido)</span>
     </div>
-    <div class="facts">${natureChip(m.nature)}${itemChip(m.item, true)}${abilityChip(m.ability)}</div>
+    <div class="facts">${natureChip(m.nature)}${itemChip(m.item, true)}${abilityChip(m.ability)}${ballChip(m.ball)}</div>
     ${movesList(m.moves)}
     ${statsTable(m)}
   </article>`;
@@ -175,12 +182,13 @@ export function boxGrid(box) {
     const s = bySlot.get(i);
     if (!s) { cells += `<div class="slot empty" role="gridcell" aria-label="Posição ${i}, vazia"></div>`; continue; }
     const sp = s.species;
-    const label = `${s.hasNickname ? s.nickname + ' (' + sp.name + ')' : sp.name}, posição ${i}`;
+    const label = `${s.hasNickname ? s.nickname + ' (' + sp.name + ')' : sp.name}${s.shiny ? ', shiny' : ''}, posição ${i}`;
     const next = sp.spriteId && sp.hasIcon ? spriteUrl(sp.spriteId) : '';
     cells += `<button class="slot" type="button" role="gridcell" data-slot="${i}" aria-label="${esc(label)}">
       <img${next ? ' class="ico"' : ''} data-sprite="1" data-next="${esc(next)}" src="${esc(iconSrc(sp))}" alt="" decoding="async" crossorigin="anonymous">
       ${sp.spriteId ? '' : `<span class="lbl">${esc(s.nickname)}</span>`}
       ${sp.confidence !== 'confirmado' ? '<span class="q" aria-hidden="true"></span>' : ''}
+      ${s.shiny ? '<span class="star" aria-hidden="true">★</span>' : ''}
     </button>`;
   }
   return cells;
@@ -193,7 +201,7 @@ export function pcDetail(m) {
     ${monHeader(m, 'h2', ' id="detail-title"')}
     <p class="mon-sub">${esc(m.where)}, posição ${m.slot}</p>
     ${sp.evidence ? `<p class="evidence">${esc(sp.evidence)}</p>` : ''}
-    <div class="facts">${natureChip(m.nature)}${itemChip(m.item, true)}${abilityChip(m.ability)}</div>
+    <div class="facts">${natureChip(m.nature)}${itemChip(m.item, true)}${abilityChip(m.ability)}${ballChip(m.ball)}</div>
     ${movesList(m.moves)}
     ${ivEvTable(m)}
     <p class="unread-list">No PC, o nível é calculado pela experiência (${m.exp.toLocaleString('pt-BR')} exp). Amizade e treinador original não são guardados no registro do PC.</p>
@@ -208,6 +216,7 @@ export function notesWin() {
       <summary id="notes-h">O que ainda não dá para ler</summary>
       <ul>
         <li>HP atual da equipe (a barra mostra o HP máximo).</li>
+        <li>Shiny e gênero na equipe; gênero no PC.</li>
         <li>No PC: stats (o jogo recalcula ao tirar da caixa), amizade e treinador original não são guardados.</li>
         <li>O nível no PC é calculado pela experiência (guardada dividida por 10) com a curva Medium Slow, que o Quetzal usa para todas as espécies.</li>
         <li>Itens com ID acima de 479 ainda não foram todos conferidos e aparecem como "provável"; a partir de 829 (megapedras novas) a numeração é própria do Quetzal e só os itens já conferidos têm nome.</li>
