@@ -221,8 +221,10 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 .stats .num { width: 40px; text-align: right; padding-right: 8px; font-size: .78rem; }
 .stats .bar { height: 8px; background: var(--bar); }
 .stats .bar i { display: block; height: 100%; background: var(--accent); }
-.stats .ivev { width: 108px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; font-size: .8rem; }
-.stats .ivev .max { color: var(--gold); font-weight: 700; }
+.stats .iv, .stats .ev { width: 40px; text-align: right; font: .72rem var(--pixel); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stats thead th { padding: 0 0 2px; color: var(--muted); }
+.stats td.iv { padding-left: 8px; }
+.stats .iv.max { color: var(--gold); }
 .stats caption { text-align: left; color: var(--muted); font-size: .78rem; caption-side: bottom; padding-top: 4px; }
 
 /* PC */
@@ -276,7 +278,7 @@ details > summary { cursor: pointer; min-height: 44px; display: flex; align-item
   .portrait { width: 88px; height: 88px; }
   .portrait img { width: 80px; height: 80px; }
   .moves { grid-template-columns: 1fr; }
-  .stats .ivev { width: 92px; }
+  .stats .iv, .stats .ev { width: 34px; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
