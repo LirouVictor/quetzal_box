@@ -13,9 +13,12 @@ Site estático (Vite + JS puro) que lê saves `.sav` de **Pokémon Quetzal** (RO
 
 - `src/parser/save.js`: leitura crua (só números/textos). Offsets em constantes exportadas (`PARTY`, `PC`, ...).
 - `src/parser/describe.js`: resolve nomes, tipos, natureza, habilidade, nível (pela exp) e marca a confiança de cada dado.
+- `src/parser/stats.js`: stats pela fórmula (stats base da PokeAPI), detecção de natureza efetiva ("mint") e Hidden Power. `src/parser/natures.js`: tabela de naturezas.
+- `src/analysis.js`: fraquezas/resistências e cobertura da equipe (tabela de tipos em `src/data/typechart.json`).
+- `src/search.js`: busca e filtros sobre equipe + PC.
 - `src/parser/charset.js`: tabela de caracteres Gen 3.
 - `src/export.js`: CSV (BOM + `;`, padrão do Excel pt-BR), Showdown, JSON.
-- `src/data/`: tabelas geradas + `quetzal-overrides.json` (manual: IDs próprios do Quetzal e exceções de item).
+- `src/data/`: tabelas geradas + `quetzal-overrides.json` (manual: IDs próprios do Quetzal e exceções de item). `move-text.json` (descrições dos golpes) é carregado sob demanda, num pacote separado.
 - `src/ui/`, `src/main.js`, `src/styles/`: interface. `src/ui/store.js` guarda uma cópia do último save no IndexedDB (só local) para abrir sozinha na próxima visita.
 - `src/sw-template.js` vira `dist/sw.js` no build (plugin em `vite.config.js` injeta a lista de precache). `public/_headers` tem cache e CSP para o Cloudflare Pages (hash do script inline calculado no build).
 - `reference/quetzal-viewer.html`: protótipo original (só referência; não é usado no build).
@@ -85,7 +88,8 @@ Contagem em `0x6A4` (u8). Registros a partir de `0x6A8`, **104 bytes (0x68), sem
 | 0x5A | 6×u16 | stats HP/Atk/Def/Spe/SpA/SpD | confirmado |
 | 0x66 | u16 | varia (`0000`, `2202`, `1111`); não é o HP atual | desconhecido |
 
-- Natureza = PID % 25 (conferida contra os stats).
+- Natureza = PID % 25. Os PIDs vistos são pequenos e seguem `225 + natureza` (o jogo escolhe o PID só para fixar a natureza).
+- **Stats** = fórmula padrão das gerações 3+ com os stats base oficiais (PokeAPI): reproduz exatamente os stats salvos de 9 das 10 espécies vistas na equipe. A exceção é o **Serperior** (PID `0x1F0`, PID % 25 = Gentle): os stats batem com **Modest**, como se tivesse usado uma "mint". O campo dessa natureza efetiva não foi localizado; a UI detecta testando as 25 naturezas contra os stats salvos e mostra "Gentle · stats de Modest". Falta conferir no jogo qual natureza o resumo mostra.
 - **Shiny na equipe: não localizado.** Os PIDs vistos são pequenos (ex.: `0xF0`), então o shiny não sai da fórmula PID/OT da Gen 3; deve haver um bit próprio, ainda não achado (nenhum Pokémon da equipe nos saves é shiny).
 - **HP atual não foi encontrado** no registro; a UI mostra só o HP máximo.
 - Observação: todos os PP observados (equipe e PC) estão no máximo com 3 PP Ups (ex.: Tackle 56 = 35 × 1,6), até em Pokémon recém-capturados. Pode ser regra do Quetzal; não confirmado se o campo é o PP atual.
@@ -125,7 +129,7 @@ Registro de 38 bytes. Bits contados em little-endian a partir do byte 0 (bit *n*
 | bytes 28–37 | | apelido (vazio = usar nome da espécie) | confirmado |
 
 - "Cruzado" = Pokémon que aparece na equipe de um save e no PC de outro (Lucario, Basculegion, Arcanine, Baxcalibur, Corviknight, Rillaboom): item, exp, natureza, habilidade, IVs e EVs batem exatamente. O teste `equipe → PC` cobre isso.
-- O registro do PC **não tem** PID, OT, amizade nem stats. Os stats são recalculados pelo jogo ao tirar da caixa.
+- O registro do PC **não tem** PID, OT, amizade nem stats. O app calcula os stats pela mesma fórmula (nos 6 Pokémon cruzados, os stats calculados no PC são iguais aos salvos na equipe). Para um Pokémon com "mint", a natureza do PC (bits 161–165) pode não ser a que vale para os stats; ainda não visto.
 - **Nível**: não é guardado; vem da experiência. Todos os Pokémon nível 100 vistos (inclusive espécies "Slow", como Dragonite e Baxcalibur, e "Medium Fast", como Basculegion) têm exatamente 1 059 860 de exp, o máximo da curva **Medium Slow**: o Quetzal usa essa curva para todas as espécies. **Confirmado** no jogo pelo autor com níveis calculados do PC (Scizor 59, Blaziken 92, Pelipper 26).
 - EVs ÷ 4: o PC só guarda múltiplos de 4.
 - Com 11 bits, o PC só representa espécies até 2047.

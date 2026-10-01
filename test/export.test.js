@@ -51,7 +51,10 @@ suite('CSV', () => {
     expect(raichu.slice(0, 14)).toEqual(['BOX1', '4', 'Raichu', 'Alola', '951', 'confirmado', 'Raichu', 'electric', 'psychic',
       '58', '199100', 'Modest', 'Aloraichium Z', 'Surge Surfer']);
     expect(raichu.slice(14, 16)).toEqual(['Great Ball', 'sim']); // bola e shiny
-    expect(raichu[24]).toBe(''); // HP (stats não são guardados no PC)
+    const head = lines[0].split(';');
+    expect(raichu[head.indexOf('HP')]).toBe('156'); // stats do PC são calculados: ⌊(2·60+31+1)·58/100⌋+58+10
+    expect(raichu[head.indexOf('Stats')]).toBe('calculados');
+    expect(lines[1].split(';')[head.indexOf('Stats')]).toBe('salvos');
     expect(lines[5].split(';')[12]).toBe('Item 866');
   });
 });

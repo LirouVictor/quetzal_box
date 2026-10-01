@@ -46,6 +46,9 @@ suite.skipIf(!has)('save real (fixtures/PokemonQuetzalPtBrAlpha9v0.sav)', () => 
     expect(luc.evs).toEqual({ hp: 4, atk: 0, def: 0, spe: 252, spa: 252, spd: 0 });
     expect(luc.stats).toEqual({ hp: 282, atk: 230, def: 176, spe: 279, spa: 361, spd: 176 });
     expect(luc.item.id).toBe(865);
+    // Stats da equipe: a natureza do PID reproduz os stats, exceto no Serperior (stats batem com Modest)
+    expect(d.party.map(m => m.statNature && m.statNature.name)).toEqual([null, null, 'Modest', null, null, null]);
+    expect(d.party[5].hiddenPower).toBe('dark'); // Lucario, IVs 31 em tudo
     expect(raw.party.map(p => p.misc)).toEqual([0x40000000, 0x40000000, 0x40000000, 0x50000000, 0x50000000, 0x50000000]);
     // Habilidades conferidas pelo autor na tela de resumo do jogo
     expect(d.party.map(m => m.ability.name)).toEqual(['Inner Focus', 'Intimidate', 'Overgrow', 'Magic Guard', 'Adaptability', 'Inner Focus']);
@@ -126,6 +129,7 @@ suite.skipIf(!hasPc)('equipe → PC (fixtures/PokemonQuetzalPtBrAlpha9v0-pc.sav)
       expect(c.item).toEqual(p.item);
       expect(c.ability).toEqual(p.ability);
       expect(c.ball).toEqual(p.ball); // byte 0x32 da equipe = bits 38–43 do PC
+      expect(c.stats).toEqual(p.stats); // stats calculados no PC = stats salvos na equipe
       expect(c.ivs).toEqual(p.ivs);
       expect(c.evs).toEqual(p.evs);
       expect(c.moves).toEqual(p.moves);

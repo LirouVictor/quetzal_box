@@ -2,6 +2,7 @@
 
 import { spriteSrc, iconSrc, spriteUrl } from './sprites.js';
 import { SHOWDOWN_ORDER, STAT_LABEL } from '../export.js';
+import { analyzeTeam } from '../analysis.js';
 
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const pad5 = n => String(n).padStart(5, '0');
@@ -30,20 +31,31 @@ function portrait(m, size = 96) {
   return `<div class="portrait${t}"><img data-sprite="1"${next} src="${esc(spriteSrc(sp, m.shiny))}" width="${size}" height="${size}" alt="" decoding="async" loading="lazy" crossorigin="anonymous"></div>`;
 }
 
+const CATEGORY = ['Físico', 'Especial', 'Status'];
+
 function movesList(moves) {
   if (!moves.length) return '<p class="hint">Sem golpes.</p>';
-  return `<ul class="moves">${moves.map(mv => `
-    <li class="move t-${esc(mv.type || 'none')}">
-      <span>${esc(mv.name)}</span><span class="pp">${mv.pp} PP</span>
-      <span class="mt">${esc(mv.type || '—')}</span>
-    </li>`).join('')}</ul>`;
+  return `<ul class="moves">${moves.map(mv => {
+    const power = mv.power ? mv.power : '—';
+    const acc = mv.accuracy ? mv.accuracy + '%' : '—';
+    const cat = mv.category !== null && mv.category !== undefined ? CATEGORY[mv.category] : '—';
+    return `<li><details class="move t-${esc(mv.type || 'none')}">
+      <summary><span>${esc(mv.name)}</span><span class="pp">${mv.pp} PP</span>
+        <span class="mt">${esc(mv.type || '—')} · ${esc(cat)}</span></summary>
+      <div class="move-info">
+        <span><span class="k">Poder</span> ${power}</span><span><span class="k">Precisão</span> ${acc}</span>
+        <p class="move-desc" data-move="${mv.id}"></p>
+      </div>
+    </details></li>`;
+  }).join('')}</ul>`;
 }
 
 /** Tabela de stats com colunas fixas: rótulo, [valor], barra, IV, EV. */
 function statRows(m, { withStats }) {
   const max = withStats ? Math.max(...SHOWDOWN_ORDER.map(k => m.stats[k]), 1) : 31;
+  const nat = m.statNature || m.nature;
   const rows = SHOWDOWN_ORDER.map(k => {
-    const cls = m.nature && m.nature.plus === k ? 'plus' : m.nature && m.nature.minus === k ? 'minus' : '';
+    const cls = nat && nat.plus === k ? 'plus' : nat && nat.minus === k ? 'minus' : '';
     const mark = cls === 'plus' ? '+' : cls === 'minus' ? '−' : '';
     const iv = m.ivs[k];
     const value = withStats ? m.stats[k] : iv;
@@ -56,7 +68,9 @@ function statRows(m, { withStats }) {
     </tr>`;
   }).join('');
   const head = `<thead><tr><td></td>${withStats ? '<td></td>' : ''}<td></td><th scope="col" class="iv">IV</th><th scope="col" class="ev">EV</th></tr></thead>`;
-  const caption = withStats ? 'Barras relativas ao maior stat deste Pokémon.' : 'Barras = IV (0–31). Stats não são guardados no PC.';
+  const caption = !withStats ? 'Barras = IV (0–31). Stats não calculados (espécie sem stats base conhecidos).'
+    : m.statsCalculated ? 'Stats calculados (o PC não guarda stats): stats base oficiais + nível, IVs, EVs e natureza. Barras relativas ao maior stat.'
+    : 'Barras relativas ao maior stat deste Pokémon.';
   return `<table class="stats"><caption>${caption}</caption>${head}<tbody>${rows}</tbody></table>`;
 }
 
@@ -68,10 +82,18 @@ function ballChip(b) {
   return `<span class="chip"><span class="k">Bola</span><b>${esc(b.name)}</b>${badge(b.confidence)}</span>`;
 }
 
-function natureChip(n) {
+function natureChip(n, statNature = null) {
   if (!n) return '<span class="chip unread"><span class="k">Natureza</span> não lida</span>';
-  const eff = n.plus ? ` <span class="k">+${STAT_LABEL[n.plus]} −${STAT_LABEL[n.minus]}</span>` : ' <span class="k">neutra</span>';
-  return `<span class="chip"><span class="k">Natureza</span><b>${esc(n.name)}</b>${eff}</span>`;
+  const effOf = x => x.plus ? `+${STAT_LABEL[x.plus]} −${STAT_LABEL[x.minus]}` : 'neutra';
+  if (statNature) {
+    return `<span class="chip" title="Os stats salvos batem com ${esc(statNature.name)}, não com ${esc(n.name)} (efeito de mint?)"><span class="k">Natureza</span><b>${esc(n.name)}</b> <span class="k">stats de ${esc(statNature.name)} (${effOf(statNature)})</span></span>`;
+  }
+  return `<span class="chip"><span class="k">Natureza</span><b>${esc(n.name)}</b> <span class="k">${effOf(n)}</span></span>`;
+}
+
+function hiddenPowerChip(t) {
+  if (!t) return '';
+  return `<span class="chip"><span class="k">Hidden Power</span><span class="type t-${esc(t)}">${esc(t)}</span></span>`;
 }
 
 function itemChip(item, complete) {
@@ -109,7 +131,7 @@ export function partyCard(m) {
       <span>HP</span><span class="meter"><i style="width:100%"></i></span><span>${m.stats.hp}</span>
       <span class="hp-note">HP máximo (o HP atual ainda não é lido)</span>
     </div>
-    <div class="facts">${natureChip(m.nature)}${itemChip(m.item, true)}${abilityChip(m.ability)}${ballChip(m.ball)}</div>
+    <div class="facts">${natureChip(m.nature, m.statNature)}${itemChip(m.item, true)}${abilityChip(m.ability)}${ballChip(m.ball)}${hiddenPowerChip(m.hiddenPower)}</div>
     ${movesList(m.moves)}
     ${statsTable(m)}
   </article>`;
@@ -194,20 +216,108 @@ export function boxGrid(box) {
   return cells;
 }
 
-export function pcDetail(m) {
+export function monDetail(m) {
   const sp = m.species;
+  const where = m.location === 'party' ? `Equipe, posição ${m.slot}` : `${m.where}, posição ${m.slot}`;
+  const note = m.location === 'pc'
+    ? `<p class="unread-list">No PC, o nível vem da experiência (${m.exp.toLocaleString('pt-BR')} exp) e os stats são calculados. Amizade e treinador original não são guardados no registro do PC.</p>`
+    : '';
   return `<button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="Fechar">✕</button>
   <div class="mon">
     ${monHeader(m, 'h2', ' id="detail-title"')}
-    <p class="mon-sub">${esc(m.where)}, posição ${m.slot}</p>
+    <p class="mon-sub">${esc(where)}</p>
     ${sp.evidence ? `<p class="evidence">${esc(sp.evidence)}</p>` : ''}
-    <div class="facts">${natureChip(m.nature)}${itemChip(m.item, true)}${abilityChip(m.ability)}${ballChip(m.ball)}</div>
+    <div class="facts">${natureChip(m.nature, m.statNature)}${itemChip(m.item, true)}${abilityChip(m.ability)}${ballChip(m.ball)}${hiddenPowerChip(m.hiddenPower)}</div>
     ${movesList(m.moves)}
-    ${ivEvTable(m)}
-    <p class="unread-list">No PC, o nível é calculado pela experiência (${m.exp.toLocaleString('pt-BR')} exp). Amizade e treinador original não são guardados no registro do PC.</p>
+    ${m.stats ? statsTable(m) : ivEvTable(m)}
+    ${note}
     <div class="export-btns"><button class="btn btn-ghost" type="button" data-copy="mon">Copiar (Showdown)</button></div>
     <details><summary>Bytes do registro</summary><p class="raw">${esc(m.raw)}</p></details>
   </div>`;
+}
+
+const typeChip = t => `<span class="type t-${esc(t)}">${esc(t)}</span>`;
+const monShort = m => esc(m.hasNickname ? m.nickname : m.species.name);
+
+/** Fraquezas/resistências por tipo de ataque e cobertura dos golpes da equipe. */
+export function analysisWin(d, T) {
+  if (!d.party.length) return '';
+  const a = analyzeTeam(d.party, { types: T.types, chart: T.typechart });
+  const rows = a.defense.map(r => {
+    const names = list => list.map(monShort).join(', ');
+    const cell = (list, cls, label) => list.length
+      ? `<button type="button" class="cnt ${cls}" data-info="${esc(label)} a ${esc(r.type)}: ${names(list)}" aria-label="${list.length} ${esc(label.toLowerCase())}">${list.length}</button>`
+      : '<span class="cnt zero">·</span>';
+    return `<tr class="${r.alert ? 'alert' : ''}">
+      <th scope="row">${typeChip(r.type)}</th>
+      <td>${cell(r.weak, 'weak', 'Fracos')}</td><td>${cell(r.resist, 'resist', 'Resistem')}</td><td>${cell(r.immune, 'immune', 'Imunes')}</td>
+    </tr>`;
+  }).join('');
+  return `<section class="win" aria-labelledby="analysis-h">
+    <div class="win-title"><h2 id="analysis-h">Análise da equipe</h2><small>tipos</small></div>
+    <details class="analysis">
+      <summary>Fraquezas e resistências</summary>
+      <table class="typetab">
+        <thead><tr><th scope="col">Ataque</th><th scope="col">Fracos</th><th scope="col">Resistem</th><th scope="col">Imunes</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p class="type-info" id="type-info" role="status">Toque num número para ver quem.</p>
+      <p class="hint">Linhas destacadas: tipos que acertam muitos membros em cheio. Não considera habilidades (Levitate etc.) nem itens.</p>
+    </details>
+    <details class="analysis">
+      <summary>Cobertura dos golpes</summary>
+      <p class="k-line">Golpes de dano da equipe: ${a.moveTypes.map(typeChip).join(' ') || '—'}</p>
+      <p class="k-line">Super efetivo contra: ${a.coverage.map(typeChip).join(' ') || '—'}</p>
+      <p class="k-line">Nenhum golpe super efetivo contra: ${a.gaps.map(typeChip).join(' ') || '—'}</p>
+    </details>
+  </section>`;
+}
+
+/** Busca na equipe e em todas as caixas do PC. */
+export function searchWin(d, T) {
+  const typeOpts = T.types.filter(t => t && t !== 'stellar').map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  return `<section class="win" aria-labelledby="search-h">
+    <div class="win-title"><h2 id="search-h">Buscar</h2><small>equipe + PC</small></div>
+    <div class="search-form">
+      <label class="sr" for="q">Buscar</label>
+      <input id="q" type="search" placeholder="Nome, espécie, golpe, habilidade ou item" autocomplete="off" enterkeyhint="search">
+      <div class="search-row">
+        <label class="sr" for="f-type">Tipo</label>
+        <select id="f-type"><option value="">Todos os tipos</option>${typeOpts}</select>
+        <label class="sr" for="f-flag">Filtro</label>
+        <select id="f-flag">
+          <option value="">Sem filtro</option>
+          <option value="shiny">Só shiny</option>
+          <option value="hidden">Habilidade oculta</option>
+          <option value="female">Fêmeas</option>
+          <option value="male">Machos</option>
+          <option value="iv31">6 IVs 31</option>
+        </select>
+        <label class="sr" for="f-sort">Ordem</label>
+        <select id="f-sort">
+          <option value="pos">Posição</option>
+          <option value="level">Nível (maior)</option>
+          <option value="name">Nome</option>
+          <option value="dex">Nº da espécie</option>
+        </select>
+      </div>
+    </div>
+    <p class="hint" id="search-count" role="status"></p>
+    <ul class="results" id="results"></ul>
+    <button class="btn btn-ghost hidden" type="button" id="more">Mostrar mais</button>
+  </section>`;
+}
+
+export function resultRow(m, i) {
+  const sp = m.species;
+  const where = m.location === 'party' ? `Equipe ${m.slot}` : `${esc(m.where)} · ${m.slot}`;
+  const g = m.gender && m.gender.symbol ? ` <span class="gender ${m.gender.symbol === '♀' ? 'f' : 'm'}">${m.gender.symbol}</span>` : '';
+  return `<li><button class="result" type="button" data-i="${i}">
+    <img data-sprite="1" src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" decoding="async" loading="lazy" crossorigin="anonymous">
+    <span class="r-main"><b>${monShort(m)}</b>${g}${m.shiny ? ' <span class="shiny">★</span>' : ''}
+      <span class="r-sub">${m.hasNickname ? esc(sp.name) + ' · ' : ''}${where}</span></span>
+    <span class="r-lv">Nv. ${m.level ?? '?'}</span>
+  </button></li>`;
 }
 
 export function notesWin() {
@@ -217,7 +327,8 @@ export function notesWin() {
       <ul>
         <li>HP atual da equipe (a barra mostra o HP máximo).</li>
         <li>Shiny e gênero na equipe.</li>
-        <li>No PC: stats (o jogo recalcula ao tirar da caixa), amizade e treinador original não são guardados.</li>
+        <li>No PC: amizade e treinador original não são guardados. Os stats são calculados (stats base oficiais + nível, IVs, EVs e natureza); a fórmula foi conferida contra a equipe.</li>
+        <li>Poder, precisão e descrição dos golpes vêm do pokeemerald-expansion (geração mais nova); o Quetzal pode ter mudado algum golpe.</li>
         <li>O nível no PC é calculado pela experiência (guardada dividida por 10) com a curva Medium Slow, que o Quetzal usa para todas as espécies.</li>
         <li>Itens com ID acima de 479 ainda não foram todos conferidos e aparecem como "provável"; a partir de 829 (megapedras novas) a numeração é própria do Quetzal e só os itens já conferidos têm nome.</li>
         <li>Espécies com ID acima de 905 (numeração própria do Quetzal) vêm de uma tabela manual; as ainda não conferidas no jogo aparecem como "provável".</li>

@@ -3,23 +3,10 @@
 
 import { STAT_ORDER } from './save.js';
 
-export const NATURES = [
-  'Hardy', 'Lonely', 'Brave', 'Adamant', 'Naughty', 'Bold', 'Docile', 'Relaxed', 'Impish', 'Lax',
-  'Timid', 'Hasty', 'Serious', 'Jolly', 'Naive', 'Modest', 'Mild', 'Quiet', 'Bashful', 'Rash',
-  'Calm', 'Gentle', 'Sassy', 'Careful', 'Quirky',
-];
-const NATURE_STATS = ['atk', 'def', 'spe', 'spa', 'spd'];
+import { NATURES, natureFromPid, natureFromId } from './natures.js';
+import { calcStats, naturesMatchingStats, hiddenPowerType } from './stats.js';
 
-/** Natureza a partir do PID (PID % 25), com o stat aumentado e o reduzido. */
-export function natureFromPid(pid) {
-  return natureFromId(pid % 25);
-}
-
-export function natureFromId(id) {
-  if (id >= NATURES.length) return null;
-  const plus = NATURE_STATS[Math.floor(id / 5)], minus = NATURE_STATS[id % 5];
-  return { id, name: NATURES[id], plus: plus === minus ? null : plus, minus: plus === minus ? null : minus };
-}
+export { NATURES, natureFromPid, natureFromId };
 
 export const CONFIRMED = 'confirmado';
 export const PROBABLE = 'provável';
@@ -63,6 +50,7 @@ export function makeResolver(T) {
         abilities: form ? form.abilities
           : base ? (T.speciesAbilities[base] || [0, 0, 0]).map(abilityName) : [null, null, null],
         genderRate: form ? form.genderRate : base ? T.genderRates[base] : null,
+        baseStats: form ? form.baseStats : base ? T.baseStats[base] : null,
         traitsFromBase: !!base,
       };
     }
@@ -73,6 +61,7 @@ export function makeResolver(T) {
         spriteId: id, hasIcon: id <= LAST_GEN8_ICON, types: types.map(typeName).filter(Boolean),
         abilities: (T.speciesAbilities[id] || [0, 0, 0]).map(abilityName),
         genderRate: T.genderRates[id] ?? null,
+        baseStats: T.baseStats[id] || null,
       };
     }
     return {
@@ -81,7 +70,7 @@ export function makeResolver(T) {
       showdown: nickname || null,
       confidence: UNKNOWN,
       evidence: nickname ? 'ID próprio do Quetzal ainda não mapeado; nome tirado do apelido.' : 'ID próprio do Quetzal ainda não mapeado.',
-      spriteId: null, hasIcon: false, types: [], abilities: [null, null, null], genderRate: null,
+      spriteId: null, hasIcon: false, types: [], abilities: [null, null, null], genderRate: null, baseStats: null,
     };
   }
 
@@ -96,7 +85,12 @@ export function makeResolver(T) {
 
   function move(m) {
     const row = T.moves[m.id];
-    return { id: m.id, name: row ? row[0] : `Golpe ${m.id}`, type: row ? typeName(row[1]) : null, pp: m.pp };
+    const det = T.moveDetails[m.id];
+    return {
+      id: m.id, name: row ? row[0] : `Golpe ${m.id}`, type: row ? typeName(row[1]) : null, pp: m.pp,
+      // Dados do expansion (geração mais nova): poder/precisão 0 = variável ou não se aplica
+      power: det ? det[0] : null, accuracy: det ? det[1] : null, category: det ? det[3] : null,
+    };
   }
 
   function item(id) {
@@ -154,6 +148,17 @@ export function describe(raw, T) {
 
   const party = raw.party.map(p => {
     const sp = R.species(p.speciesId, p.nickname);
+    const nature = natureFromPid(p.pid);
+    // Natureza que vale para os stats: se a do PID não reproduz os stats salvos, procura a que reproduz (mint)
+    let statNature = null;
+    if (sp.baseStats) {
+      const ok = naturesMatchingStats(sp.baseStats, p.ivs, p.evs, p.level, p.stats);
+      if (ok.length && !ok.includes(nature.id)) {
+        const effect = natureFromId(ok[0]);
+        // Naturezas neutras dão os mesmos stats; o que importa é o efeito (+/−)
+        if (!(nature.plus === effect.plus && nature.minus === effect.minus)) statNature = effect;
+      }
+    }
     return {
       location: 'party',
       where: 'Equipe',
@@ -167,7 +172,8 @@ export function describe(raw, T) {
       level: p.level,
       levelFromExp: false,
       exp: p.exp,
-      nature: natureFromPid(p.pid),
+      nature,
+      statNature,
       item: R.item(p.itemId),
       ability: R.ability(sp, p.abilityNum),
       ball: R.ball(p.ballId),
@@ -177,7 +183,8 @@ export function describe(raw, T) {
       ot: { name: p.otName, tid: p.otId & 0xFFFF, sid: p.otId >>> 16 },
       pid: p.pid,
       moves: p.moves.map(R.move),
-      stats: p.stats, ivs: p.ivs, evs: p.evs,
+      stats: p.stats, statsCalculated: false, ivs: p.ivs, evs: p.evs,
+      hiddenPower: hiddenPowerType(p.ivs),
       unknown: { misc54: '0x' + p.misc.toString(16).padStart(8, '0') },
       raw: p.raw,
     };
@@ -189,6 +196,10 @@ export function describe(raw, T) {
     partial: b.partial,
     slots: b.slots.map(s => {
       const sp = R.species(s.speciesId, s.nickname);
+      const level = levelFromExp(s.exp);
+      const nature = natureFromId(s.natureId);
+      // O PC não guarda stats: calculados pelos stats base (fórmula conferida contra a equipe)
+      const stats = sp.baseStats && nature ? calcStats(sp.baseStats, s.ivs, s.evs, level, nature) : null;
       return {
         location: 'pc',
         where: b.name,
@@ -199,10 +210,11 @@ export function describe(raw, T) {
         nickname: s.nickname || sp.name,
         hasNickname: !!s.nickname && !sameName(s.nickname, sp.name),
         complete: false,
-        level: levelFromExp(s.exp),
+        level,
         levelFromExp: true,
         exp: s.exp,
-        nature: natureFromId(s.natureId),
+        nature,
+        statNature: null,
         item: R.item(s.itemId),
         ability: R.ability(sp, s.abilityNum),
         ball: R.ball(s.ballId),
@@ -210,7 +222,8 @@ export function describe(raw, T) {
         gender: R.gender(sp, s.femaleBit),
         friendship: null, ot: null, pid: null,
         moves: s.moves.map(R.move),
-        stats: null, ivs: s.ivs, evs: s.evs,
+        stats, statsCalculated: !!stats, ivs: s.ivs, evs: s.evs,
+        hiddenPower: hiddenPowerType(s.ivs),
         raw: s.raw,
       };
     }),

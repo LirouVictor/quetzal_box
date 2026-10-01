@@ -26,8 +26,14 @@ Visualizador de saves de **Pokémon Quetzal** (ROM hack de GBA). Abra o `.sav` d
 | Gênero | ainda não | ✅ |
 | Experiência | ✅ | ✅ (o jogo guarda ÷ 10) |
 | Nível | ✅ | calculado pela experiência (curva conferida no jogo) |
-| Stats | ✅ | não são guardados no PC |
+| Stats | ✅ | calculados (stats base + nível, IVs, EVs, natureza) |
 | HP atual | ainda não | — |
+
+Também tem:
+- **Busca** na equipe e em todas as caixas (nome, espécie, golpe, habilidade, item), com filtros (tipo, shiny, habilidade oculta, gênero, 6 IVs 31) e ordenação;
+- **Análise da equipe**: fraquezas, resistências e imunidades por tipo, e cobertura dos golpes;
+- **Detalhes dos golpes** (poder, precisão, categoria, descrição) ao tocar no golpe;
+- **Hidden Power** de cada Pokémon.
 
 Espécies com ID acima de 905 usam numeração própria do Quetzal. Elas são identificadas por uma tabela manual, e as que ainda não foram conferidas no jogo aparecem como **provável**. Itens com ID acima de 479 ainda não foram todos conferidos e aparecem como **provável**; a partir do 829 (megapedras novas) a numeração do Quetzal é diferente da tabela de referência, e só os itens já conferidos têm nome. Os detalhes técnicos estão em [`CLAUDE.md`](CLAUDE.md).
 
