@@ -2,7 +2,7 @@
 // Gera as tabelas estáticas em src/data/*.json.
 //
 // Fontes:
-//   - rh-hideout/pokeemerald-expansion (master): IDs e nomes de golpes e itens
+//   - rh-hideout/pokeemerald-expansion (master): IDs e nomes de golpes, itens e Poké Balls
 //     (é a numeração que o Quetzal usa nesses campos).
 //   - PokeAPI/pokeapi (CSV do repositório): nomes de espécies 1–905, tipos e habilidades
 //     (1ª, 2ª, oculta) das espécies, tipos de golpes e as formas referenciadas em
@@ -58,7 +58,8 @@ function csv(text) {
 
 // Avalia um `enum { A = 1, B, C = A, D = C + 2, ... }` de C. Devolve Map nome -> valor.
 function parseEnum(src, enumName) {
-  const start = src.indexOf(`enum __attribute__((packed)) ${enumName}`);
+  const start = src.search(new RegExp(`enum\\s+(?:__attribute__\\(\\(packed\\)\\)\\s+)?${enumName}\\b`));
+  if (start < 0) throw new Error(`enum ${enumName} não encontrado`);
   const body = src.slice(src.indexOf('{', start) + 1, src.indexOf('};', start));
   const values = new Map();
   let next = 0;
@@ -121,10 +122,11 @@ function denseArray(map, max, fallback) {
 
 async function main() {
   console.log('Baixando fontes…');
-  const [movesH, movesInfo, itemsH, itemsInfo,
+  const [movesH, movesInfo, itemsH, itemsInfo, ballsH,
     pTypes, pPokemon, pSpeciesNames, pPokemonTypes, pMoves, pPokemonAbilities, pAbilityNames] = await Promise.all([
     get(`${EXP}/include/constants/moves.h`), get(`${EXP}/src/data/moves_info.h`),
     get(`${EXP}/include/constants/items.h`), get(`${EXP}/src/data/items.h`),
+    get(`${EXP}/include/constants/pokeball.h`),
     get(`${PAPI}/types.csv`), get(`${PAPI}/pokemon.csv`), get(`${PAPI}/pokemon_species_names.csv`),
     get(`${PAPI}/pokemon_types.csv`), get(`${PAPI}/moves.csv`),
     get(`${PAPI}/pokemon_abilities.csv`), get(`${PAPI}/ability_names.csv`),
@@ -228,7 +230,16 @@ async function main() {
   await write('types.json', types);
   await write('species.json', { meta, species, abilities: speciesAbilities, abilityNames });
   await write('moves.json', { meta, moves });
+  // Poké Balls (enum PokeBall; nome = item ITEM_<X>_BALL)
+  const ballEnum = byValue(parseEnum(ballsH, 'PokeBall'), 'BALL_');
+  const itemValue = new Map([...itemEnum].map(([v, c]) => [c, v]));
+  const balls = denseArray(new Map([...ballEnum].map(([v, c]) => {
+    const itemId = itemValue.get(`ITEM_${c.slice(5)}_BALL`);
+    return [v, itemId !== undefined ? items[itemId] : titleCase(c.slice(5)) + ' Ball'];
+  })), Math.max(...ballEnum.keys()), null);
+
   await write('items.json', { meta, items });
+  await write('balls.json', { meta, balls });
   await write('forms.json', forms);
 
   console.log(`types ${types.length - 1}, species ${species.length - 1}, moves ${maxMove}, items ${maxItem}, forms ${Object.keys(forms).length}`);

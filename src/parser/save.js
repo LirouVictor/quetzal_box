@@ -20,7 +20,7 @@ export const PARTY = {
   size: 0x68,
   max: 6,
   pid: 0x00, otId: 0x04, nickname: 0x08, nicknameLen: 10, otName: 0x14, otNameLen: 7,
-  species: 0x28, item: 0x2A, exp: 0x2C, friendship: 0x31,
+  species: 0x28, item: 0x2A, exp: 0x2C, friendship: 0x31, ball: 0x32,
   moves: 0x34, pp: 0x3C, evs: 0x40, ivs: 0x50, misc: 0x54, level: 0x58, stats: 0x5A,
   /** Bits 28–29 do u32 em 0x54: número da habilidade (0 = 1ª, 1 = 2ª, 2 = oculta). */
   abilityShift: 28,
@@ -45,6 +45,8 @@ export const PC = {
     species: [0, 11],
     item: [11, 10],
     exp10: [21, 17], // experiência ÷ 10
+    ball: [38, 6], // Poké Ball (enum PokeBall do expansion; bit 43 sempre 0 nos saves vistos)
+    shiny: [44, 1],
     moves: [48, 58, 68, 78], moveWidth: 10,
     evs: 88, evWidth: 6, // EV ÷ 4, ordem HP/Atk/Def/Spe/SpA/SpD
     ivs: 124, ivWidth: 5,
@@ -143,6 +145,7 @@ export function parseSave(input) {
       itemId: dv.getUint16(r + PARTY.item, true),
       exp: dv.getUint32(r + PARTY.exp, true),
       friendship: u8[r + PARTY.friendship],
+      ballId: u8[r + PARTY.ball],
       moves: [0, 1, 2, 3].map(j => ({ id: dv.getUint16(r + PARTY.moves + 2 * j, true), pp: u8[r + PARTY.pp + j] })).filter(m => m.id),
       evs, ivs, stats,
       level: u8[r + PARTY.level],
@@ -193,6 +196,8 @@ export function parseSave(input) {
         nickname: decodeText(e, PC.nickname, PC.nicknameLen),
         itemId: bitField(bits, ...B.item),
         exp: bitField(bits, ...B.exp10) * 10,
+        ballId: bitField(bits, ...B.ball),
+        shiny: bitField(bits, ...B.shiny) === 1,
         natureId: bitField(bits, ...B.nature),
         abilityNum: bitField(bits, ...B.ability),
         evs, ivs,

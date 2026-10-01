@@ -44,6 +44,7 @@ function writeSlot(u8, slot, o, saveIndex, rotate) {
     d1.setUint16(r + PARTY.item, p.item ?? 0, true);
     d1.setUint32(r + PARTY.exp, p.exp ?? 0, true);
     s1[r + PARTY.friendship] = p.friendship ?? 0;
+    s1[r + PARTY.ball] = p.ball ?? 1;
     (p.moves || []).forEach(([id, pp], j) => { d1.setUint16(r + PARTY.moves + 2 * j, id, true); s1[r + PARTY.pp + j] = pp; });
     (p.evs || [0, 0, 0, 0, 0, 0]).forEach((v, j) => { s1[r + PARTY.evs + j] = v; });
     const ivs = p.ivs || [0, 0, 0, 0, 0, 0];
@@ -65,6 +66,8 @@ function writeSlot(u8, slot, o, saveIndex, rotate) {
     put(m.species, B.species[0]);
     put(m.item ?? 0, B.item[0]);
     put(Math.floor((m.exp ?? 0) / 10), B.exp10[0]);
+    put(m.ball ?? 1, B.ball[0]);
+    put(m.shiny ? 1 : 0, B.shiny[0]);
     (m.moves || []).forEach(([id], j) => put(id, B.moves[j]));
     (m.evs || [0, 0, 0, 0, 0, 0]).forEach((v, j) => put(v >> 2, B.evs + j * B.evWidth));
     (m.ivs || [0, 0, 0, 0, 0, 0]).forEach((v, j) => put(v, B.ivs + j * B.ivWidth));
