@@ -2,7 +2,7 @@
 
 Visualizador de saves de **Pokémon Quetzal** (ROM hack de GBA). Abra o `.sav` do emulador e veja treinador, equipe e PC. Dá para exportar tudo em planilha (CSV), texto do Pokémon Showdown ou JSON.
 
-- **100% local:** o save é lido no navegador e não é enviado a nenhum servidor.
+- **100% local:** o save é lido no navegador e não é enviado a nenhum servidor. A única exceção é opcional: o **Assistente (IA)** manda a lista dos Pokémon (nunca o `.sav`) ao Gemini quando você toca num dos botões dele.
 - **Leve:** sem framework. A página inicial pesa uns 8 KB comprimidos (sem as fontes). O parser e as tabelas (~29 KB comprimidos) só carregam quando você abre um save.
 - **Offline (PWA):** depois da primeira visita, o app funciona sem internet. Os sprites já vistos ficam guardados.
 
@@ -35,8 +35,21 @@ Também tem:
 - **Análise da equipe**: fraquezas, resistências e imunidades por tipo, e cobertura dos golpes;
 - **Detalhes dos golpes** (poder, precisão, categoria, descrição) ao tocar no golpe;
 - **Hidden Power** de cada Pokémon.
+- **Assistente (IA, opcional)**: com uma chave grátis do Gemini (Google AI Studio), avalia a equipe (nota, pontos fortes e fracos, sinergia, trocas com o PC, dicas) ou monta uma equipe com os Pokémon da equipe e do PC. Veja a seção abaixo.
 
 Espécies com ID acima de 905 usam numeração própria do Quetzal. Elas são identificadas por uma tabela manual, e as que ainda não foram conferidas no jogo aparecem como **provável**. Itens com ID acima de 479 ainda não foram todos conferidos e aparecem como **provável**; a partir do 829 (megapedras novas) a numeração do Quetzal é diferente da tabela de referência, e só os itens já conferidos têm nome. Os detalhes técnicos estão em [`CLAUDE.md`](CLAUDE.md).
+
+## Assistente (IA)
+
+1. Crie uma chave grátis em <https://aistudio.google.com/apikey> (precisa de conta Google).
+2. No app, abra um save, cole a chave na janela **Assistente** e toque em **Salvar chave**. Ela fica só neste aparelho (`localStorage`); **Apagar chave deste aparelho** remove.
+3. **Analisar minha equipe** ou **Montar equipe**. O campo **Pedido** aceita um desejo livre ("quero usar o Lucario", "sem lendários").
+
+Como funciona (`src/ai/`):
+- O navegador chama a API do Gemini direto (`gemini.js`), com a chave do usuário. O modelo padrão é `gemini-flash-latest`; se ele deixar de existir, o app escolhe outro "flash" disponível para a chave e guarda a escolha (dá para trocar em **Configurações da IA**).
+- O pedido (`prompt.js`) leva uma linha por Pokémon: referência (`E1` = equipe 1, `C3-12` = caixa 3, posição 12), espécie, tipos, habilidade, item, natureza, stats base, IVs e golpes (tipo, categoria e poder). **Sem nível**, porque o jogador pode treinar qualquer um. Vão a equipe inteira e até 250 Pokémon do PC (maior total de stats base primeiro, no máximo 2 da mesma espécie).
+- A resposta vem em JSON (schema fixo) e é conferida: trocas, dicas e membros que citam referências inexistentes são descartados e avisados; a equipe montada não repete espécie. As telas (`view.js`) desenham os Pokémon com os dados do save, e a equipe montada passa também pela análise de tipos do próprio app.
+- No plano grátis, o Google pode usar o que recebe para melhorar os produtos dele (o app avisa isso).
 
 ## Desenvolvimento
 
@@ -105,7 +118,7 @@ npx wrangler pages deploy dist --project-name quetzal-box
 `public/_headers` vai junto para o `dist/` e configura:
 
 - cache longo para `assets/*` (os nomes têm hash) e `no-cache` para `index.html`, `sw.js` e o manifest;
-- Content-Security-Policy restrita: scripts só do próprio site, imagens só do site e de `raw.githubusercontent.com`. O hash do script inline de tema é calculado no build.
+- Content-Security-Policy restrita: scripts só do próprio site, imagens só do site e de `raw.githubusercontent.com`, conexões só com o site, `raw.githubusercontent.com` e a API do Gemini. O hash do script inline de tema é calculado no build.
 
 ## GitHub Pages (alternativa)
 
@@ -124,6 +137,7 @@ Funciona sem mudar nada, porque os caminhos são relativos. Publique o conteúdo
 src/
   parser/      leitura do save (save.js), tabela de caracteres, descrição com nomes (describe.js)
   data/        tabelas JSON (geradas) + quetzal-overrides.json (manual)
+  ai/          assistente com IA (Gemini): cliente, pedido/conferência e telas; carregado sob demanda
   ui/          templates, sprites, download/cópia
   export.js    CSV / Showdown / JSON
   main.js      entrada leve (tema, abrir arquivo, service worker)

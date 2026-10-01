@@ -332,6 +332,69 @@ button.cnt:focus-visible { outline-offset: 1px; }
 .r-lv { font: .75rem var(--pixel); color: var(--accent); }
 .notes ul { margin: 6px 0 0; padding-left: 18px; }
 
+/* Assistente (IA) */
+.ai-intro { margin: 0 0 6px; }
+.ai-steps { margin: 0 0 10px; padding-left: 22px; line-height: 1.5; }
+.ai-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+.ai-label { display: block; font: .7rem var(--pixel); text-transform: uppercase; color: var(--muted); margin: 0 0 4px; grid-column: 1 / -1; }
+#ai-key, .ai-input {
+  min-height: 44px; width: 100%; padding: 6px 10px; font: inherit; color: var(--ink);
+  background: var(--win-2); border: 0; border-radius: 0; box-shadow: inset 0 0 0 3px var(--edge);
+}
+.ai-actions { margin: 8px 0; }
+.ai-settings { margin-top: 8px; }
+.ai-settings > summary { font-size: .9rem; color: var(--muted); }
+.ai-settings .ai-form { margin-bottom: 6px; }
+.ai-out:empty { display: none; }
+.ai-out { margin-top: 12px; scroll-margin-top: 84px; }
+.ai-wait { margin: 0; padding: 14px; text-align: center; background: var(--win-2); }
+.ai-wait small { color: var(--muted); }
+.dots::after { content: "..."; }
+@media (prefers-reduced-motion: no-preference) {
+  .dots::after { animation: dots 1.2s steps(4) infinite; display: inline-block; width: 3ch; text-align: left; overflow: hidden; vertical-align: bottom; }
+  @keyframes dots { from { width: 0; } to { width: 4ch; } }
+}
+.ai-result { display: grid; gap: 12px; }
+.ai-score { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.ai-grade { font-size: 2rem; line-height: 1; color: var(--accent); }
+.ai-grade small { font-size: .9rem; color: var(--muted); }
+.ai-score .meter { height: 14px; background: var(--bar); box-shadow: inset 0 0 0 2px var(--edge); padding: 2px; }
+.ai-score .meter i { display: block; height: 100%; background: var(--accent); }
+.ai-summary { margin: 0; padding: 10px 12px; background: var(--win-2); box-shadow: inset 4px 0 0 var(--accent); }
+.ai-team-name { margin: 0; font-size: 1.1rem; color: var(--accent); }
+.ai-block h3 { margin: 0 0 6px; font: .78rem var(--pixel); text-transform: uppercase; }
+.ai-block ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.ai-block li { position: relative; padding-left: 16px; line-height: 1.4; }
+.ai-block li::before { content: ""; position: absolute; left: 2px; top: .5em; width: 6px; height: 6px; background: var(--edge); }
+.ai-block.good li::before { background: var(--accent); }
+.ai-block.bad li::before { background: var(--accent-2); }
+.ai-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.ai-block .ai-swaps li, .ai-block .ai-tips li, .ai-team li { padding-left: 0; }
+.ai-block .ai-swaps li::before, .ai-block .ai-tips li::before, .ai-team li::before { display: none; }
+.ai-swap, .ai-tip { padding: 8px; background: var(--win-2); }
+.ai-swap p, .ai-tip p { margin: 6px 2px 0; }
+.ai-pair { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; align-items: center; }
+.ai-arrow { font-size: .8rem; color: var(--accent-2); }
+.ai-mon {
+  display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 6px; align-items: center; width: 100%; min-height: 48px;
+  padding: 2px 8px 2px 2px; border: 0; font: inherit; text-align: left; color: var(--ink); background: var(--win); cursor: pointer;
+  box-shadow: inset 0 0 0 2px var(--edge);
+}
+.ai-mon img, .ai-card img { width: 48px; height: 40px; object-fit: contain; }
+.ai-mon span, .ai-card-top > span { min-width: 0; }
+.ai-mon > span > b, .ai-card-top b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-mon small, .ai-card-top small { display: block; color: var(--muted); font-size: .75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-team { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 8px; }
+.ai-card {
+  display: grid; gap: 6px; align-content: start; width: 100%; height: 100%; padding: 8px; border: 0; font: inherit; text-align: left;
+  color: var(--ink); background: var(--win-2); cursor: pointer; box-shadow: inset 0 0 0 2px var(--edge), inset 0 -4px 0 var(--hi);
+}
+.ai-card-top { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 6px; align-items: center; }
+.ai-card .types { margin: 0; }
+.ai-role { justify-self: start; --hi: var(--accent); font-weight: 700; }
+.ai-why { font-size: .88rem; line-height: 1.4; }
+.ai-foot { font-size: .8rem; }
+
 @media (max-width: 420px) {
   .win { padding: 12px; }
   .mon-head { grid-template-columns: 88px 1fr; }

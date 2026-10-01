@@ -16,6 +16,7 @@ Site estático (Vite + JS puro) que lê saves `.sav` de **Pokémon Quetzal** (RO
 - `src/parser/stats.js`: stats pela fórmula (stats base da PokeAPI), detecção da natureza real quando ela foi trocada no jogo (PID % 25 diferente) e Hidden Power. `src/parser/natures.js`: tabela de naturezas.
 - `src/analysis.js`: fraquezas/resistências e cobertura da equipe (tabela de tipos em `src/data/typechart.json`).
 - `src/search.js`: busca e filtros sobre equipe + PC.
+- `src/ai/`: assistente opcional com o Gemini (chave do usuário no `localStorage`, chamada direta do navegador; CSP libera `generativelanguage.googleapis.com`). `prompt.js` monta o pedido (sem nível; referências `E1`/`C3-12`) e confere a resposta (só referências que existem); `view.js` desenha; `index.js` é o pacote carregado sob demanda. Nunca enviar o `.sav` nem dados além dos Pokémon.
 - `src/parser/charset.js`: tabela de caracteres Gen 3.
 - `src/export.js`: CSV (BOM + `;`, padrão do Excel pt-BR), Showdown, JSON.
 - `src/data/`: tabelas geradas + `quetzal-overrides.json` (manual: IDs próprios do Quetzal e exceções de item). `move-text.json` (descrições dos golpes) é carregado sob demanda, num pacote separado.

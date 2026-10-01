@@ -6,6 +6,7 @@ import { toCSV, toShowdown, toJSON, fileBase } from './export.js';
 import { download, copyText } from './ui/io.js';
 import * as R from './ui/render.js';
 import { searchMons } from './search.js';
+import * as Gemini from './ai/gemini.js';
 
 const PAGE = 60;
 let moveText = null; // descrições dos golpes, carregadas na primeira vez que um golpe é aberto
@@ -29,6 +30,7 @@ function render() {
     ${R.warningsWin(data.warnings)}
     ${R.partyWin(data)}
     ${R.analysisWin(data, T)}
+    ${R.aiWin(data, { hasKey: !!Gemini.getKey(), model: Gemini.getModel() })}
     ${R.pcWin(data)}
     ${R.searchWin(data, T)}
     ${R.notesWin()}`;
@@ -61,6 +63,8 @@ function render() {
     if (b) document.getElementById('type-info').textContent = b.dataset.info;
   });
 
+  setupAi(out);
+
   // Busca
   let timer = 0;
   const run = () => { clearTimeout(timer); timer = setTimeout(runSearch, 150); };
@@ -84,6 +88,60 @@ function render() {
     if (btn) openDetail(state.results[+btn.dataset.i], btn);
   });
   runSearch();
+}
+
+// Assistente (IA): a chave fica no aparelho; o código das análises só carrega ao tocar num botão.
+function setupAi(out) {
+  const $ = s => out.querySelector(s);
+  const aiOut = $('#ai-out');
+  const showMain = on => { $('#ai-setup').classList.toggle('hidden', on); $('#ai-main').classList.toggle('hidden', !on); };
+  $('#ai-save').addEventListener('click', () => {
+    const v = $('#ai-key').value.trim();
+    if (!v) { aiOut.innerHTML = '<p class="error">Cole a chave antes de salvar.</p>'; return; }
+    Gemini.setKey(v);
+    $('#ai-key').value = '';
+    aiOut.innerHTML = '';
+    showMain(true);
+  });
+  $('#ai-forget').addEventListener('click', () => {
+    Gemini.setKey('');
+    aiOut.innerHTML = '';
+    showMain(false);
+  });
+  $('#ai-model-save').addEventListener('click', () => {
+    Gemini.setModel($('#ai-model').value);
+    $('#ai-model').value = Gemini.getModel();
+  });
+  const buttons = out.querySelectorAll('[data-ai]');
+  buttons.forEach(b => b.addEventListener('click', async () => {
+    const disabled = [...buttons].map(x => x.disabled);
+    buttons.forEach(x => { x.disabled = true; });
+    aiOut.innerHTML = `<p class="ai-wait"><span class="pixel">${b.dataset.ai === 'analyze' ? 'Analisando a equipe' : 'Montando a equipe'}</span><span class="dots" aria-hidden="true"></span><br><small>Pode levar até um minuto.</small></p>`;
+    try {
+      const ai = await import('./ai/index.js');
+      const res = await ai.runAi(b.dataset.ai, { all: state.all, T, note: $('#ai-note').value });
+      state.ai = res;
+      aiOut.innerHTML = res.html;
+      aiOut.scrollIntoView({ block: 'start' });
+      $('#ai-model').value = Gemini.getModel();
+    } catch (e) {
+      console.error(e);
+      const msg = e && e.name === 'AiError' ? e.message : 'Algo deu errado ao falar com o Gemini. Tente de novo.';
+      aiOut.innerHTML = `<p class="error">${R.esc(msg)}</p>`;
+      if (e && e.code === 'key') showMain(false);
+    } finally {
+      buttons.forEach((x, i) => { x.disabled = disabled[i]; });
+    }
+  }));
+  aiOut.addEventListener('click', async e => {
+    const card = e.target.closest('[data-ref]');
+    if (card && state.ai) { const m = state.ai.byRef.get(card.dataset.ref); if (m) openDetail(m, card); return; }
+    const copy = e.target.closest('[data-ai-copy]');
+    if (copy && state.ai && state.ai.team) {
+      const ok = await copyText(toShowdown({ party: state.ai.team, pc: { boxes: [] } }, { includePC: false }).replace(/^=== Equipe ===\n\n/, ''));
+      copy.textContent = ok ? 'Copiado!' : 'Não foi possível copiar';
+    }
+  });
 }
 
 function runSearch() {
