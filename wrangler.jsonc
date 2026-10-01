@@ -1,9 +1,0 @@
-// Configuração do Cloudflare Workers (site estático com assets).
-// O nome precisa ser igual ao do Worker no painel da Cloudflare.
-{
-  "name": "quetzal-box",
-  "compatibility_date": "2026-09-30",
-  "assets": {
-    "directory": "./dist"
-  }
-}
