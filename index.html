@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Quetzal Save Viewer</title>
+  <meta name="description" content="Veja a equipe e o PC do seu save de Pokémon Quetzal e exporte em CSV, Showdown ou JSON. Tudo roda no navegador.">
+  <meta name="theme-color" content="#2b3350" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#10131f" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
+  <script>
+    // Aplica o tema salvo antes da primeira pintura (evita piscar).
+    try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Pular para o conteúdo</a>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 16 16" width="28" height="28" aria-hidden="true" shape-rendering="crispEdges"><use href="#plume"/></svg>
+      <span class="brand-name">Quetzal<br><b>Save Viewer</b></span>
+    </div>
+    <div class="topbar-actions">
+      <label class="btn btn-small btn-ghost hidden" id="reopen" for="file">Trocar save</label>
+      <button class="btn btn-small btn-ghost btn-icon" id="theme" type="button" aria-label="Alternar tema claro/escuro" title="Alternar tema">
+        <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" shape-rendering="crispEdges"><use href="#moon"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="win intro" id="intro">
+      <h1 class="pixel">Abra seu save do Quetzal</h1>
+      <p>Veja treinador, equipe e PC, e exporte para planilha, Showdown ou JSON. A leitura acontece no seu aparelho: o arquivo não é enviado para lugar nenhum.</p>
+      <div class="drop" id="drop">
+        <label class="btn btn-big" for="file">
+          <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" shape-rendering="crispEdges"><use href="#folder"/></svg>
+          Abrir arquivo .sav
+        </label>
+        <!-- Sem "accept": no Android, filtrar por .sav costuma deixar o arquivo acinzentado no seletor. O conteúdo é validado ao abrir. -->
+        <input type="file" id="file">
+        <p class="hint">No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui.</p>
+      </div>
+      <p class="error hidden" id="err" role="alert"></p>
+    </section>
+
+    <div id="out" class="hidden" aria-live="polite"></div>
+  </main>
+
+  <footer class="foot">
+    <p>Projeto de fã, sem vínculo com Nintendo, Game Freak, The Pokémon Company ou com os autores do Quetzal. Sprites do repositório <a href="https://github.com/PokeAPI/sprites" rel="noopener">PokeAPI/sprites</a>.</p>
+  </footer>
+
+  <dialog id="detail" class="win sheet" aria-labelledby="detail-title"></dialog>
+
+  <!-- Ícones originais em pixel art (16×16) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="plume" viewBox="0 0 16 16">
+      <path fill="var(--plume-a)" d="M11 1h1v1h-1zM12 1h1v1h-1zM9 2h1v1h-1zM10 2h1v1h-1zM11 2h1v1h-1zM12 2h1v1h-1zM13 2h1v1h-1zM8 3h1v1h-1zM9 3h1v1h-1zM10 3h1v1h-1zM12 3h1v1h-1zM13 3h1v1h-1zM7 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM11 4h1v1h-1zM12 4h1v1h-1zM13 4h1v1h-1zM6 5h1v1h-1zM7 5h1v1h-1zM8 5h1v1h-1zM10 5h1v1h-1zM11 5h1v1h-1zM12 5h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM9 6h1v1h-1zM10 6h1v1h-1zM11 6h1v1h-1zM4 7h1v1h-1zM5 7h1v1h-1zM6 7h1v1h-1zM8 7h1v1h-1zM9 7h1v1h-1zM10 7h1v1h-1zM4 8h1v1h-1zM5 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM3 9h1v1h-1zM4 9h1v1h-1zM6 9h1v1h-1zM7 9h1v1h-1zM8 9h1v1h-1zM3 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM4 11h1v1h-1z"/>
+      <path fill="var(--plume-c)" d="M11 3h1v1h-1zM10 4h1v1h-1zM9 5h1v1h-1zM8 6h1v1h-1zM7 7h1v1h-1zM6 8h1v1h-1zM5 9h1v1h-1zM4 10h1v1h-1zM3 11h1v1h-1z"/>
+      <path fill="var(--plume-b)" d="M2 11h1v1h-1zM2 12h1v1h-1zM3 12h1v1h-1zM1 13h1v1h-1zM2 13h1v1h-1zM1 14h1v1h-1z"/>
+    </symbol>
+    <symbol id="moon" viewBox="0 0 16 16">
+      <path fill="currentColor" d="M6 2h4v1H8v1H7v2H6v4h1v2h1v1h2v1H6v-1H4v-1H3v-2H2V6h1V4h1V3h2z"/>
+      <path fill="currentColor" d="M12 3h1v1h-1zM13 6h1v1h-1zM11 7h1v1h-1z"/>
+    </symbol>
+    <symbol id="sun" viewBox="0 0 16 16">
+      <path fill="currentColor" d="M6 5h4v1h1v4h-1v1H6v-1H5V6h1z"/>
+      <path fill="currentColor" d="M7 1h2v2H7zM7 13h2v2H7zM1 7h2v2H1zM13 7h2v2h-2zM3 3h2v2H3zM11 3h2v2h-2zM3 11h2v2H3zM11 11h2v2h-2z"/>
+    </symbol>
+    <symbol id="folder" viewBox="0 0 16 16">
+      <path fill="currentColor" d="M1 3h5l1 1h8v2H3l-2 7zM3 7h12l-2 7H1z"/>
+    </symbol>
+  </svg>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

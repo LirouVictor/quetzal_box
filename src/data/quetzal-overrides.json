@@ -1,0 +1,85 @@
+{
+  "_doc": "Tabela manual do que difere entre o Quetzal e as fontes geradas. Espécies com ID > 905 têm numeração própria do Quetzal. 'confidence' é 'confirmado' ou 'provável'; 'evidence' diz de onde veio. 'pokeapi' é o identificador da forma na PokeAPI (para sprite e tipos); null = sem correspondência (silhueta). Itens: até 'itemsVerifiedUpTo' a tabela do expansion master foi conferida; entre esse valor e 'itemsDivergeFrom' o nome do master é usado como 'provável'; a partir de 'itemsDivergeFrom' a numeração diverge e itens sem override aparecem como não mapeados.",
+  "species": {
+    "951": {
+      "name": "Raichu",
+      "form": "Alola",
+      "showdown": "Raichu-Alola",
+      "pokeapi": "raichu-alola",
+      "confidence": "confirmado",
+      "evidence": "Confirmado no jogo pelo autor (o save tem Raichu de Alola e Raichu comum, ID 26)."
+    },
+    "973": {
+      "name": "Weezing",
+      "form": "Galar",
+      "showdown": "Weezing-Galar",
+      "pokeapi": "weezing-galar",
+      "confidence": "confirmado",
+      "evidence": "Confirmado no jogo pelo autor."
+    },
+    "1210": {
+      "name": "Basculegion",
+      "form": null,
+      "showdown": "Basculegion",
+      "pokeapi": "basculegion-male",
+      "confidence": "confirmado",
+      "evidence": "Confirmado no jogo pelo autor (habilidade Adaptability). Macho/fêmea não determinado; sprite do macho."
+    },
+    "1224": {
+      "name": "Arcanine",
+      "form": "Hisui",
+      "showdown": "Arcanine-Hisui",
+      "pokeapi": "arcanine-hisui",
+      "confidence": "confirmado",
+      "evidence": "Confirmado no jogo pelo autor."
+    },
+    "1308": {
+      "name": "Annihilape",
+      "form": null,
+      "showdown": "Annihilape",
+      "pokeapi": "annihilape",
+      "confidence": "provável",
+      "evidence": "Apelido padrão 'Annihilape' no save; golpe Rage Fist."
+    },
+    "1327": {
+      "name": "Baxcalibur",
+      "form": null,
+      "showdown": "Baxcalibur",
+      "pokeapi": "baxcalibur",
+      "confidence": "provável",
+      "evidence": "Apelido padrão 'Baxcalibur' no save; golpe Glaive Rush."
+    },
+    "1469": {
+      "name": "Pikachu",
+      "form": "estilo Red",
+      "showdown": "Pikachu",
+      "pokeapi": null,
+      "confidence": "confirmado",
+      "evidence": "Conferido no jogo: boné branco/vermelho com símbolo vermelho e jaqueta vermelha, lembrando o treinador Red. Forma própria do Quetzal, sem sprite correspondente na PokeAPI (os bonés oficiais não têm jaqueta)."
+    }
+  },
+  "items": {
+    "860": {
+      "name": "Raichunite Y",
+      "confidence": "confirmado",
+      "evidence": "Conferido no jogo (Raichu, ID 26). No master é 859."
+    },
+    "865": {
+      "name": "Lucarionite Z",
+      "confidence": "confirmado",
+      "evidence": "Conferido no jogo (Lucario). No master é 864."
+    },
+    "871": {
+      "name": "Golisopite",
+      "confidence": "confirmado",
+      "evidence": "Conferido no jogo (Golisopod). No master é 868."
+    },
+    "877": {
+      "name": "Baxcalibrite",
+      "confidence": "confirmado",
+      "evidence": "Conferido no jogo (Baxcalibur). No master é 871."
+    }
+  },
+  "itemsDivergeFrom": 829,
+  "itemsVerifiedUpTo": 479
+}
