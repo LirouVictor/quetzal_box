@@ -1,6 +1,7 @@
 // Cópia local do último save aberto (IndexedDB). Fica só neste navegador/aparelho.
 // Qualquer falha (modo anônimo, armazenamento bloqueado) é ignorada: o app funciona sem isso.
 
+// Nome antigo do app mantido de propósito: trocar faria o aparelho perder a cópia já guardada.
 const DB = 'quetzal-save-viewer';
 const STORE = 'saves';
 const KEY = 'last';

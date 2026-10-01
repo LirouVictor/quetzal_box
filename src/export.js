@@ -64,6 +64,7 @@ export function toShowdown(d, { includePC = true } = {}) {
 }
 
 export function toJSON(d, meta = {}) {
+  // 'format' é um identificador estável do arquivo (nome antigo do app), não o nome exibido.
   return JSON.stringify({ format: 'quetzal-save-viewer', version: 1, ...meta, ...d }, null, 2) + '\n';
 }
 

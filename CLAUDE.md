@@ -1,4 +1,4 @@
-# Quetzal Save Viewer
+# Quetzal Box
 
 Site estático (Vite + JS puro) que lê saves `.sav` de **Pokémon Quetzal** (ROM hack de GBA sobre pokeemerald com engine expandida), mostra treinador, equipe e PC e exporta CSV / Showdown / JSON. Tudo roda no navegador; nada é enviado a servidor. Alvo principal: Chrome no Android em aparelho de entrada (Redmi Note 11), então **leveza é requisito**: sem framework, sem dependências de runtime, renderizar só o que está visível (uma caixa do PC por vez), sem efeitos caros de CSS.
 

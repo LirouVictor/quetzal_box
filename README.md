@@ -1,4 +1,4 @@
-# Quetzal Save Viewer
+# Quetzal Box
 
 Visualizador de saves de **Pokémon Quetzal** (ROM hack de GBA). Abra o `.sav` do emulador e veja treinador, equipe e PC. Dá para exportar tudo em planilha (CSV), texto do Pokémon Showdown ou JSON.
 
@@ -65,7 +65,7 @@ npm run diff-saves -- save.sav --pc 1 5               # mostra o registro em hex
 
 ### Ícones
 
-Os ícones do app (uma pena em pixel art, desenho original) são gerados por `node tools/make-icons.mjs` em `public/icons/`.
+Os ícones do app (esfera em pixel art nas cores do quetzal com uma pena; desenho original, sem copiar a Poké Ball) são gerados por `node tools/make-icons.mjs` em `public/icons/`. O script também imprime os `<path>` do logo para o `<symbol id="logo">` do `index.html`.
 
 ## Deploy no Cloudflare Pages
 
@@ -87,7 +87,7 @@ A Cloudflare lê a versão do Node em `.node-version`. Se precisar, defina `NODE
 
 ```bash
 npm run build
-npx wrangler pages deploy dist --project-name quetzal-save-viewer
+npx wrangler pages deploy dist --project-name quetzal-box
 ```
 
 ### Cabeçalhos
