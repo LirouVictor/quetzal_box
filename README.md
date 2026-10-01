@@ -13,7 +13,8 @@ Visualizador de saves de **Pokémon Quetzal** (ROM hack de GBA). Abra o `.sav` d
 1. Abra o site no Chrome do Android (ou em qualquer navegador moderno).
 2. Toque em **Abrir arquivo .sav** e escolha o save na pasta do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, também dá para arrastar o arquivo para a página.
 3. Para instalar como app: menu do Chrome → **Instalar app** / **Adicionar à tela inicial**.
-4. Uma cópia do último save aberto fica guardada no navegador (IndexedDB, só neste aparelho) e abre sozinha na próxima visita. Para ver o progresso mais recente, abra o `.sav` de novo. O botão **Esquecer este save** apaga a cópia.
+4. Com o app instalado, dá para abrir o save sem passar pelo seletor: no gerenciador de arquivos, segure o `.sav` → **Compartilhar** → **Quetzal Box**. (Se o app já estava instalado antes dessa função, desinstale e instale de novo para ele aparecer no menu.)
+5. Uma cópia do último save aberto fica guardada no navegador (IndexedDB, só neste aparelho) e abre sozinha na próxima visita. Para ver o progresso mais recente, abra o `.sav` de novo. O botão **Esquecer este save** apaga a cópia.
 
 ### O que é lido hoje
 
@@ -114,6 +115,7 @@ Funciona sem mudar nada, porque os caminhos são relativos. Publique o conteúdo
 
 - `public/manifest.webmanifest` tem nome, ícones 192/512 (inclusive *maskable*), `display: standalone` e `start_url`/`scope` relativos.
 - O service worker (`src/sw-template.js`, gerado como `dist/sw.js` no build) faz o precache do app inteiro e guarda até 1500 sprites já vistos.
+- `share_target` no manifest: o app instalado aparece no menu **Compartilhar** do Android. O service worker recebe o arquivo (POST em `./share`), guarda num cache temporário e redireciona para `./?shared=1`, onde `src/main.js` abre o save.
 - Para gerar o APK: publique o site, abra <https://www.pwabuilder.com>, informe a URL e escolha **Android**. Para o app abrir sem a barra de endereço (TWA), publique o `assetlinks.json` que o PWABuilder gerar em `public/.well-known/assetlinks.json` e faça o deploy de novo.
 
 ## Estrutura

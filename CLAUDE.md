@@ -20,7 +20,7 @@ Site estático (Vite + JS puro) que lê saves `.sav` de **Pokémon Quetzal** (RO
 - `src/export.js`: CSV (BOM + `;`, padrão do Excel pt-BR), Showdown, JSON.
 - `src/data/`: tabelas geradas + `quetzal-overrides.json` (manual: IDs próprios do Quetzal e exceções de item). `move-text.json` (descrições dos golpes) é carregado sob demanda, num pacote separado.
 - `src/ui/`, `src/main.js`, `src/styles/`: interface. `src/ui/store.js` guarda uma cópia do último save no IndexedDB (só local) para abrir sozinha na próxima visita.
-- `src/sw-template.js` vira `dist/sw.js` no build (plugin em `vite.config.js` injeta a lista de precache). `public/_headers` tem cache e CSP para o Cloudflare Pages (hash do script inline calculado no build).
+- `src/sw-template.js` vira `dist/sw.js` no build (plugin em `vite.config.js` injeta a lista de precache). Ele também recebe o `.sav` do menu Compartilhar do Android (`share_target` no manifest → POST `./share` → cache `qsv-share` → `./?shared=1`, lido em `src/main.js`). `public/_headers` tem cache e CSP para o Cloudflare Pages (hash do script inline calculado no build).
 - `reference/quetzal-viewer.html`: protótipo original (só referência; não é usado no build).
 
 ## Regras do projeto

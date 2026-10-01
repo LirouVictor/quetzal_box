@@ -87,8 +87,28 @@ $('#forget').addEventListener('click', async () => {
   scrollTo(0, 0);
 });
 
-// Abre automaticamente a cópia do último save, se houver.
-loadRememberedSave().then(saved => {
+// Save recebido pelo menu "Compartilhar" do Android (o service worker guarda; ver sw-template.js).
+const SHARE_CACHE = 'qsv-share';
+const SHARE_KEY = './shared-save';
+async function takeSharedSave() {
+  if (!new URLSearchParams(location.search).has('shared')) return null;
+  history.replaceState(null, '', location.pathname);
+  try {
+    const cache = await caches.open(SHARE_CACHE);
+    const res = await cache.match(SHARE_KEY);
+    if (!res) return null;
+    await cache.delete(SHARE_KEY);
+    const name = decodeURIComponent(res.headers.get('x-file-name') || 'save.sav');
+    return new File([await res.blob()], name);
+  } catch {
+    return null;
+  }
+}
+
+// Abre o save compartilhado; se não houver, a cópia do último save, se houver.
+takeSharedSave().then(async shared => {
+  if (shared) return load(shared);
+  const saved = await loadRememberedSave();
   if (!saved || !$('#out').classList.contains('hidden')) return;
   openBytes(saved.bytes, saved.name, { fromCopy: saved.savedAt }).catch(() => forgetSave());
 });
