@@ -1,4 +1,4 @@
-# Quetzal Save Viewer
+# Quetzal Box
 
 Visualizador de saves de **Pokémon Quetzal** (ROM hack de GBA). Abra o `.sav` do emulador e veja treinador, equipe e PC. Dá para exportar tudo em planilha (CSV), texto do Pokémon Showdown ou JSON.
 
@@ -13,6 +13,7 @@ Visualizador de saves de **Pokémon Quetzal** (ROM hack de GBA). Abra o `.sav` d
 1. Abra o site no Chrome do Android (ou em qualquer navegador moderno).
 2. Toque em **Abrir arquivo .sav** e escolha o save na pasta do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, também dá para arrastar o arquivo para a página.
 3. Para instalar como app: menu do Chrome → **Instalar app** / **Adicionar à tela inicial**.
+4. Uma cópia do último save aberto fica guardada no navegador (IndexedDB, só neste aparelho) e abre sozinha na próxima visita. Para ver o progresso mais recente, abra o `.sav` de novo. O botão **Esquecer este save** apaga a cópia.
 
 ### O que é lido hoje
 
@@ -64,7 +65,7 @@ npm run diff-saves -- save.sav --pc 1 5               # mostra o registro em hex
 
 ### Ícones
 
-Os ícones do app (uma pena em pixel art, desenho original) são gerados por `node tools/make-icons.mjs` em `public/icons/`.
+Os ícones do app (esfera em pixel art nas cores do quetzal com uma pena; desenho original, sem copiar a Poké Ball) são gerados por `node tools/make-icons.mjs` em `public/icons/`. O script também imprime os `<path>` do logo para o `<symbol id="logo">` do `index.html`.
 
 ## Deploy no Cloudflare Pages
 
@@ -82,11 +83,15 @@ O build é estático e fica em `dist/`. Os caminhos são relativos (`base: './'`
 
 A Cloudflare lê a versão do Node em `.node-version`. Se precisar, defina `NODE_VERSION=22` em *Settings → Environment variables*.
 
+### Opção C: Cloudflare Workers (é como o site está publicado hoje)
+
+O `wrangler.jsonc` na raiz define o Worker `quetzal-pkhex`, que serve os arquivos de `dist/`. Com ele, tanto o deploy de produção (`npx wrangler deploy`) quanto as prévias de PR (`npx wrangler versions upload`) funcionam sem argumentos extras. No painel: **Build command** `npm run build`. Se você renomear o Worker no painel, troque o `name` no arquivo também.
+
 ### Opção B: upload direto com o Wrangler
 
 ```bash
 npm run build
-npx wrangler pages deploy dist --project-name quetzal-save-viewer
+npx wrangler pages deploy dist --project-name quetzal-box
 ```
 
 ### Cabeçalhos

@@ -1,4 +1,4 @@
-# Quetzal Save Viewer
+# Quetzal Box
 
 Site estático (Vite + JS puro) que lê saves `.sav` de **Pokémon Quetzal** (ROM hack de GBA sobre pokeemerald com engine expandida), mostra treinador, equipe e PC e exporta CSV / Showdown / JSON. Tudo roda no navegador; nada é enviado a servidor. Alvo principal: Chrome no Android em aparelho de entrada (Redmi Note 11), então **leveza é requisito**: sem framework, sem dependências de runtime, renderizar só o que está visível (uma caixa do PC por vez), sem efeitos caros de CSS.
 
@@ -16,7 +16,7 @@ Site estático (Vite + JS puro) que lê saves `.sav` de **Pokémon Quetzal** (RO
 - `src/parser/charset.js`: tabela de caracteres Gen 3.
 - `src/export.js`: CSV (BOM + `;`, padrão do Excel pt-BR), Showdown, JSON.
 - `src/data/`: tabelas geradas + `quetzal-overrides.json` (manual: IDs próprios do Quetzal e exceções de item).
-- `src/ui/`, `src/main.js`, `src/styles/`: interface.
+- `src/ui/`, `src/main.js`, `src/styles/`: interface. `src/ui/store.js` guarda uma cópia do último save no IndexedDB (só local) para abrir sozinha na próxima visita.
 - `src/sw-template.js` vira `dist/sw.js` no build (plugin em `vite.config.js` injeta a lista de precache). `public/_headers` tem cache e CSP para o Cloudflare Pages (hash do script inline calculado no build).
 - `reference/quetzal-viewer.html`: protótipo original (só referência; não é usado no build).
 

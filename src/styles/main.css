@@ -19,9 +19,6 @@
   --hp: #2f9a4f;
   --plus: #c0392b;
   --minus: #2c62b8;
-  --plume-a: #23735f;
-  --plume-b: #b8362c;
-  --plume-c: #5fbf8f;
   --top-bg: #2b3350;
   --top-ink: #fbf8ee;
   --top-ink-on-gold: #fbf8ee;
@@ -36,7 +33,6 @@
     --bg: #10131f; --bg-band: #161b2c; --win: #1b2135; --win-2: #232b44; --edge: #8fa0cf; --hi: #2e3858;
     --ink: #eceff8; --muted: #a3abc6; --accent: #4fc3a1; --accent-ink: #0d1a16; --accent-2: #ff7a6b; --gold: #e8c060;
     --bar: #2e3858; --hp: #5fd07f; --plus: #ff7a6b; --minus: #7fb0ff;
-    --plume-a: #4fc3a1; --plume-b: #ff7a6b; --plume-c: #a8f0d0;
     --top-bg: #222a44; --top-ink: #eceff8; --top-ink-on-gold: #10131f;
   }
 }
@@ -45,7 +41,6 @@
   --bg: #10131f; --bg-band: #161b2c; --win: #1b2135; --win-2: #232b44; --edge: #8fa0cf; --hi: #2e3858;
   --ink: #eceff8; --muted: #a3abc6; --accent: #4fc3a1; --accent-ink: #0d1a16; --accent-2: #ff7a6b; --gold: #e8c060;
   --bar: #2e3858; --hp: #5fd07f; --plus: #ff7a6b; --minus: #7fb0ff;
-  --plume-a: #4fc3a1; --plume-b: #ff7a6b; --plume-c: #a8f0d0;
   --top-bg: #222a44; --top-ink: #eceff8; --top-ink-on-gold: #10131f;
 }
 
@@ -117,7 +112,7 @@ h1, h2, h3 { margin: 0; line-height: 1.15; }
   box-shadow: 0 4px 0 var(--accent);
 }
 .brand { display: flex; align-items: center; gap: 10px; }
-.brand-mark { background: var(--win); padding: 2px; }
+.brand-mark { flex: none; }
 .brand-name { font-family: var(--pixel); font-size: .72rem; line-height: 1.15; text-transform: uppercase; }
 .brand-name b { font-size: .95rem; font-weight: 700; }
 .topbar-actions { display: flex; gap: 10px; align-items: center; }
@@ -168,6 +163,8 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 .status:empty { display: none; }
 
 .warnings { --hi: var(--gold); }
+.saved-note { --hi: var(--accent); }
+.saved-note p { margin: 0 0 8px; font-size: .92rem; }
 #out { display: grid; gap: 20px; }
 #out > section > .win-title { margin: 0 4px 4px; }
 .warnings ul { margin: 0; padding-left: 18px; }
@@ -257,8 +254,10 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 
 /* Folha de detalhes (dialog) */
 .sheet {
+  /* .win define position: relative; o diálogo modal precisa ficar fixo, senão a página rola até ele */
+  position: fixed; inset: 0; margin: auto; height: fit-content;
   width: min(560px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow: auto;
-  border: 0; color: var(--ink); padding: 16px;
+  border: 0; color: var(--ink); padding: 16px; overscroll-behavior: contain;
 }
 .sheet::backdrop { background: rgba(10, 12, 20, .6); }
 .sheet .close { position: absolute; right: 10px; top: 10px; }

@@ -67,7 +67,12 @@ function openDetail(slot, opener) {
     const ok = await copyText(toShowdown({ party: [m], pc: { boxes: [] } }, { includePC: false }).replace(/^=== Equipe ===\n\n/, ''));
     e.target.textContent = ok ? 'Copiado!' : 'Não foi possível copiar';
   });
-  dlg.addEventListener('close', () => opener.focus(), { once: true });
+  // Ao fechar, volta exatamente para onde a página estava.
+  const scroll = window.scrollY;
+  dlg.addEventListener('close', () => {
+    opener.focus({ preventScroll: true });
+    if (window.scrollY !== scroll) window.scrollTo(0, scroll);
+  }, { once: true });
   dlg.showModal();
 }
 

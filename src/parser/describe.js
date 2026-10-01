@@ -48,6 +48,8 @@ export function makeResolver(T) {
     const ov = T.overrides.species[id];
     if (ov) {
       const form = ov.pokeapi ? T.forms[ov.pokeapi] : null;
+      // Forma sem correspondência: tipos e habilidades da espécie base, como "provável".
+      const base = !form && ov.baseDex && T.species[ov.baseDex] ? ov.baseDex : null;
       return {
         name: ov.name,
         form: ov.form || null,
@@ -56,8 +58,11 @@ export function makeResolver(T) {
         evidence: ov.evidence || null,
         spriteId: form ? form.id : null,
         hasIcon: form ? form.icon : false,
-        types: form ? form.types.map(typeName).filter(Boolean) : [],
-        abilities: form ? form.abilities : [null, null, null],
+        types: form ? form.types.map(typeName).filter(Boolean)
+          : base ? T.species[base].slice(1).map(typeName).filter(Boolean) : [],
+        abilities: form ? form.abilities
+          : base ? (T.speciesAbilities[base] || [0, 0, 0]).map(abilityName) : [null, null, null],
+        traitsFromBase: !!base,
       };
     }
     if (id >= 1 && id <= MAX_DEX && T.species[id]) {
@@ -84,7 +89,7 @@ export function makeResolver(T) {
     // Como no expansion: se o slot estiver vazio, vale a primeira habilidade existente.
     const name = sp.abilities[num] || sp.abilities.find(Boolean) || null;
     if (!name) return { num, name: num === 2 ? 'Habilidade oculta' : `Habilidade ${num + 1}`, hidden: num === 2, confidence: UNKNOWN };
-    return { num, name, hidden: num === 2, confidence: sp.confidence === CONFIRMED ? CONFIRMED : PROBABLE };
+    return { num, name, hidden: num === 2, confidence: sp.confidence === CONFIRMED && !sp.traitsFromBase ? CONFIRMED : PROBABLE };
   }
 
   function move(m) {
