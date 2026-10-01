@@ -65,7 +65,7 @@ npm run diff-saves -- save.sav --pc 1 5               # mostra o registro em hex
 
 ### Ícones
 
-Os ícones do app (esfera em pixel art nas cores do quetzal com uma pena; desenho original, sem copiar a Poké Ball) são gerados por `node tools/make-icons.mjs` em `public/icons/`. O script também imprime os `<path>` do logo para o `<symbol id="logo">` do `index.html`.
+Os ícones do app (esfera em pixel art nas cores do quetzal com uma lupa; desenho original, sem copiar a Poké Ball) são gerados por `node tools/make-icons.mjs` em `public/icons/`. O script também imprime os `<path>` do logo para o `<symbol id="logo">` do `index.html`.
 
 ## Deploy no Cloudflare Pages
 

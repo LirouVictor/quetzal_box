@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Gera os ícones do app (pixel art original: esfera nas cores do quetzal + pena) em PNG e SVG.
+// Gera os ícones do app (pixel art original: esfera nas cores do quetzal + lupa) em PNG e SVG.
 // Uso: node tools/make-icons.mjs   → public/icons/*
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
@@ -9,62 +9,56 @@ import { fileURLToPath } from 'node:url';
 const OUT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../public/icons');
 mkdirSync(OUT, { recursive: true });
 
-// Pena original 16×16. A = verde, C = verde claro (raque), B = vermelho (cálamo)
-const FEATHER = [
-  '................',
-  '...........AA...',
-  '.........AAAAA..',
-  '........AAACAA..',
-  '.......AAACAAA..',
-  '......AAACAAA...',
-  '.....AAACAAA....',
-  '....AAACAAA.....',
-  '....AACAAA......',
-  '...AACAAA.......',
-  '...ACAA.........',
-  '..BCA...........',
-  '..BB............',
-  '.BB.............',
-  '.B..............',
-  '................',
-];
-
-// Ícone 32×32: esfera de captura estilizada (cores do quetzal, não as da Poké Ball) com a pena saindo por trás.
+// Ícone 32×32: esfera de captura estilizada (cores do quetzal, não as da Poké Ball) com uma lupa na frente.
 const N = 32;
 const COLORS = {
-  A: [0x4f, 0xc3, 0xa1], C: [0xa8, 0xf0, 0xd0], B: [0xff, 0x7a, 0x6b], // pena
   O: [0x0d, 0x10, 0x20], // contorno
   G: [0x2f, 0x9e, 0x80], H: [0x8f, 0xe3, 0xc6], // metade de cima (verde) e brilho
   W: [0xfb, 0xf8, 0xee], S: [0xd9, 0xd1, 0xb8], // metade de baixo (creme) e sombra
+  R: [0xc8, 0xd3, 0xe6], // aro da lupa
+  L: [0x7f, 0xa6, 0xe0], l: [0xe0, 0xec, 0xff], // vidro e reflexo
+  D: [0x23, 0x73, 0x5f], // cabo (verde escuro)
 };
 const BG = [0x22, 0x2a, 0x44];
 
+/** Círculo com contorno de 1 pixel onde algum vizinho fica fora. `paint(dx, dy, d)` dá a cor do interior. */
+function disc(g, cx, cy, r, paint) {
+  const inside = (x, y) => Math.hypot(x - cx, y - cy) <= r;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    if (!inside(x, y)) continue;
+    const edge = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1);
+    g[y][x] = edge ? 'O' : paint(x - cx, y - cy, Math.hypot(x - cx, y - cy));
+  }
+}
+
 function buildGrid() {
   const g = Array.from({ length: N }, () => Array(N).fill('.'));
-  // Pena atrás, no canto superior direito, com contorno escuro
-  const fx = 15, fy = 1;
-  FEATHER.forEach((row, y) => [...row].forEach((ch, x) => { if (ch !== '.') g[y + fy][x + fx] = ch; }));
-  const isFeather = (x, y) => 'ABC'.includes((g[y] || [])[x]);
+  // Esfera (canto superior esquerdo)
+  disc(g, 12.5, 11.5, 11.5, (dx, dy, d) => {
+    if (d <= 3.6) return d > 2.3 ? 'O' : 'W'; // botão central
+    if (Math.abs(dy) <= 1) return 'O'; // faixa do meio
+    if (dy < 0) return (dx < -2 && dy < -4 && d > 11.5 - 2.5 && d < 11.5 - 1.4) ? 'H' : 'G';
+    return (dx + dy > 8 && d > 11.5 - 3) ? 'S' : 'W';
+  });
+  // Cabo da lupa: segmento diagonal com contorno
+  const lx = 21, ly = 20.5;
+  const seg = (x, y) => {
+    const t = Math.max(6, Math.min(12, ((x - lx) + (y - ly)) / Math.SQRT2));
+    const px = lx + t / Math.SQRT2, py = ly + t / Math.SQRT2;
+    return Math.hypot(x - px, y - py);
+  };
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-    if (g[y][x] === '.' && (isFeather(x - 1, y) || isFeather(x + 1, y) || isFeather(x, y - 1) || isFeather(x, y + 1))) g[y][x] = 'o';
+    const d = seg(x, y);
+    if (d <= 1.5) g[y][x] = 'D';
+    else if (d <= 2.5) g[y][x] = 'O';
   }
-  // Esfera: contorno de 1 pixel onde algum vizinho fica fora do círculo
-  const cx = 13.5, cy = 19.5, r = 11.5;
-  const inside = (x, y) => Math.hypot(x - cx, y - cy) <= r;
-  for (let y = 0; y < N; y++) {
-    for (let x = 0; x < N; x++) {
-      if (!inside(x, y)) continue;
-      const dx = x - cx, dy = y - cy, d = Math.hypot(dx, dy);
-      let ch;
-      if (!inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1)) ch = 'O';
-      else if (Math.abs(dy) <= 1) ch = 'O'; // faixa do meio
-      else if (dy < 0) ch = (dx < -2 && dy < -4 && d > r - 2.5 && d < r - 1.4) ? 'H' : 'G';
-      else ch = (dx + dy > 8 && d > r - 3) ? 'S' : 'W';
-      if (d <= 3.6) ch = d > 2.3 ? 'O' : 'B'; // botão central vermelho
-      g[y][x] = ch;
-    }
-  }
-  return g.map(row => row.join('').replace(/o/g, 'O'));
+  // Lente (por cima de tudo)
+  disc(g, lx, ly, 7, (dx, dy, d) => {
+    if (d > 5) return 'R';
+    if (d > 4.1) return 'O';
+    return (dx < -0.5 && dy < -0.5 && d > 1.8 && d < 3.4) ? 'l' : 'L';
+  });
+  return g.map(row => row.join(''));
 }
 const GRID = buildGrid();
 
