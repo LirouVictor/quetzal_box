@@ -72,7 +72,9 @@ Contagem em `0x6A4` (u8). Registros a partir de `0x6A8`, **104 bytes (0x68), sem
 | 0x28 | u16 | espécie | confirmado |
 | 0x2A | u16 | item | confirmado |
 | 0x2C | u32 | experiência | confirmado |
+| 0x30 | u8 | `0xFF` em todos | desconhecido |
 | 0x31 | u8 | amizade | confirmado |
+| 0x32 | u8 | **Poké Ball** (enum `PokeBall` do expansion) | confirmado (6 Pokémon cruzados com o PC) |
 | 0x34 | 4×u16 | golpes | confirmado |
 | 0x3C | 4×u8 | PP | confirmado (ver observação) |
 | 0x40 | 6×u8 | EVs HP/Atk/Def/Spe/SpA/SpD | confirmado |
@@ -84,6 +86,7 @@ Contagem em `0x6A4` (u8). Registros a partir de `0x6A8`, **104 bytes (0x68), sem
 | 0x66 | u16 | varia (`0000`, `2202`, `1111`); não é o HP atual | desconhecido |
 
 - Natureza = PID % 25 (conferida contra os stats).
+- **Shiny na equipe: não localizado.** Os PIDs vistos são pequenos (ex.: `0xF0`), então o shiny não sai da fórmula PID/OT da Gen 3; deve haver um bit próprio, ainda não achado (nenhum Pokémon da equipe nos saves é shiny).
 - **HP atual não foi encontrado** no registro; a UI mostra só o HP máximo.
 - Observação: todos os PP observados (equipe e PC) estão no máximo com 3 PP Ups (ex.: Tackle 56 = 35 × 1,6), até em Pokémon recém-capturados. Pode ser regra do Quetzal; não confirmado se o campo é o PP atual.
 
@@ -107,11 +110,13 @@ Registro de 38 bytes. Bits contados em little-endian a partir do byte 0 (bit *n*
 | 0–10 | 11 | espécie | confirmado |
 | 11–20 | 10 | item | confirmado |
 | 21–37 | 17 | **experiência ÷ 10** | confirmado (6 Pokémon cruzados com a equipe) |
-| 38–47 | 10 | desconhecido | pendente |
+| 38–43 | 6 | **Poké Ball** (enum `PokeBall`: 1 Poké, 2 Great, 3 Ultra, 5 Premier conferidos no jogo; 25 = bola "radiante" própria do Quetzal). Bit 43 sempre 0; a largura pode ser 5 | confirmado |
+| 44 | 1 | **shiny** | confirmado (os 3 shinys da BOX1, e só eles) |
+| 45–47 | 3 | desconhecido | pendente |
 | 48–87 | 4×10 | golpes | confirmado |
 | 88–123 | 6×6 | **EVs ÷ 4**, ordem HP/Atk/Def/Spe/SpA/SpD | confirmado (6 Pokémon) |
 | 124–153 | 6×5 | IVs, mesma ordem | confirmado (6 Pokémon) |
-| 154–160 | 7 | desconhecido (bit 160 = 1 em vários Pokémon selvagens) | pendente |
+| 154–160 | 7 | desconhecido. Bit 160 = 0 em todos os machos conferidos e 1 em vários Pokémon selvagens: candidato a gênero (falta conferir fêmeas) | pendente |
 | 161–165 | 5 | natureza (0–24, mesma ordem de PID % 25) | confirmado (6 Pokémon) |
 | 166–167 | 2 | número da habilidade (0/1/2), igual a `0x54` da equipe | confirmado (6 Pokémon + sets coerentes) |
 | 168–191 | 24 | desconhecido | pendente |
@@ -146,11 +151,11 @@ Registro de 38 bytes. Bits contados em little-endian a partir do byte 0 (bit *n*
 
 ## Pendências de engenharia reversa
 
-Resolvidas: habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade no PC, número de caixas (37), curva de nível (Medium Slow para todas as espécies).
+Resolvidas: habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade no PC, número de caixas (37), curva de nível (Medium Slow para todas as espécies), Poké Ball (equipe e PC) e shiny (PC).
 
 1. Tabela de itens: achar onde começa o deslocamento (faixa 480–860) e mapear os itens ≥ 829.
 2. Tabela de espécies > 905 (hipótese Gen 9 = Nacional + 329 ainda não testada).
-3. PC: bits 38–47, 154–160 e 168–191 (candidatos: gênero, shiny, Poké Ball, local/nível de captura, amizade).
+3. PC: bits 45–47, 154–160 e 168–191 (candidatos: gênero — bit 160?, local/nível de captura). Equipe: bit de shiny.
 4. HP atual da equipe; significado de `0x59`, `0x66` e do bit 30 de `0x54`.
 
 Método: saves pareados com uma única mudança no jogo + `tools/diff-saves.mjs`.

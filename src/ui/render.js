@@ -216,6 +216,7 @@ export function notesWin() {
       <summary id="notes-h">O que ainda não dá para ler</summary>
       <ul>
         <li>HP atual da equipe (a barra mostra o HP máximo).</li>
+        <li>Shiny e gênero na equipe; gênero no PC.</li>
         <li>No PC: stats (o jogo recalcula ao tirar da caixa), amizade e treinador original não são guardados.</li>
         <li>O nível no PC é calculado pela experiência (guardada dividida por 10) com a curva Medium Slow, que o Quetzal usa para todas as espécies.</li>
         <li>Itens com ID acima de 479 ainda não foram todos conferidos e aparecem como "provável"; a partir de 829 (megapedras novas) a numeração é própria do Quetzal e só os itens já conferidos têm nome.</li>
