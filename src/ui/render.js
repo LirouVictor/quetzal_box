@@ -381,7 +381,7 @@ export function notesWin() {
     <details>
       <summary id="notes-h">O que ainda não dá para ler</summary>
       <ul>
-        <li>HP atual da equipe (a barra mostra o HP máximo).</li>
+        <li>HP atual da equipe (os detalhes mostram o HP máximo).</li>
         <li>Shiny e gênero na equipe.</li>
         <li>No PC: amizade e treinador original não são guardados. Os stats são calculados (stats base oficiais + nível, IVs, EVs e natureza); a fórmula foi conferida contra a equipe.</li>
         <li>Poder, precisão e descrição dos golpes vêm do pokeemerald-expansion (geração mais nova); o Quetzal pode ter mudado algum golpe.</li>
