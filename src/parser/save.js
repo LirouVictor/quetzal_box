@@ -20,6 +20,10 @@ export const PARTY = {
   size: 0x68,
   max: 6,
   pid: 0x00, otId: 0x04, nickname: 0x08, nicknameLen: 10, otName: 0x14, otNameLen: 7,
+  /** Byte de flags: bit 3 (0x08) = shiny. */
+  flags: 0x13, shinyFlag: 0x08,
+  /** u16 desalinhado: provavelmente o HP atual (igual ao máximo em todos os Pokémon vistos, todos com HP cheio). */
+  hp: 0x23,
   species: 0x28, item: 0x2A, exp: 0x2C, friendship: 0x31, ball: 0x32,
   moves: 0x34, pp: 0x3C, evs: 0x40, ivs: 0x50, misc: 0x54, level: 0x58, stats: 0x5A,
   /** Bits 28–29 do u32 em 0x54: número da habilidade (0 = 1ª, 1 = 2ª, 2 = oculta). */
@@ -147,6 +151,8 @@ export function parseSave(input) {
       exp: dv.getUint32(r + PARTY.exp, true),
       friendship: u8[r + PARTY.friendship],
       ballId: u8[r + PARTY.ball],
+      shiny: (u8[r + PARTY.flags] & PARTY.shinyFlag) !== 0,
+      hp: dv.getUint16(r + PARTY.hp, true),
       moves: [0, 1, 2, 3].map(j => ({ id: dv.getUint16(r + PARTY.moves + 2 * j, true), pp: u8[r + PARTY.pp + j] })).filter(m => m.id),
       evs, ivs, stats,
       level: u8[r + PARTY.level],

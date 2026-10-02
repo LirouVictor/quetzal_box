@@ -46,9 +46,13 @@ suite.skipIf(!has)('save real (fixtures/PokemonQuetzalPtBrAlpha9v0.sav)', () => 
     expect(luc.evs).toEqual({ hp: 4, atk: 0, def: 0, spe: 252, spa: 252, spd: 0 });
     expect(luc.stats).toEqual({ hp: 282, atk: 230, def: 176, spe: 279, spa: 361, spd: 176 });
     expect(luc.item.id).toBe(865);
-    // Serperior: PID % 25 = Gentle, mas o jogo mostra Modest (conferido pelo autor), que é a natureza que reproduz os stats
+    // Serperior: PID 0x1F0; (PID & 0xFF) % 25 = Modest, como o jogo mostra (PID % 25 daria Gentle)
     expect(d.party[2].nature.name).toBe('Modest');
-    expect(d.party.map(m => m.pidNature && m.pidNature.name)).toEqual([null, null, 'Gentle', null, null, null]);
+    expect(d.party.map(m => m.pidNature)).toEqual([null, null, null, null, null, null]);
+    // Shiny: bit 3 do byte 0x13 (Serperior é shiny; confere com o bit do PC no save 3). Todos machos.
+    expect(d.party.map(m => m.shiny)).toEqual([false, false, true, false, false, false]);
+    expect(d.party.map(m => m.gender && m.gender.name)).toEqual(['macho', 'macho', 'macho', 'macho', 'macho', 'macho']);
+    expect(raw.party.map(p => p.hp)).toEqual(raw.party.map(p => p.stats.hp)); // HP cheio em todos
     expect(d.party[5].hiddenPower).toBe('dark'); // Lucario, IVs 31 em tudo
     expect(raw.party.map(p => p.misc)).toEqual([0x40000000, 0x40000000, 0x40000000, 0x50000000, 0x50000000, 0x50000000]);
     // Habilidades conferidas pelo autor na tela de resumo do jogo
@@ -135,5 +139,46 @@ suite.skipIf(!hasPc)('equipe → PC (fixtures/PokemonQuetzalPtBrAlpha9v0-pc.sav)
       expect(c.evs).toEqual(p.evs);
       expect(c.moves).toEqual(p.moves);
     }
+  });
+});
+
+// Save do autor com Tyranitar (shiny, fêmea) e Scorbunny (shiny) tirados do PC para a equipe e o Serperior
+// levado da equipe para o PC; Tyranitar com Heavy-Duty Boots e Scorbunny com Assault Vest.
+const FILE_3 = process.env.QUETZAL_SAVE_3 || new URL('../fixtures/PokemonQuetzalPtBrAlpha9v0-3.sav', import.meta.url).pathname;
+const has3 = has && existsSync(FILE_3);
+
+suite.skipIf(!has3)('PC → equipe: shiny, gênero e natureza (fixtures/PokemonQuetzalPtBrAlpha9v0-3.sav)', () => {
+  const raw = has3 ? parseSave(readFileSync(FILE_3)) : null;
+  const d = has3 ? describe(raw, T) : null;
+  const before = has3 ? describe(parseSave(readFileSync(FILE_PC)), T) : null;
+
+  it('shiny (byte 0x13, bit 3) e gênero (byte baixo do PID) na equipe', () => {
+    expect(d.party.map(m => m.species.name)).toEqual(['Tyranitar', 'Scorbunny', 'Corviknight', 'Basculegion', 'Arcanine']);
+    expect(d.party.map(m => m.shiny)).toEqual([true, true, false, false, false]);
+    expect(d.party.map(m => m.gender.name)).toEqual(['fêmea', 'macho', 'macho', 'macho', 'macho']);
+  });
+
+  it('natureza = (PID & 0xFF) % 25 e bate com a do PC', () => {
+    expect(raw.party.map(p => p.pid)).toEqual([0x10F, 0x1EC, 0xE9, 0xEE, 0xEE]);
+    expect(d.party.map(m => m.nature.name)).toEqual(['Modest', 'Hasty', 'Impish', 'Jolly', 'Jolly']);
+    expect(d.party.map(m => m.pidNature)).toEqual([null, null, null, null, null]);
+    const pcBefore = before.pc.boxes.flatMap(b => b.slots);
+    for (const m of d.party.slice(0, 2)) {
+      const c = pcBefore.find(x => x.speciesId === m.speciesId && x.exp === m.exp);
+      expect(c.nature).toEqual(m.nature);
+      expect(c.shiny).toBe(m.shiny);
+      expect(c.gender).toEqual(m.gender);
+    }
+  });
+
+  it('Serperior no PC: natureza Modest e shiny', () => {
+    const s = d.pc.boxes[0].slots.find(m => m.speciesId === 497);
+    expect(s.nature.name).toBe('Modest');
+    expect(s.shiny).toBe(true);
+  });
+
+  it('itens 503 e 510 (faixa antes só "provável")', () => {
+    expect(d.party[0].item).toMatchObject({ id: 510, name: 'Heavy-Duty Boots', confidence: 'confirmado' });
+    expect(d.party[1].item).toMatchObject({ id: 503, name: 'Assault Vest', confidence: 'confirmado' });
   });
 });

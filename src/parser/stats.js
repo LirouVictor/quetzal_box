@@ -31,7 +31,7 @@ const sameStats = (a, b) => BASE_ORDER.every(k => a[k] === b[k]);
 
 /**
  * Naturezas (0–24) cujo efeito reproduz exatamente os stats salvos.
- * Serve para achar a natureza real quando ela foi trocada no jogo (PID % 25 deixa de valer).
+ * Serve de conferência: se os stats salvos só fecharem com outra natureza, vale a que os reproduz.
  */
 export function naturesMatchingStats(base, ivs, evs, level, stats) {
   const out = [];

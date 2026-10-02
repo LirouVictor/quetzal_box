@@ -38,16 +38,16 @@
       "form": null,
       "showdown": "Annihilape",
       "pokeapi": "annihilape",
-      "confidence": "provável",
-      "evidence": "Apelido padrão 'Annihilape' no save; golpe Rage Fist."
+      "confidence": "confirmado",
+      "evidence": "Confirmado no jogo pelo autor."
     },
     "1327": {
       "name": "Baxcalibur",
       "form": null,
       "showdown": "Baxcalibur",
       "pokeapi": "baxcalibur",
-      "confidence": "provável",
-      "evidence": "Apelido padrão 'Baxcalibur' no save; golpe Glaive Rush."
+      "confidence": "confirmado",
+      "evidence": "Confirmado no jogo pelo autor."
     },
     "1469": {
       "name": "Pikachu",
@@ -82,7 +82,7 @@
     }
   },
   "itemsDivergeFrom": 829,
-  "itemsVerifiedUpTo": 479,
+  "itemsVerifiedUpTo": 510,
   "ballsVerified": [
     1,
     2,
