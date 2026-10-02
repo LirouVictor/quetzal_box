@@ -22,6 +22,7 @@ Site estático (Vite + JS puro) que lê saves de GBA — **Pokémon Quetzal** (R
 - `src/analysis.js`: fraquezas/resistências e cobertura da equipe (tabela de tipos em `src/data/typechart.json`).
 - `src/search.js`: busca e filtros sobre equipe + PC.
 - `src/ai/`: assistente opcional com IA (Gemini ou Groq, à escolha; chave do usuário no `localStorage`, chamada direta do navegador; CSP libera `generativelanguage.googleapis.com` e `api.groq.com`). `gemini.js`/`groq.js` são os clientes (mesma interface), `providers.js` escolhe, `http.js` tem as peças comuns. `prompt.js` monta o pedido (sem nível; referências `E1`/`C3-12`) e confere a resposta (só referências que existem); `view.js` desenha; `index.js` é o pacote carregado sob demanda. Nunca enviar o `.sav` nem dados além dos Pokémon.
+- `src/demo/`: **save de demonstração** (`demo.js`, carregado só ao tocar em "Ver um save de exemplo"): monta na hora um save do Quetzal com Pokémon fictícios (só espécies/itens conferidos; stats da equipe pela fórmula) usando `quetzal-writer.js`, que também é o gerador dos testes. Nunca grava no save do usuário; o exemplo não vira "último save".
 - `src/parser/charset.js`: tabela de caracteres Gen 3.
 - `src/export.js`: CSV (BOM + `;`, padrão do Excel pt-BR), Showdown, JSON.
 - `src/data/`: tabelas geradas + `quetzal-overrides.json` (manual: IDs próprios do Quetzal e exceções de item). `move-text.json` (descrições dos golpes) é carregado sob demanda, num pacote separado.

@@ -28,6 +28,12 @@ export function openSave(buffer, fileName) {
   return data;
 }
 
+/** Bytes do save de demonstração (montado na hora, num pacote carregado só quando pedido). */
+export async function demoBytes() {
+  const { buildDemoSave } = await import('./demo/demo.js');
+  return buildDemoSave(BASE);
+}
+
 function render() {
   const { data, fileName } = state;
   const out = document.getElementById('out');
