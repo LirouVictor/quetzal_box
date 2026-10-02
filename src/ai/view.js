@@ -10,9 +10,40 @@ const where = m => (m.hasNickname ? m.species.name + ' · ' : '')
 
 const VERDICT = n => (n >= 10 ? 'Excelente' : n >= 8 ? 'Muito boa' : n >= 6 ? 'Boa' : n >= 4 ? 'Mediana' : 'Fraca');
 
-/** Escapa o texto e troca as referências (E1, C3-12) pelo nome do Pokémon. */
-function rich(text, byRef) {
-  return esc(text).replace(REF_RE, r => (byRef.has(r) ? `<b>${monShort(byRef.get(r))}</b>` : r));
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Escapa o texto e troca as referências (E1, C3-12) pelo nome do Pokémon, em negrito.
+ * A IA às vezes escreve o nome junto da referência ("Corviknight (C1-2)", "C1-2 (Corviknight)",
+ * "C1-2 Corviknight"): o nome repetido é absorvido para não aparecer duas vezes.
+ */
+export function rich(text, byRef) {
+  const src = String(text ?? '');
+  let out = '', last = 0;
+  for (const match of src.matchAll(REF_RE)) {
+    const m = byRef.get(match[0]);
+    if (!m) continue;
+    const names = [...new Set([m.nickname, m.species.name].filter(Boolean))].map(reEsc).join('|');
+    let before = src.slice(last, match.index);
+    let end = match.index + match[0].length;
+    // Nome antes: "Nome (REF" / "Nome REF" / "Nome [REF"
+    const left = before.match(new RegExp(`(?:^|[^\\p{L}\\p{N}])((?:${names})\\s*([(\\[]?)\\s*)$`, 'iu'));
+    let opened = '';
+    if (left) { before = before.slice(0, before.length - left[1].length); opened = left[2]; }
+    else {
+      const br = before.match(/([(\[])\s*$/);
+      if (br) { before = before.slice(0, before.length - br[0].length); opened = br[1]; }
+    }
+    const rest = src.slice(end);
+    let after;
+    if (opened) after = rest.match(new RegExp(`^(?:\\s*[,/-]?\\s*(?:${names}))?\\s*[)\\]]`, 'iu'));
+    else if (!left) after = rest.match(new RegExp(`^\\s*[(\\[]\\s*(?:${names})\\s*[)\\]]|^\\s+(?:${names})(?![\\p{L}\\p{N}])`, 'iu'));
+    if (opened && !after) before += opened; // parêntese sem par: devolve
+    if (after) end += after[0].length;
+    out += esc(before) + `<b>${monShort(m)}</b>`;
+    last = end;
+  }
+  return out + esc(src.slice(last));
 }
 
 function sprite(m, size) {

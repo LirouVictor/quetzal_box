@@ -3,7 +3,7 @@ import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, 
 import * as groq from '../src/ai/groq.js';
 import { provider, providerId, setProviderId } from '../src/ai/providers.js';
 import { generateJSON, errorMessage, pickModel, listFlashModels, fallbackOrder, setModel, getModel } from '../src/ai/gemini.js';
-import { analysisView, buildView } from '../src/ai/view.js';
+import { analysisView, buildView, rich } from '../src/ai/view.js';
 import T from '../src/data/tables.js';
 
 const ivs = n => ({ hp: n, atk: n, def: n, spa: n, spd: n, spe: n });
@@ -73,6 +73,18 @@ suite('IA: conferência da resposta', () => {
     expect(r.nome).toBe('Equipe sugerida');
     expect(r.membros.map(x => x.ref)).toEqual(['E1', 'C3-12', 'C1-1']);
     expect(r.dropped).toEqual(['X1']);
+  });
+  it('nome junto da referência não aparece duas vezes', () => {
+    const L = '<b>Lucario</b>', G = '<b>Garchomp</b>';
+    expect(rich('E1 forte', byRef)).toBe(`${L} forte`);
+    expect(rich('Lucario (E1) e Garchomp (C3-12) formam', byRef)).toBe(`${L} e ${G} formam`);
+    expect(rich('E1 Lucario e C3-12 Garchomp', byRef)).toBe(`${L} e ${G}`);
+    expect(rich('E1 (Lucario) e [C3-12]', byRef)).toBe(`${L} e ${G}`);
+    expect(rich('Lucario E1 ataca', byRef)).toBe(`${L} ataca`);
+    expect(rich('(E1) sozinho', byRef)).toBe(`${L} sozinho`);
+    expect(rich('Pelipper e E1', byRef)).toBe(`Pelipper e ${L}`);
+    expect(rich('C99-1 não existe', byRef)).toBe('C99-1 não existe');
+    expect(rich('E1 <script>', byRef)).toBe(`${L} &lt;script&gt;`);
   });
   it('telas: nomes no lugar das referências e texto escapado', () => {
     const a = checkAnalysis({ nota: 7, resumo: 'E1 <b>forte</b>', pontos_fortes: [], pontos_fracos: [], sinergias: [], trocas: [{ sai: 'E2', entra: 'C3-12', motivo: 'C3-12 cobre E2' }], dicas: [] }, byRef);

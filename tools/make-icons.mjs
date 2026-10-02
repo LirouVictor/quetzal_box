@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Gera os ícones do app (pixel art original: esfera nas cores do quetzal + lupa) em PNG e SVG.
+// Gera os ícones do app (pixel art original: "sD" de savDex com uma esfera dentro do D) em PNG e SVG.
 // Uso: node tools/make-icons.mjs   → public/icons/*
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
@@ -9,55 +9,74 @@ import { fileURLToPath } from 'node:url';
 const OUT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../public/icons');
 mkdirSync(OUT, { recursive: true });
 
-// Ícone 32×32: esfera de captura estilizada (cores do quetzal, não as da Poké Ball) com uma lupa na frente.
+// Ícone 32×32: as letras "sD" (savDex) em pixel art; dentro do D, uma esfera de captura nas cores do app
+// (verde em cima, azul-claro embaixo; não são as cores da Poké Ball).
 const N = 32;
 const COLORS = {
-  O: [0x0d, 0x10, 0x20], // contorno
-  G: [0x2f, 0x9e, 0x80], H: [0x8f, 0xe3, 0xc6], // metade de cima (verde) e brilho
-  W: [0xfb, 0xf8, 0xee], S: [0xd9, 0xd1, 0xb8], // metade de baixo (creme) e sombra
-  R: [0xc8, 0xd3, 0xe6], // aro da lupa
-  L: [0x7f, 0xa6, 0xe0], l: [0xe0, 0xec, 0xff], // vidro e reflexo
-  D: [0x23, 0x73, 0x5f], // cabo (verde escuro)
+  K: [0x0d, 0x10, 0x20], // sombra das letras, faixa e aro do botão
+  C: [0xfb, 0xf8, 0xee], c: [0xd9, 0xd1, 0xb8], // letras (creme) e base das letras
+  G: [0x2f, 0x9e, 0x80], H: [0x8f, 0xe3, 0xc6], // metade de cima da esfera e brilho
+  L: [0xc8, 0xd3, 0xe6], // metade de baixo
+  W: [0xff, 0xff, 0xff], // botão
 };
 const BG = [0x22, 0x2a, 0x44];
 
-/** Círculo com contorno de 1 pixel onde algum vizinho fica fora. `paint(dx, dy, d)` dá a cor do interior. */
-function disc(g, cx, cy, r, paint) {
-  const inside = (x, y) => Math.hypot(x - cx, y - cy) <= r;
-  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-    if (!inside(x, y)) continue;
-    const edge = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1);
-    g[y][x] = edge ? 'O' : paint(x - cx, y - cy, Math.hypot(x - cx, y - cy));
-  }
-}
+// "s" minúsculo, traço de 2–3 pixels (10 × 12)
+const S = [
+  '.########.',
+  '##########',
+  '###....###',
+  '###.......',
+  '###.......',
+  '#########.',
+  '.#########',
+  '.......###',
+  '.......###',
+  '###....###',
+  '##########',
+  '.########.',
+];
 
 function buildGrid() {
   const g = Array.from({ length: N }, () => Array(N).fill('.'));
-  // Esfera (canto superior esquerdo)
-  disc(g, 12.5, 11.5, 11.5, (dx, dy, d) => {
-    if (d <= 3.6) return d > 2.3 ? 'O' : 'W'; // botão central
-    if (Math.abs(dy) <= 1) return 'O'; // faixa do meio
-    if (dy < 0) return (dx < -2 && dy < -4 && d > 11.5 - 2.5 && d < 11.5 - 1.4) ? 'H' : 'G';
-    return (dx + dy > 8 && d > 11.5 - 3) ? 'S' : 'W';
-  });
-  // Cabo da lupa: segmento diagonal com contorno
-  const lx = 21, ly = 20.5;
-  const seg = (x, y) => {
-    const t = Math.max(6, Math.min(12, ((x - lx) + (y - ly)) / Math.SQRT2));
-    const px = lx + t / Math.SQRT2, py = ly + t / Math.SQRT2;
-    return Math.hypot(x - px, y - py);
+  const letter = new Set();
+  const put = (x, y) => { if (x >= 0 && y >= 0 && x < N && y < N) letter.add(`${x},${y}`); };
+  // s: colunas 2–11, linhas 16–27
+  S.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === '#') put(2 + x, 16 + y); }));
+  // D: haste reta à esquerda + meia elipse à direita; contorno de 3 pixels
+  const D = { x0: 13, x1: 29, y0: 4, y1: 27 };
+  const cx = 19, cy = (D.y0 + D.y1) / 2, rx = D.x1 - cx + 0.5, ry = (D.y1 - D.y0) / 2 + 0.5;
+  const inD = (x, y, inset) => {
+    if (y < D.y0 + inset || y > D.y1 - inset || x < D.x0 + inset) return false;
+    if (x <= cx) return true;
+    const ex = (x - cx) / (rx - inset), ey = (y - cy) / (ry - inset);
+    return ex * ex + ey * ey <= 1;
   };
+  const counter = [];
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-    const d = seg(x, y);
-    if (d <= 1.5) g[y][x] = 'D';
-    else if (d <= 2.5) g[y][x] = 'O';
+    if (!inD(x, y, 0)) continue;
+    if (inD(x, y, 3)) counter.push([x, y]); else put(x, y);
   }
-  // Lente (por cima de tudo)
-  disc(g, lx, ly, 7, (dx, dy, d) => {
-    if (d > 5) return 'R';
-    if (d > 4.1) return 'O';
-    return (dx < -0.5 && dy < -0.5 && d > 1.8 && d < 3.4) ? 'l' : 'L';
-  });
+  // Sombra (1 pixel para baixo e para a direita), depois as letras com a base mais escura
+  for (const k of letter) { const [x, y] = k.split(',').map(Number); if (x + 1 < N && y + 1 < N) g[y + 1][x + 1] = 'K'; }
+  const inCounter = new Set(counter.map(([x, y]) => `${x},${y}`));
+  for (const k of letter) {
+    const [x, y] = k.split(',').map(Number);
+    const below = `${x},${y + 1}`;
+    g[y][x] = letter.has(below) || inCounter.has(below) ? 'C' : 'c';
+  }
+  // Esfera dentro do D
+  const bx = 21, by = cy;
+  for (const [x, y] of counter) {
+    const ax = Math.abs(x - bx), ay = Math.abs(y - by);
+    let ch;
+    if (ax <= 1 && ay <= 1) ch = 'W'; // botão 3 × 2
+    else if (ax <= 2 && ay <= 2 && !(ax === 2 && ay > 1)) ch = 'K'; // aro com cantos cortados
+    else if (ay <= 0.5) ch = 'K'; // faixa do meio
+    else if (y < by) ch = (x <= 18 && y <= by - 6) ? 'H' : 'G';
+    else ch = 'L';
+    g[y][x] = ch;
+  }
   return g.map(row => row.join(''));
 }
 const GRID = buildGrid();
@@ -113,7 +132,7 @@ function svg() {
 
 writeFileSync(path.join(OUT, 'icon-192.png'), png(192, 0.84));
 writeFileSync(path.join(OUT, 'icon-512.png'), png(512, 0.84));
-writeFileSync(path.join(OUT, 'maskable-512.png'), png(512, 0.6));
+writeFileSync(path.join(OUT, 'maskable-512.png'), png(512, 0.66));
 writeFileSync(path.join(OUT, 'icon.svg'), svg());
 // Símbolo do cabeçalho (mesmo desenho, sem fundo): impresso para colar no <symbol id="logo"> do index.html
 const hex = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
