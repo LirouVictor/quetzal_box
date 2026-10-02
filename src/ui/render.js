@@ -375,20 +375,3 @@ export function resultRow(m, i) {
     <span class="r-lv">Nv. ${m.level ?? '?'}</span>
   </button></li>`;
 }
-
-export function notesWin() {
-  return `<section class="win notes" aria-labelledby="notes-h">
-    <details>
-      <summary id="notes-h">O que ainda não dá para ler</summary>
-      <ul>
-        <li>HP atual da equipe (os detalhes mostram o HP máximo).</li>
-        <li>Shiny e gênero na equipe.</li>
-        <li>No PC: amizade e treinador original não são guardados. Os stats são calculados (stats base oficiais + nível, IVs, EVs e natureza); a fórmula foi conferida contra a equipe.</li>
-        <li>Poder, precisão e descrição dos golpes vêm do pokeemerald-expansion (geração mais nova); o Quetzal pode ter mudado algum golpe.</li>
-        <li>O nível no PC é calculado pela experiência (guardada dividida por 10) com a curva Medium Slow, que o Quetzal usa para todas as espécies.</li>
-        <li>Itens com ID acima de 479 ainda não foram todos conferidos e aparecem como "provável"; a partir de 829 (megapedras novas) a numeração é própria do Quetzal e só os itens já conferidos têm nome.</li>
-        <li>Espécies com ID acima de 905 (numeração própria do Quetzal) vêm de uma tabela manual; as ainda não conferidas no jogo aparecem como "provável".</li>
-      </ul>
-    </details>
-  </section>`;
-}

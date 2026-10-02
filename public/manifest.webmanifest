@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "Quetzal Box",
-  "short_name": "Quetzal Box",
+  "name": "savDex",
+  "short_name": "savDex",
   "description": "Veja a equipe e o PC do seu save de Pokémon Quetzal e exporte em CSV, Showdown ou JSON. Funciona offline; o save não sai do aparelho.",
   "lang": "pt-BR",
   "dir": "ltr",

@@ -1,4 +1,4 @@
-/* Quetzal Save Viewer — visual de RPG portátil em pixel art, com bordas e cores próprias.
+/* savDex — visual de RPG portátil em pixel art, com bordas e cores próprias.
    Regras de performance: sem blur, sem filtros, sem sombras com desfoque; só sombras "duras". */
 
 :root {
@@ -113,8 +113,8 @@ h1, h2, h3 { margin: 0; line-height: 1.15; }
 }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand-mark { flex: none; }
-.brand-name { font-family: var(--pixel); font-size: .72rem; line-height: 1.15; text-transform: uppercase; }
-.brand-name b { font-size: .95rem; font-weight: 700; }
+.brand-name { font-family: var(--pixel); font-size: 1.05rem; line-height: 1; }
+.brand-name b { font-weight: 700; color: #8fe3c6; } /* verde-claro do ícone: contraste bom na barra escura nos dois temas */
 .topbar-actions { display: flex; gap: 10px; align-items: center; }
 
 main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 32px; display: grid; gap: 20px; }
@@ -291,7 +291,6 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 .raw { font: .7rem/1.4 ui-monospace, monospace; color: var(--muted); overflow-wrap: anywhere; margin: 0; }
 details > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 700; }
 
-.notes { font-size: .92rem; }
 
 /* Análise da equipe */
 .analysis > summary {
@@ -348,7 +347,6 @@ button.cnt:focus-visible { outline-offset: 1px; }
 .r-main b { font-weight: 700; }
 .r-sub { display: block; color: var(--muted); font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .r-lv { font: .75rem var(--pixel); color: var(--accent); }
-.notes ul { margin: 6px 0 0; padding-left: 18px; }
 
 /* Assistente (IA) */
 .ai-intro { margin: 0 0 6px; }

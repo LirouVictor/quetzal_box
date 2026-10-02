@@ -1,4 +1,4 @@
-# Quetzal Box
+# savDex
 
 Visualizador de saves de **Pokémon Quetzal** (ROM hack de GBA). Abra o `.sav` do emulador e veja treinador, equipe e PC. Dá para exportar tudo em planilha (CSV), texto do Pokémon Showdown ou JSON.
 
@@ -13,7 +13,7 @@ Visualizador de saves de **Pokémon Quetzal** (ROM hack de GBA). Abra o `.sav` d
 1. Abra o site no Chrome do Android (ou em qualquer navegador moderno).
 2. Toque em **Abrir arquivo .sav** e escolha o save na pasta do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, também dá para arrastar o arquivo para a página.
 3. Para instalar como app: menu do Chrome → **Instalar app** / **Adicionar à tela inicial**.
-4. Com o app instalado, dá para abrir o save sem passar pelo seletor: no gerenciador de arquivos, segure o `.sav` → **Compartilhar** → **Quetzal Box**. (Se o app já estava instalado antes dessa função, desinstale e instale de novo para ele aparecer no menu.)
+4. Com o app instalado, dá para abrir o save sem passar pelo seletor: no gerenciador de arquivos, segure o `.sav` → **Compartilhar** → **savDex**. (Se o app já estava instalado antes dessa função, desinstale e instale de novo para ele aparecer no menu.)
 5. Uma cópia do último save aberto fica guardada no navegador (IndexedDB, só neste aparelho) e abre sozinha na próxima visita. Para ver o progresso mais recente, abra o `.sav` de novo. O botão **Esquecer este save** apaga a cópia.
 
 ### O que é lido hoje
@@ -95,7 +95,7 @@ npm run diff-saves -- save.sav --pc 1 5               # mostra o registro em hex
 
 ### Ícones
 
-Os ícones do app (esfera em pixel art nas cores do quetzal com uma lupa; desenho original, sem copiar a Poké Ball) são gerados por `node tools/make-icons.mjs` em `public/icons/`. O script também imprime os `<path>` do logo para o `<symbol id="logo">` do `index.html`.
+Os ícones do app (as letras "sD" em pixel art com uma esfera de captura dentro do D, nas cores do app; desenho original, sem copiar a Poké Ball) são gerados por `node tools/make-icons.mjs` em `public/icons/`. O script também imprime os `<path>` do logo para o `<symbol id="logo">` do `index.html`.
 
 ## Deploy no Cloudflare Pages
 

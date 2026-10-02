@@ -33,8 +33,7 @@ function render() {
     ${R.analysisWin(data, T)}
     ${R.pcWin(data)}
     ${R.searchWin(data, T)}
-    ${R.exportWin()}
-    ${R.notesWin()}`;
+    ${R.exportWin()}`;
   out.classList.remove('hidden');
   renderBox();
 

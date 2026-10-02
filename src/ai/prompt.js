@@ -61,7 +61,7 @@ export const SYSTEM = [
   'Regras:',
   '- Use SOMENTE os dados enviados: espécies, tipos, habilidades, itens, naturezas, stats base, IVs e golpes. Não invente Pokémon, golpes ou habilidades que não estejam na lista.',
   '- O Quetzal pode ter mudado algumas espécies e golpes; confie nos tipos e dados enviados, não na sua memória.',
-  '- Cite Pokémon SEMPRE pela referência do começo de cada linha (ex.: E1, C3-12), também dentro dos textos.',
+  '- Cite Pokémon SEMPRE pela referência do começo de cada linha (ex.: E1, C3-12), também dentro dos textos, e SEM escrever o nome junto (o app troca a referência pelo nome). Certo: "C3-12 resiste a Ice". Errado: "Garchomp (C3-12) resiste a Ice".',
   '- Ignore o nível: o jogador pode treinar qualquer Pokémon.',
   '- Só uma megaevolução pode ser usada por batalha.',
   '- Se sugerir um golpe que o Pokémon ainda não tem, diga que é sugestão e que ele precisa aprender o golpe.',
