@@ -44,6 +44,8 @@ export function makeResolver(T) {
         confidence: ov.confidence,
         evidence: ov.evidence || null,
         spriteId: form ? form.id : null,
+        // ID de Pokémon da PokeAPI para evoluções e golpes por nível (forma ou espécie base)
+        dexId: form ? form.id : base,
         hasIcon: form ? form.icon : false,
         types: form ? form.types.map(typeName).filter(Boolean)
           : base ? T.species[base].slice(1).map(typeName).filter(Boolean) : [],
@@ -58,7 +60,7 @@ export function makeResolver(T) {
       const [name, ...types] = T.species[id];
       return {
         name, form: null, showdown: showdownSpecies(name), confidence: CONFIRMED, evidence: null,
-        spriteId: id, hasIcon: id <= LAST_GEN8_ICON, types: types.map(typeName).filter(Boolean),
+        spriteId: id, dexId: id, hasIcon: id <= LAST_GEN8_ICON, types: types.map(typeName).filter(Boolean),
         abilities: (T.speciesAbilities[id] || [0, 0, 0]).map(abilityName),
         genderRate: T.genderRates[id] ?? null,
         baseStats: T.baseStats[id] || null,
@@ -70,7 +72,7 @@ export function makeResolver(T) {
       showdown: nickname || null,
       confidence: UNKNOWN,
       evidence: nickname ? 'ID próprio do Quetzal ainda não mapeado; nome tirado do apelido.' : 'ID próprio do Quetzal ainda não mapeado.',
-      spriteId: null, hasIcon: false, types: [], abilities: [null, null, null], genderRate: null, baseStats: null,
+      spriteId: null, dexId: null, hasIcon: false, types: [], abilities: [null, null, null], genderRate: null, baseStats: null,
     };
   }
 

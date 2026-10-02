@@ -7,6 +7,7 @@ Site estático (Vite + JS puro) que lê saves `.sav` de **Pokémon Quetzal** (RO
 - `npm run dev` / `npm run build` (saída em `dist/`) / `npm run preview`
 - `npm test`: Vitest. Os testes sintéticos sempre rodam; os do save real (`test/parser.fixture.test.js`) só rodam se existirem `fixtures/PokemonQuetzalPtBrAlpha9v0.sav` e `fixtures/PokemonQuetzalPtBrAlpha9v0-pc.sav` (Lucario e Basculegion movidos para a BOX1, posições 21 e 23), ou `QUETZAL_SAVE` / `QUETZAL_SAVE_PC`. **Saves reais não são versionados** (`.gitignore`).
 - `npm run tables`: regenera `src/data/*.json` a partir do pokeemerald-expansion e dos CSVs da PokeAPI (precisa de rede). Os JSON são versionados; o build não acessa rede.
+- `npm run dex`: regenera `src/data/dex.json` (linhas evolutivas com o método em português e golpes por nível do jogo oficial mais recente; golpes ligados aos IDs do expansion pelo nome). Carregado sob demanda ao abrir o detalhe de um Pokémon; aparece como "provável" (o Quetzal pode ter mudado).
 - `npm run diff-saves -- a.sav b.sav`: compara dois saves para engenharia reversa (ver `tools/`).
 
 ## Estrutura

@@ -3,8 +3,8 @@
 
 import '@fontsource/silkscreen/latin-400.css';
 import '@fontsource/silkscreen/latin-700.css';
-import '@fontsource/atkinson-hyperlegible/latin-400.css';
-import '@fontsource/atkinson-hyperlegible/latin-700.css';
+import '@fontsource/pixelify-sans/latin-400.css';
+import '@fontsource/pixelify-sans/latin-700.css';
 import './styles/main.css';
 import { installImageFallback } from './ui/sprites.js';
 import { rememberSave, loadRememberedSave, forgetSave } from './ui/store.js';

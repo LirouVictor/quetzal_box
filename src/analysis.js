@@ -37,3 +37,19 @@ export function analyzeTeam(party, T) {
     moveTypes: [...moveTypes],
   };
 }
+
+/**
+ * Multiplicador de dano recebido de cada tipo de ataque, para um Pokémon com os tipos `defTypes`.
+ * Agrupado: 4×, 2×, ½, ¼ e 0 (imune). Sem habilidades nem itens.
+ */
+export function defenseMatchups(defTypes, T) {
+  const idx = new Map(T.types.map((t, i) => [t, i]));
+  const groups = { 4: [], 2: [], 0.5: [], 0.25: [], 0: [] };
+  if (!defTypes.length) return groups;
+  for (const [t, i] of T.types.map((t, i) => [t, i])) {
+    if (!t || t === 'stellar') continue;
+    const x = defTypes.reduce((m, d) => m * (idx.has(d) ? T.chart[i][idx.get(d)] : 1), 1);
+    if (x in groups) groups[x].push(t);
+  }
+  return groups;
+}
