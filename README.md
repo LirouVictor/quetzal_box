@@ -101,7 +101,7 @@ Os ícones do app (as letras "sD" em pixel art com uma esfera de captura dentro 
 
 O build é estático e fica em `dist/`. Os caminhos são relativos (`base: './'`), então o mesmo build funciona na raiz de um domínio ou numa subpasta.
 
-### Opção A: integração com o GitHub (recomendada, sem tokens; é como o site está publicado hoje, em https://quetzal-box.pages.dev)
+### Opção A: integração com o GitHub (recomendada, sem tokens; é como o site está publicado hoje, em https://savdex.pages.dev)
 
 1. No painel da Cloudflare: **Workers & Pages → Create → Pages → Connect to Git** e escolha este repositório.
 2. Configuração de build:
@@ -117,7 +117,7 @@ A Cloudflare lê a versão do Node em `.node-version`. Se precisar, defina `NODE
 
 ```bash
 npm run build
-npx wrangler pages deploy dist --project-name quetzal-box
+npx wrangler pages deploy dist --project-name savdex
 ```
 
 ### Cabeçalhos
