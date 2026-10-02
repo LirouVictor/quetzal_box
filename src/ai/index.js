@@ -1,24 +1,48 @@
 // Funções de IA (carregadas sob demanda, só quando o usuário toca num botão do assistente).
+// Em duas etapas: prepareAi monta exatamente o que vai ser enviado (para o usuário ver e confirmar);
+// sendAi envia e desenha a resposta.
 
 import { provider } from './providers.js';
 import { refOf, systemPrompt, ANALYSIS_SCHEMA, BUILD_SCHEMA, analysisPrompt, buildPrompt, checkAnalysis, checkBuild } from './prompt.js';
-import { analysisView, buildView } from './view.js';
+import { analysisView, buildView, confirmView } from './view.js';
 
 /**
+ * Monta o pedido sem enviar nada.
  * @param {'analyze'|'build'} kind
  * @param {{ all: object[], T: object, game?: object, note?: string }} ctx
- * @returns {Promise<{ html: string, byRef: Map<string, object>, team: object[]|null }>}
  */
-export async function runAi(kind, { all, T, game = null, note = '' }) {
-  const system = systemPrompt(game);
+export function prepareAi(kind, { all, T, game = null, note = '' }) {
   const P = provider();
+  const system = systemPrompt(game);
+  const prompt = kind === 'analyze' ? analysisPrompt(all, T, note, P.maxCandidates) : buildPrompt(all, T, note, P.maxCandidates);
+  const lines = prompt.split('\n');
+  const counts = {
+    party: lines.filter(l => /^E\d \|/.test(l)).length,
+    pc: lines.filter(l => /^C\d+-\d+ \|/.test(l)).length,
+    pcTotal: all.filter(m => m.location !== 'party').length,
+  };
+  return { kind, P, system, prompt, schema: kind === 'analyze' ? ANALYSIS_SCHEMA : BUILD_SCHEMA, all, T, note: note.trim(), counts };
+}
+
+/** HTML da janela de confirmação ("o que vai ser enviado"). */
+export function confirmHtml(prep) {
+  return confirmView(prep);
+}
+
+/** Envia o pedido preparado e devolve a tela do resultado. */
+export async function sendAi(prep) {
+  const { kind, P, system, prompt, schema, all, T } = prep;
   const byRef = new Map(all.map(m => [refOf(m), m]));
   const label = model => `${P.service} (${model})`;
+  const { data, model } = await P.generateJSON({ system, prompt, schema });
   if (kind === 'analyze') {
-    const { data, model } = await P.generateJSON({ system, prompt: analysisPrompt(all, T, note, P.maxCandidates), schema: ANALYSIS_SCHEMA });
     return { html: analysisView(checkAnalysis(data, byRef), byRef, label(model)), byRef, team: null };
   }
-  const { data, model } = await P.generateJSON({ system, prompt: buildPrompt(all, T, note, P.maxCandidates), schema: BUILD_SCHEMA });
   const r = checkBuild(data, byRef);
   return { html: buildView(r, byRef, label(model), T), byRef, team: r.membros.map(x => byRef.get(x.ref)) };
+}
+
+/** Prepara e envia direto (sem confirmação). */
+export async function runAi(kind, ctx) {
+  return sendAi(prepareAi(kind, ctx));
 }
