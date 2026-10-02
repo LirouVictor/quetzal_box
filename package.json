@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "tables": "node tools/build-tables.mjs",
     "dex": "node tools/build-dex.mjs",
+    "gen3": "node tools/build-gen3.mjs",
     "diff-saves": "node tools/diff-saves.mjs"
   },
   "devDependencies": {

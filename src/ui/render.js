@@ -22,7 +22,7 @@ function genderIcon(g) {
 
 function badge(conf) {
   if (conf === PROBABLE) return ' <span class="badge" title="Identificação provável, ainda não confirmada">provável</span>';
-  if (conf === 'desconhecido') return ' <span class="badge" title="ID do Quetzal ainda não mapeado">?</span>';
+  if (conf === 'desconhecido') return ' <span class="badge" title="ID ainda não mapeado">?</span>';
   return '';
 }
 
@@ -117,7 +117,7 @@ function monHeader(m, headingTag = 'h3', idAttr = '') {
   const title = m.hasNickname ? esc(m.nickname) : speciesLabel(sp);
   const sub = [
     m.hasNickname ? speciesLabel(sp) : null,
-    `#${m.speciesId}`,
+    `#${m.dexNo ?? m.speciesId}`,
   ].filter(Boolean).join(' · ');
   return `<div class="mon-head">
     ${portrait(m)}
@@ -133,8 +133,10 @@ export function trainerWin(d, fileName) {
   const t = d.trainer;
   const pcTotal = d.pc.boxes.reduce((a, b) => a + b.slots.length, 0);
   const kv = (k, v, cls = '') => `<div><dt>${k}</dt><dd${cls ? ` class="${cls}"` : ''}>${v}</dd></div>`;
+  const game = d.game ? d.game.name : '';
   return `<section class="win trainer" aria-labelledby="trainer-h">
     <div class="win-title"><h2 id="trainer-h">Treinador</h2><small class="file" title="${esc(fileName)}">${esc(fileName)}</small></div>
+    ${game ? `<p class="game-chip"><span class="k">Jogo</span> <b>${esc(game)}</b></p>` : ''}
     <div class="trainer-row">
       <p class="trainer-name pixel">${esc(t.name || '—')}</p>
       <dl class="kv">
@@ -237,9 +239,10 @@ function matchupTable(m, T) {
 export function monDetail(m, T) {
   const sp = m.species;
   const where = m.location === 'party' ? `Equipe, posição ${m.slot}` : `${m.where}, posição ${m.slot}`;
-  const note = m.location === 'pc'
-    ? `<p class="unread-list">No PC, o nível vem da experiência (${m.exp.toLocaleString('pt-BR')} exp) e os stats são calculados. Amizade e treinador original não são guardados no registro do PC.</p>`
-    : '';
+  const note = m.location !== 'pc' ? ''
+    : m.complete
+      ? `<p class="unread-list">No PC, o nível vem da experiência (${m.exp.toLocaleString('pt-BR')} exp) e os stats são calculados.</p>`
+      : `<p class="unread-list">No PC, o nível vem da experiência (${m.exp.toLocaleString('pt-BR')} exp) e os stats são calculados. Amizade e treinador original não são guardados no registro do PC.</p>`;
   return `<button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="Fechar">✕</button>
   <div class="mon">
     ${monHeader(m, 'h2', ' id="detail-title"')}

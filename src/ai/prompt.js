@@ -54,20 +54,41 @@ export function candidates(all, max = MAX_CANDIDATES) {
   return out;
 }
 
-export const SYSTEM = [
-  'Você é um especialista em Pokémon ajudando quem joga Pokémon Quetzal, uma ROM hack de Pokémon Emerald com engine expandida',
-  '(tipo Fairy, divisão físico/especial por golpe, megaevoluções, habilidades e golpes até a geração 9, formas regionais).',
-  'O jogador quer montar e avaliar equipes para jogar o jogo (batalhas em singles contra treinadores e líderes).',
-  'Regras:',
-  '- Use SOMENTE os dados enviados: espécies, tipos, habilidades, itens, naturezas, stats base, IVs e golpes. Não invente Pokémon, golpes ou habilidades que não estejam na lista.',
-  '- O Quetzal pode ter mudado algumas espécies e golpes; confie nos tipos e dados enviados, não na sua memória.',
-  '- Cite Pokémon SEMPRE pela referência do começo de cada linha (ex.: E1, C3-12), também dentro dos textos, e SEM escrever o nome junto (o app troca a referência pelo nome). Certo: "C3-12 resiste a Ice". Errado: "Garchomp (C3-12) resiste a Ice".',
-  '- Ignore o nível: o jogador pode treinar qualquer Pokémon.',
-  '- Só uma megaevolução pode ser usada por batalha.',
-  '- Se sugerir um golpe que o Pokémon ainda não tem, diga que é sugestão e que ele precisa aprender o golpe.',
-  '- Escreva em português do Brasil, de forma direta e específica. Nomes de Pokémon, golpes, itens, habilidades e tipos ficam em inglês.',
-  '- Frases curtas: cada item de lista com no máximo 2 frases.',
-].join('\n');
+/** Contexto de cada jogo para a IA. */
+const GAME_CONTEXT = {
+  quetzal: [
+    'Pokémon Quetzal, uma ROM hack de Pokémon Emerald com engine expandida',
+    '(tipo Fairy, divisão físico/especial por golpe, megaevoluções, habilidades e golpes até a geração 9, formas regionais).',
+    '- O Quetzal pode ter mudado algumas espécies e golpes; confie nos tipos e dados enviados, não na sua memória.',
+    '- Só uma megaevolução pode ser usada por batalha.',
+  ],
+  gen3: [
+    'um jogo oficial da Geração 3',
+    '(sem tipo Fairy, sem megaevoluções; na Gen 3 a categoria física/especial depende do TIPO do golpe: Normal, Fighting, Flying, Poison, Ground, Rock, Bug, Ghost e Steel são físicos; os demais, especiais).',
+    '- Use os dados de Gen 3 enviados (tipos, golpes, poder), não os de jogos mais novos.',
+    '- Não sugira itens, golpes ou mecânicas que não existem na Gen 3.',
+  ],
+};
+
+/** Instruções fixas para a IA, conforme o jogo do save. */
+export function systemPrompt(game) {
+  const key = game && game.id === 'quetzal' ? 'quetzal' : 'gen3';
+  const [what, details, ...rules] = GAME_CONTEXT[key];
+  const name = game && game.id !== 'quetzal' ? `${game.name}, ${what}` : what;
+  return [
+    `Você é um especialista em Pokémon ajudando quem joga ${name}`,
+    details,
+    'O jogador quer montar e avaliar equipes para jogar o jogo (batalhas em singles contra treinadores e líderes).',
+    'Regras:',
+    '- Use SOMENTE os dados enviados: espécies, tipos, habilidades, itens, naturezas, stats base, IVs e golpes. Não invente Pokémon, golpes ou habilidades que não estejam na lista.',
+    ...rules,
+    '- Cite Pokémon SEMPRE pela referência do começo de cada linha (ex.: E1, C3-12), também dentro dos textos, e SEM escrever o nome junto (o app troca a referência pelo nome). Certo: "C3-12 resiste a Ice". Errado: "Garchomp (C3-12) resiste a Ice".',
+    '- Ignore o nível: o jogador pode treinar qualquer Pokémon.',
+    '- Se sugerir um golpe que o Pokémon ainda não tem, diga que é sugestão e que ele precisa aprender o golpe.',
+    '- Escreva em português do Brasil, de forma direta e específica. Nomes de Pokémon, golpes, itens, habilidades e tipos ficam em inglês.',
+    '- Frases curtas: cada item de lista com no máximo 2 frases.',
+  ].join('\n');
+}
 
 const str = { type: 'STRING' };
 const strList = { type: 'ARRAY', items: str };

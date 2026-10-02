@@ -22,7 +22,7 @@ const SORTS = {
   pos: () => 0, // mantém a ordem natural (equipe, depois caixas)
   level: (a, b) => (b.level ?? 0) - (a.level ?? 0),
   name: (a, b) => norm(a.hasNickname ? a.nickname : a.species.name).localeCompare(norm(b.hasNickname ? b.nickname : b.species.name)),
-  dex: (a, b) => a.speciesId - b.speciesId,
+  dex: (a, b) => (a.dexNo ?? a.speciesId) - (b.dexNo ?? b.speciesId),
 };
 
 /**

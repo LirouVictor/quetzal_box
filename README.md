@@ -1,6 +1,6 @@
 # savDex
 
-Visualizador de saves de **Pokémon Quetzal** (ROM hack de GBA). Abra o `.sav` do emulador e veja treinador, equipe e PC. Dá para exportar tudo em planilha (CSV), texto do Pokémon Showdown ou JSON.
+Visualizador de saves de Pokémon de GBA: **Pokémon Quetzal** (ROM hack) e os jogos oficiais da Gen 3 (**Emerald**, **FireRed/LeafGreen**, **Ruby/Sapphire**). Abra o `.sav` do emulador (ou o `.sps` exportado do GameShark/SharkPort) e veja treinador, equipe e PC. Dá para exportar tudo em planilha (CSV), texto do Pokémon Showdown ou JSON.
 
 - **100% local:** o save é lido no navegador e não é enviado a nenhum servidor. A única exceção é opcional: o **Assistente (IA)** manda a lista dos Pokémon (nunca o `.sav`) ao serviço de IA escolhido (Gemini ou Groq) quando você toca num dos botões dele.
 - **Leve:** sem framework. A página inicial pesa uns 8 KB comprimidos (sem as fontes). O parser e as tabelas (~29 KB comprimidos) só carregam quando você abre um save.
@@ -16,7 +16,16 @@ Visualizador de saves de **Pokémon Quetzal** (ROM hack de GBA). Abra o `.sav` d
 4. Com o app instalado, dá para abrir o save sem passar pelo seletor: no gerenciador de arquivos, segure o `.sav` → **Compartilhar** → **savDex**. (Se o app já estava instalado antes dessa função, desinstale e instale de novo para ele aparecer no menu.)
 5. Uma cópia do último save aberto fica guardada no navegador (IndexedDB, só neste aparelho) e abre sozinha na próxima visita. Para ver o progresso mais recente, abra o `.sav` de novo. O botão **Esquecer este save** apaga a cópia.
 
-### O que é lido hoje
+### Jogos suportados
+
+- **Pokémon Quetzal** (testado na Alpha 9 PT-BR; o save não guarda a versão do jogo).
+- **Pokémon Emerald** e **FireRed/LeafGreen** (conferidos com saves reais).
+- **Pokémon Ruby/Sapphire** (mesmo formato do Emerald; ainda sem save real para testar).
+- Hacks que mantêm o formato de um desses jogos também abrem, mas nomes de espécies, golpes e itens podem não bater se o hack os mudou.
+
+O app identifica o formato antes de ler. Um save que não bate com nenhum formato conhecido mostra um aviso ("não é de um jogo suportado"), em vez de dados parecidos com os certos.
+
+### O que é lido hoje (Quetzal)
 
 | | Equipe | PC |
 |---|---|---|

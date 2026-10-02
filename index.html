@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>savDex</title>
-  <meta name="description" content="savDex: veja a equipe e o PC do seu save de Pokémon Quetzal e exporte em CSV, Showdown ou JSON. Tudo roda no navegador.">
+  <meta name="description" content="savDex: veja a equipe e o PC do seu save de Pokémon (Quetzal, Emerald, FireRed/LeafGreen, Ruby/Sapphire) e exporte em CSV, Showdown ou JSON. Tudo roda no navegador.">
   <meta name="theme-color" content="#2b3350" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#10131f" media="(prefers-color-scheme: dark)">
   <link rel="manifest" href="./manifest.webmanifest">
@@ -33,7 +33,7 @@
 
   <main id="main">
     <section class="win intro" id="intro">
-      <h1 class="pixel">Abra seu save do Quetzal</h1>
+      <h1 class="pixel">Abra seu save</h1>
       <p>Veja treinador, equipe e PC, e exporte para planilha, Showdown ou JSON. A leitura acontece no seu aparelho: o arquivo não é enviado para lugar nenhum. Uma cópia do último save fica guardada neste navegador para abrir sozinha na próxima visita.</p>
       <div class="drop" id="drop">
         <label class="btn btn-big" for="file">
@@ -42,7 +42,17 @@
         </label>
         <!-- Sem "accept": no Android, filtrar por .sav costuma deixar o arquivo acinzentado no seletor. O conteúdo é validado ao abrir. -->
         <input type="file" id="file">
-        <p class="hint">No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui.</p>
+        <p class="hint">No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui. Aceita .sav e exports do GameShark (.sps).</p>
+      </div>
+      <div class="supported">
+        <h2 class="pixel">Jogos suportados</h2>
+        <ul>
+          <li>Pokémon Quetzal <small>(testado na Alpha 9 PT-BR)</small></li>
+          <li>Pokémon Emerald</li>
+          <li>Pokémon FireRed / LeafGreen</li>
+          <li>Pokémon Ruby / Sapphire <small>(mesmo formato do Emerald; ainda sem save real para testar)</small></li>
+        </ul>
+        <p class="hint">Hacks que mantêm o formato desses jogos também abrem, mas nomes de espécies, golpes e itens podem não bater se o hack os mudou. Save de outro jogo mostra um aviso em vez de dados errados.</p>
       </div>
       <p class="error hidden" id="err" role="alert"></p>
     </section>
@@ -59,7 +69,7 @@
   </main>
 
   <footer class="foot">
-    <p>Projeto de fã, sem vínculo com Nintendo, Game Freak, The Pokémon Company ou com os autores do Quetzal. Sprites do repositório <a href="https://github.com/PokeAPI/sprites" rel="noopener">PokeAPI/sprites</a>.</p>
+    <p>Projeto de fã, sem vínculo com Nintendo, Game Freak, The Pokémon Company ou com os autores dos hacks (como o Quetzal). Sprites do repositório <a href="https://github.com/PokeAPI/sprites" rel="noopener">PokeAPI/sprites</a>.</p>
   </footer>
 
   <dialog id="detail" class="win sheet" aria-labelledby="detail-title"></dialog>
