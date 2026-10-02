@@ -121,6 +121,17 @@ export function makeResolver(T) {
   }
 
   /**
+   * Gênero na equipe: como na geração 3, fêmea se o byte baixo do PID for menor que o limite da espécie
+   * (taxa de fêmeas em oitavos → 31, 63, 127, 191, 223). Conferido no jogo (Tyranitar fêmea, machos).
+   */
+  function genderFromPid(sp, pid) {
+    const r = sp.genderRate;
+    if (r === null || r === undefined || r <= 0 || r >= 8) return gender(sp, 0);
+    const threshold = Math.min(254, Math.floor((r * 12.5 * 255) / 100));
+    return gender(sp, (pid & 0xFF) < threshold ? 1 : 0);
+  }
+
+  /**
    * Gênero: espécies sem gênero ou de gênero fixo seguem a espécie; as demais, o bit do save.
    * @returns {{ symbol: '♂'|'♀'|null, name: string, confidence: string }|null}
    */
@@ -133,7 +144,7 @@ export function makeResolver(T) {
     return { symbol: female ? '♀' : '♂', name: female ? 'fêmea' : 'macho', confidence: conf };
   }
 
-  return { species, move, item, ability, ball, gender };
+  return { species, move, item, ability, ball, gender, genderFromPid };
 }
 
 const SHOWDOWN_NAMES = { 'Nidoran♀': 'Nidoran-F', 'Nidoran♂': 'Nidoran-M' };
@@ -150,9 +161,8 @@ export function describe(raw, T) {
 
   const party = raw.party.map(p => {
     const sp = R.species(p.speciesId, p.nickname);
-    // Natureza: em geral PID % 25. Mas o Quetzal permite trocar a natureza (ex.: Serperior, PID = Gentle,
-    // jogo mostra Modest) e o campo dessa troca não foi localizado. Como a equipe guarda os stats, a natureza
-    // real é a que os reproduz; a do PID fica em pidNature.
+    // Natureza: (PID & 0xFF) % 25 (ver natures.js). Por segurança, se os stats salvos só fecharem com
+    // outra natureza, vale a que os reproduz; a do PID fica em pidNature.
     const pidNature = natureFromPid(p.pid);
     let nature = pidNature;
     if (sp.baseStats) {
@@ -181,8 +191,8 @@ export function describe(raw, T) {
       item: R.item(p.itemId),
       ability: R.ability(sp, p.abilityNum),
       ball: R.ball(p.ballId),
-      shiny: null, // ainda não localizado no registro da equipe
-      gender: null, // idem
+      shiny: p.shiny,
+      gender: R.genderFromPid(sp, p.pid),
       friendship: p.friendship,
       ot: { name: p.otName, tid: p.otId & 0xFFFF, sid: p.otId >>> 16 },
       pid: p.pid,

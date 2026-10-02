@@ -23,12 +23,12 @@ Visualizador de saves de **Pokémon Quetzal** (ROM hack de GBA). Abra o `.sav` d
 | Espécie, apelido, golpes, PP | ✅ | ✅ |
 | Natureza, item, habilidade, IVs, EVs | ✅ | ✅ |
 | Poké Ball | ✅ | ✅ |
-| Shiny | ainda não | ✅ |
-| Gênero | ainda não | ✅ |
+| Shiny | ✅ | ✅ |
+| Gênero | ✅ (pelo PID) | ✅ |
 | Experiência | ✅ | ✅ (o jogo guarda ÷ 10) |
 | Nível | ✅ | calculado pela experiência (curva conferida no jogo) |
 | Stats | ✅ | calculados (stats base + nível, IVs, EVs, natureza) |
-| HP atual | ainda não | — |
+| HP atual | provável (`0x23`), ainda não mostrado | — |
 
 Também tem:
 - **Busca** na equipe e em todas as caixas (nome, espécie, golpe, habilidade, item), com filtros (tipo, shiny, habilidade oculta, gênero, 6 IVs 31) e ordenação;
@@ -38,7 +38,7 @@ Também tem:
 - **Hidden Power** de cada Pokémon.
 - **Assistente (IA, opcional)**: com uma chave grátis do Gemini ou do Groq, avalia a equipe (nota, pontos fortes e fracos, sinergia, trocas com o PC, dicas) ou monta uma equipe com os Pokémon da equipe e do PC. Veja a seção abaixo.
 
-Espécies com ID acima de 905 usam numeração própria do Quetzal. Elas são identificadas por uma tabela manual, e as que ainda não foram conferidas no jogo aparecem como **provável**. Itens com ID acima de 479 ainda não foram todos conferidos e aparecem como **provável**; a partir do 829 (megapedras novas) a numeração do Quetzal é diferente da tabela de referência, e só os itens já conferidos têm nome. Os detalhes técnicos estão em [`CLAUDE.md`](CLAUDE.md).
+Espécies com ID acima de 905 usam numeração própria do Quetzal. Elas são identificadas por uma tabela manual, e as que ainda não foram conferidas no jogo aparecem como **provável**. Itens com ID acima de 510 ainda não foram todos conferidos e aparecem como **provável**; a partir do 829 (megapedras novas) a numeração do Quetzal é diferente da tabela de referência, e só os itens já conferidos têm nome. Os detalhes técnicos estão em [`CLAUDE.md`](CLAUDE.md).
 
 ## Assistente (IA)
 

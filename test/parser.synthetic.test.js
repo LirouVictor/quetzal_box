@@ -104,10 +104,10 @@ suite('describe', () => {
 
   it('usa a tabela manual para IDs do Quetzal e item 865', () => {
     const a = d.party[1];
-    expect(a.species).toMatchObject({ name: 'Annihilape', confidence: 'provável', spriteId: 979 });
+    expect(a.species).toMatchObject({ name: 'Annihilape', confidence: 'confirmado', spriteId: 979 });
     expect(a.hasNickname).toBe(false);
     expect(a.item).toMatchObject({ name: 'Lucarionite Z', confidence: 'confirmado' });
-    expect(a.ability).toMatchObject({ num: 2, name: 'Defiant', hidden: true, confidence: 'provável' });
+    expect(a.ability).toMatchObject({ num: 2, name: 'Defiant', hidden: true, confidence: 'confirmado' });
     const raichu = d.pc.boxes[1].slots[0];
     expect(raichu.species).toMatchObject({ name: 'Raichu', form: 'Alola', showdown: 'Raichu-Alola', spriteId: 10100 });
     expect(raichu.species.types).toEqual(['electric', 'psychic']);
@@ -118,9 +118,10 @@ suite('describe', () => {
     expect(raichu.shiny).toBe(true);
     expect(raichu.ball).toMatchObject({ id: 25, name: 'Radiant Ball', confidence: 'confirmado' });
     expect(raichu.gender).toMatchObject({ symbol: '♂', name: 'macho' });
-    expect(d.party[0].gender).toBeNull();
+    // Gênero da equipe pelo byte baixo do PID (15 < 127 → fêmea no Pikachu, taxa 4/8)
+    expect(d.party[0].gender).toMatchObject({ symbol: '♀', name: 'fêmea' });
     expect(d.party[0].ball).toMatchObject({ id: 1, name: 'Poké Ball', confidence: 'confirmado' });
-    expect(d.party[0].shiny).toBeNull();
+    expect(d.party[0].shiny).toBe(false);
     const pika = d.pc.boxes[1].slots[1];
     expect(pika.species.spriteId).toBeNull();
     // Forma própria sem dados na PokeAPI: tipos e habilidades da espécie base, como "provável"
@@ -168,10 +169,13 @@ suite('levelFromExp (Medium Slow)', () => {
 });
 
 suite('natureFromPid', () => {
-  it('segue PID % 25', () => {
+  it('segue (PID & 0xFF) % 25, como no Quetzal', () => {
     expect(natureFromPid(0).name).toBe('Hardy');
     expect(natureFromPid(0)).toMatchObject({ plus: null, minus: null });
-    expect(natureFromPid(25 + 13)).toMatchObject({ name: 'Jolly', plus: 'spe', minus: 'spa' });
-    expect(natureFromPid(0xFFFFFFFF).name).toBe(['Hardy','Lonely','Brave','Adamant','Naughty','Bold','Docile','Relaxed','Impish','Lax','Timid','Hasty','Serious','Jolly','Naive','Modest','Mild','Quiet','Bashful','Rash','Calm','Gentle','Sassy','Careful','Quirky'][0xFFFFFFFF % 25]);
+    expect(natureFromPid(225 + 13)).toMatchObject({ name: 'Jolly', plus: 'spe', minus: 'spa' });
+    // Serperior (macho) e Tyranitar (fêmea) do save real: PID % 25 daria Gentle; o jogo mostra Modest
+    expect(natureFromPid(0x1F0).name).toBe('Modest');
+    expect(natureFromPid(0x10F).name).toBe('Modest');
+    expect(natureFromPid(0xFFFFFFFF).name).toBe('Bold'); // 255 % 25 = 5
   });
 });

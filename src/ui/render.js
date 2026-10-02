@@ -92,7 +92,7 @@ function ballChip(b) {
 function natureChip(n, pidNature = null) {
   if (!n) return '<span class="chip unread"><span class="k">Natureza</span> não lida</span>';
   const eff = n.plus ? `+${STAT_LABEL[n.plus]} −${STAT_LABEL[n.minus]}` : 'neutra';
-  const title = pidNature ? ` title="Natureza trocada no jogo (o PID indica ${esc(pidNature.name)})."` : '';
+  const title = pidNature ? ` title="Natureza tirada dos stats salvos (o PID indica ${esc(pidNature.name)})."` : '';
   return `<span class="chip"${title}><span class="k">Natureza</span><b>${esc(n.name)}</b> <span class="k">${eff}</span></span>`;
 }
 
@@ -166,7 +166,8 @@ export function monTile(m, attrs = '') {
   const next = m.shiny && sp.spriteId ? ` data-next="${esc(spriteSrc(sp))}"` : '';
   return `<button class="ptile${t}" type="button" ${attrs} aria-label="${esc(label)}">
     <img data-sprite="1"${next} src="${esc(spriteSrc(sp, m.shiny))}" width="96" height="96" alt="" decoding="async" loading="lazy" crossorigin="anonymous">
-    <span class="ptile-name">${monShort(m)}${genderIcon(m.gender)}${m.shiny ? ' <span class="shiny" aria-hidden="true">★</span>' : ''}</span>
+    <span class="ptile-marks">${m.shiny ? '<span class="shiny" aria-hidden="true">★</span>' : ''}${genderIcon(m.gender)}</span>
+    <span class="ptile-name">${monShort(m)}</span>
     ${m.level ? `<span class="ptile-lv">Nv. ${m.level}</span>` : ''}
   </button>`;
 }

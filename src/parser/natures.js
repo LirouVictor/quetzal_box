@@ -7,9 +7,13 @@ export const NATURES = [
 ];
 const NATURE_STATS = ['atk', 'def', 'spe', 'spa', 'spd'];
 
-/** Natureza a partir do PID (PID % 25), com o stat aumentado e o reduzido. */
+/**
+ * Natureza a partir do PID, com o stat aumentado e o reduzido.
+ * No Quetzal vale o byte baixo do PID: (PID & 0xFF) % 25 (o jogo monta o PID como 225 + natureza
+ * para machos e 256 + natureza para fêmeas; conferido em 12 Pokémon da equipe).
+ */
 export function natureFromPid(pid) {
-  return natureFromId(pid % 25);
+  return natureFromId((pid & 0xFF) % 25);
 }
 
 export function natureFromId(id) {

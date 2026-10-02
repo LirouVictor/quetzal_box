@@ -7,9 +7,9 @@ import { makeSave } from './helpers/make-save.js';
 const d = describe(parseSave(makeSave({
   trainer: { name: 'Zoë; "x"', tid: 1, sid: 2 },
   party: [
-    { pid: 13, nickname: 'Fishy', species: 1210, item: 479, level: 100, abilityNum: 1, moves: [[762, 16], [97, 48]],
+    { pid: 225 + 13, nickname: 'Fishy', species: 1210, item: 479, level: 100, abilityNum: 1, moves: [[762, 16], [97, 48]],
       evs: [0, 252, 4, 252, 0, 0], ivs: [31, 31, 31, 31, 31, 31], stats: [381, 323, 167, 280, 176, 186] },
-    { pid: 15, nickname: 'Lucario', species: 448, item: 865, level: 100, moves: [[396, 32]],
+    { pid: 225 + 15, nickname: 'Lucario', species: 448, item: 865, level: 100, moves: [[396, 32]],
       evs: [4, 0, 0, 252, 252, 0], ivs: [31, 0, 31, 31, 31, 31] },
   ],
   pc: {
@@ -23,9 +23,9 @@ suite('Showdown', () => {
   const txt = toShowdown(d);
   it('equipe com apelido, item, EVs, natureza e IVs na ordem do Showdown', () => {
     expect(txt).toContain([
-      'Fishy (Basculegion) @ Life Orb', 'Ability: Adaptability', 'Level: 100', 'EVs: 252 Atk / 4 Def / 252 Spe', 'Jolly Nature', '- Wave Crash', '- Agility',
+      'Fishy (Basculegion) (M) @ Life Orb', 'Ability: Adaptability', 'Level: 100', 'EVs: 252 Atk / 4 Def / 252 Spe', 'Jolly Nature', '- Wave Crash', '- Agility',
     ].join('\n'));
-    expect(txt).toContain('Lucario @ Lucarionite Z\nAbility: Steadfast\nLevel: 100\nEVs: 4 HP / 252 SpA / 252 Spe\nModest Nature\nIVs: 0 Atk\n- Aura Sphere');
+    expect(txt).toContain('Lucario (M) @ Lucarionite Z\nAbility: Steadfast\nLevel: 100\nEVs: 4 HP / 252 SpA / 252 Spe\nModest Nature\nIVs: 0 Atk\n- Aura Sphere');
   });
   it('PC com nível, natureza, item e habilidade; formas usam o nome do Showdown', () => {
     expect(txt).toContain('=== PC: BOX1 ===\n\nSQSR (Machop) (M)\nAbility: No Guard\nLevel: 5\nRash Nature\n- Leer\n\n');
