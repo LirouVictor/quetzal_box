@@ -44,6 +44,10 @@
         <input type="file" id="file">
         <p class="hint">No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui. Aceita .sav e exports do GameShark (.sps).</p>
       </div>
+      <div class="demo-row">
+        <button class="btn btn-ghost" type="button" id="demo">Ver um save de exemplo</button>
+        <p class="hint">Sem jogo, sem arquivo: um save do Quetzal com Pokémon fictícios para experimentar o savDex.</p>
+      </div>
       <div class="supported">
         <h2 class="pixel">Jogos suportados</h2>
         <ul>
@@ -60,7 +64,7 @@
     <section class="win saved-note hidden" id="saved-note" aria-label="Save guardado">
       <p id="saved-text" role="status"></p>
       <div class="export-btns">
-        <label class="btn btn-small" for="file">Abrir save atualizado</label>
+        <label class="btn btn-small" for="file" id="saved-open">Abrir save atualizado</label>
         <button class="btn btn-small btn-ghost" type="button" id="forget">Esquecer este save</button>
       </div>
     </section>

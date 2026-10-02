@@ -40,6 +40,15 @@ function showError(msg) {
 function showSavedNote(name, savedAt) {
   const when = new Date(savedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
   $('#saved-text').textContent = `Mostrando a cópia guardada de "${name}" (aberta em ${when}). Se você jogou depois disso, abra o .sav de novo para atualizar.`;
+  $('#saved-open').textContent = 'Abrir save atualizado';
+  $('#forget').classList.remove('hidden');
+  $('#saved-note').classList.remove('hidden');
+}
+
+function showDemoNote() {
+  $('#saved-text').textContent = 'Você está vendo um save de exemplo, com Pokémon fictícios. Abra o seu .sav para ver os seus.';
+  $('#saved-open').textContent = 'Abrir meu save';
+  $('#forget').classList.add('hidden');
   $('#saved-note').classList.remove('hidden');
 }
 
@@ -55,6 +64,7 @@ async function openBytes(buf, name, opts = {}) {
   $('#intro').classList.add('hidden');
   $('#reopen').classList.remove('hidden');
   if (opts.fromCopy) showSavedNote(name, opts.fromCopy);
+  else if (opts.demo) showDemoNote();
   else $('#saved-note').classList.add('hidden');
   scrollTo(0, 0);
 }
@@ -74,6 +84,18 @@ async function load(file) {
     $('#intro').classList.remove('hidden');
   }
 }
+
+// Save de exemplo: montado na hora (Pokémon fictícios); não fica guardado como "último save"
+$('#demo').addEventListener('click', async () => {
+  $('#err').classList.add('hidden');
+  try {
+    const app = await loadApp();
+    await openBytes(await app.demoBytes(), 'exemplo-savdex.sav', { demo: true });
+  } catch (e) {
+    console.error(e);
+    showError('Não consegui abrir o save de exemplo.');
+  }
+});
 
 $('#forget').addEventListener('click', async () => {
   await forgetSave();

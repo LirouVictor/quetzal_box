@@ -10,6 +10,8 @@ Visualizador de saves de Pokémon de GBA: **Pokémon Quetzal** (ROM hack) e os j
 
 ## Como usar
 
+Sem jogo ou sem arquivo? Toque em **Ver um save de exemplo** na tela inicial: abre um save do Quetzal com Pokémon fictícios, montado na hora.
+
 1. Abra o site no Chrome do Android (ou em qualquer navegador moderno).
 2. Toque em **Abrir arquivo .sav** e escolha o save na pasta do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, também dá para arrastar o arquivo para a página.
 3. Para instalar como app: menu do Chrome → **Instalar app** / **Adicionar à tela inicial**.
