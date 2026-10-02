@@ -70,7 +70,7 @@ async function load(file) {
     console.error(e);
     showError(e && e.name === 'SaveError'
       ? e.message
-      : 'Não consegui ler este arquivo. Confira se é o .sav do Quetzal e tente de novo.');
+      : 'Não consegui ler este arquivo. Confira se é o .sav (ou .sps) de um jogo suportado e tente de novo.');
     $('#intro').classList.remove('hidden');
   }
 }

@@ -2,7 +2,7 @@
   "id": "./",
   "name": "savDex",
   "short_name": "savDex",
-  "description": "Veja a equipe e o PC do seu save de Pokémon Quetzal e exporte em CSV, Showdown ou JSON. Funciona offline; o save não sai do aparelho.",
+  "description": "Veja a equipe e o PC do seu save de Pokémon (Quetzal, Emerald, FireRed/LeafGreen) e exporte em CSV, Showdown ou JSON. Funciona offline; o save não sai do aparelho.",
   "lang": "pt-BR",
   "dir": "ltr",
   "start_url": "./",

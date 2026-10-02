@@ -150,8 +150,15 @@ main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 32px; display: grid
 .error { margin: 14px 0 0; padding: 10px 14px; color: var(--ink); background: var(--win-2); border-left: 6px solid var(--accent-2); }
 input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
+.supported { margin-top: 14px; padding: 10px 12px; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
+.supported h2 { font-size: .8rem; text-transform: uppercase; margin: 0 0 6px; }
+.supported ul { margin: 0 0 6px; padding-left: 18px; line-height: 1.6; }
+.supported small { color: var(--muted); }
+
 /* Treinador */
 .trainer .win-title small.file { max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.game-chip { margin: -4px 0 8px; font-size: .85rem; }
+.game-chip .k { color: var(--muted); }
 .trainer-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
 .trainer-name { font-size: 1.6rem; margin: 0; overflow-wrap: anywhere; }
 .kv { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
@@ -169,6 +176,9 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 .saved-note { --hi: var(--accent); }
 .saved-note p { margin: 0 0 8px; font-size: .92rem; }
 #out { display: grid; gap: 20px; }
+/* Itens de grid não crescem com conteúdo longo sem quebra (ex.: nome de arquivo comprido) */
+main > *, #out > * { min-width: 0; }
+.trainer .win-title small.file { min-width: 0; }
 #out > section > .win-title { margin: 0 4px 4px; }
 .warnings ul { margin: 0; padding-left: 18px; }
 

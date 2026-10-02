@@ -98,13 +98,24 @@ function readSlots(dv) {
 }
 
 /**
+ * Layout do Quetzal: 16 setores por slot, com as seções 14 e 15 (os jogos oficiais da Gen 3 usam 14).
+ * Só olha a estrutura; a coerência dos dados é conferida depois (load.js).
+ */
+export function isQuetzalLayout(input) {
+  const u8 = input instanceof Uint8Array ? input : new Uint8Array(input);
+  if (u8.length < SAVE_SIZE) return false;
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  return readSlots(dv).some(s => s.sections[14] !== undefined && s.sections[15] !== undefined && s.sections[0] !== undefined && s.sections[1] !== undefined);
+}
+
+/**
  * Lê o save e devolve os dados crus.
  * @param {ArrayBuffer|Uint8Array} input
  */
 export function parseSave(input) {
   const u8 = input instanceof Uint8Array ? input : new Uint8Array(input);
   if (u8.length < SAVE_SIZE) {
-    throw new SaveError(`O arquivo tem ${u8.length} bytes; um save de GBA do Quetzal tem ${SAVE_SIZE} (128 KB).`);
+    throw new SaveError(`O arquivo tem ${u8.length} bytes; um save de Pokémon de GBA tem ${SAVE_SIZE} (128 KB).`);
   }
   const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
   const warnings = [];

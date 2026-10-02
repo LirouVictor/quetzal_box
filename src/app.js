@@ -1,7 +1,8 @@
 // Carregado sob demanda quando o usuário abre um save (parser + tabelas + renderização).
 
-import { parseSave, describe } from './parser/index.js';
-import T from './data/tables.js';
+import { loadSave } from './parser/index.js';
+import BASE from './data/tables.js';
+import G3 from './data/gen3.json';
 import { toCSV, toShowdown, toJSON, fileBase } from './export.js';
 import { download, copyText } from './ui/io.js';
 import * as R from './ui/render.js';
@@ -13,8 +14,13 @@ let moveText = null; // descrições dos golpes, carregadas na primeira vez que 
 
 let state = null;
 
+// Tabelas do jogo do save aberto (o Quetzal usa as do expansion; a Gen 3 oficial, as da época)
+let T = BASE;
+
 export function openSave(buffer, fileName) {
-  const data = describe(parseSave(buffer), T);
+  const loaded = loadSave(buffer, BASE, G3);
+  const data = loaded.data;
+  T = loaded.T;
   const firstFilled = data.pc.boxes.findIndex(b => b.slots.length);
   const all = [...data.party, ...data.pc.boxes.flatMap(b => b.slots)];
   state = { data, fileName, box: firstFilled >= 0 ? firstFilled : 0, all, results: [], shown: 0 };
@@ -165,7 +171,7 @@ function setupAi(out) {
     aiOut.innerHTML = `<p class="ai-wait"><svg class="ai-spin" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true" shape-rendering="crispEdges"><use href="#logo"/></svg><span class="pixel">${b.dataset.ai === 'analyze' ? 'Analisando a equipe' : 'Montando a equipe'}</span><span class="dots" aria-hidden="true"></span><br><small>Pode levar até um minuto.</small></p>`;
     try {
       const ai = await import('./ai/index.js');
-      const res = await ai.runAi(b.dataset.ai, { all: state.all, T, note: $('#ai-note').value });
+      const res = await ai.runAi(b.dataset.ai, { all: state.all, T, game: state.data.game, note: $('#ai-note').value });
       state.ai = res;
       aiOut.innerHTML = res.html;
       aiOut.scrollIntoView({ block: 'start' });

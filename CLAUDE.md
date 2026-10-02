@@ -1,6 +1,6 @@
 # savDex
 
-Site estático (Vite + JS puro) que lê saves `.sav` de **Pokémon Quetzal** (ROM hack de GBA sobre pokeemerald com engine expandida), mostra treinador, equipe e PC e exporta CSV / Showdown / JSON. Tudo roda no navegador; nada é enviado a servidor. Alvo principal: Chrome no Android em aparelho de entrada (Redmi Note 11), então **leveza é requisito**: sem framework, sem dependências de runtime, renderizar só o que está visível (uma caixa do PC por vez), sem efeitos caros de CSS.
+Site estático (Vite + JS puro) que lê saves de GBA — **Pokémon Quetzal** (ROM hack sobre pokeemerald com engine expandida) e os **jogos oficiais da Gen 3** (Emerald, FireRed/LeafGreen, Ruby/Sapphire) —, mostra treinador, equipe e PC e exporta CSV / Showdown / JSON. Aceita `.sav` e exports do GameShark/SharkPort (`.sps`). Tudo roda no navegador; nada é enviado a servidor. Alvo principal: Chrome no Android em aparelho de entrada (Redmi Note 11), então **leveza é requisito**: sem framework, sem dependências de runtime, renderizar só o que está visível (uma caixa do PC por vez), sem efeitos caros de CSS.
 
 ## Comandos
 
@@ -8,11 +8,15 @@ Site estático (Vite + JS puro) que lê saves `.sav` de **Pokémon Quetzal** (RO
 - `npm test`: Vitest. Os testes sintéticos sempre rodam; os do save real (`test/parser.fixture.test.js`) só rodam se existirem `fixtures/PokemonQuetzalPtBrAlpha9v0.sav` e `fixtures/PokemonQuetzalPtBrAlpha9v0-pc.sav` (Lucario e Basculegion movidos para a BOX1, posições 21 e 23) e, opcional, `fixtures/PokemonQuetzalPtBrAlpha9v0-3.sav` (Tyranitar e Scorbunny shinys na equipe, Serperior no PC), ou `QUETZAL_SAVE` / `QUETZAL_SAVE_PC` / `QUETZAL_SAVE_3`. **Saves reais não são versionados** (`.gitignore`).
 - `npm run tables`: regenera `src/data/*.json` a partir do pokeemerald-expansion e dos CSVs da PokeAPI (precisa de rede). Os JSON são versionados; o build não acessa rede.
 - `npm run dex`: regenera `src/data/dex.json` (linhas evolutivas com o método em português e golpes por nível do jogo oficial mais recente; golpes ligados aos IDs do expansion pelo nome). Carregado sob demanda ao abrir o detalhe de um Pokémon; aparece como "provável" (o Quetzal pode ter mudado).
+- `npm run gen3`: regenera `src/data/gen3.json` (tabelas da Gen 3 oficial a partir do decomp pret/pokeemerald + nomes da PokeAPI).
+- Saves reais da Gen 3 para os testes (opcionais, não versionados): `fixtures/emerald.sav` e `fixtures/firered.sav`.
 - `npm run diff-saves -- a.sav b.sav`: compara dois saves para engenharia reversa (ver `tools/`).
 
 ## Estrutura
 
-- `src/parser/save.js`: leitura crua (só números/textos). Offsets em constantes exportadas (`PARTY`, `PC`, ...).
+- `src/parser/load.js`: **porta de entrada**. Tira o embrulho (`container.js`: SharkPort `.sps`), identifica o formato (layout de 16 setores do Quetzal ou 14 setores da Gen 3 oficial) e confere a coerência antes de mostrar qualquer coisa. Save que não bate com nenhum formato gera `SaveError` claro ("não é de um jogo suportado"), nunca dados parciais. `SUPPORTED` lista os jogos (também na tela inicial do `index.html`).
+- `src/parser/save.js`: leitura crua do **Quetzal** (só números/textos). Offsets em constantes exportadas (`PARTY`, `PC`, ...).
+- `src/parser/gen3.js`: leitura e descrição dos **jogos oficiais da Gen 3** (formato público: Pokémon de 80/100 bytes criptografados com PID ^ OT ID e embaralhados por PID % 24; checksums por Pokémon e por setor). Produz o mesmo formato de `describe()`; `gen3Tables()` adapta as tabelas do app (golpes 1–354 com tipo/poder da Gen 3, tabela de tipos sem Fairy).
 - `src/parser/describe.js`: resolve nomes, tipos, natureza, habilidade, nível (pela exp) e marca a confiança de cada dado.
 - `src/parser/stats.js`: stats pela fórmula (stats base da PokeAPI), conferência da natureza contra os stats salvos e Hidden Power. `src/parser/natures.js`: tabela de naturezas e natureza pelo PID (byte baixo).
 - `src/analysis.js`: fraquezas/resistências e cobertura da equipe (tabela de tipos em `src/data/typechart.json`).
@@ -34,7 +38,17 @@ Site estático (Vite + JS puro) que lê saves `.sav` de **Pokémon Quetzal** (RO
 
 ---
 
-## Formato do save
+## Gen 3 oficial (Emerald, FireRed/LeafGreen, Ruby/Sapphire) — formato público
+
+Implementado a partir da documentação pública (Bulbapedia/PKHeX) e conferido com saves reais de Emerald e FireRed (os stats salvos de toda a equipe batem com a fórmula, o que valida criptografia, tabelas e natureza/IV/EV):
+
+- 2 slots de **14 setores**; checksum por seção com tamanhos próprios (0: 0xF2C, 4: 0xF08, 13: 0x7D0, demais 0xF80; Ruby/Sapphire mudam as seções 0 e 4, aceitas também).
+- Equipe na seção 1: Emerald/Ruby/Sapphire em `0x234` (contagem) / `0x238`; FireRed/LeafGreen em `0x34` / `0x38`. O jogo é identificado pela posição em que os checksums dos Pokémon batem; Ruby/Sapphire × Emerald pelo valor em `0xAC` da seção 0 (0 = Ruby/Sapphire).
+- PC: seções 5–13 concatenadas (8 × 3968 + 2000 bytes): caixa atual (u32), 420 Pokémon de 80 bytes, nomes das 14 caixas em `0x8344`.
+- Natureza = PID % 25; shiny pela fórmula (TID ^ SID ^ PID alto ^ PID baixo) < 8; gênero pelo byte baixo do PID contra a taxa da espécie; habilidade pelo bit 31 da palavra de IVs; nível do PC pela curva de experiência da espécie.
+- O save guarda a **numeração interna** da Gen 3 (Treecko = 277); a tabela `gen3.json` converte para a Dex Nacional (sprites, evoluções, nomes).
+
+## Formato do save (Quetzal)
 
 Arquivo de 128 KB (0x20000) = 2 slots × 16 setores de 4 KB (0x1000).
 
