@@ -129,47 +129,46 @@ function monHeader(m, headingTag = 'h3', idAttr = '') {
   </div>`;
 }
 
-export function partyCard(m) {
-  return `<article class="win mon" aria-label="${esc(m.nickname)}">
-    ${monHeader(m)}
-    <div class="hp" title="HP atual ainda não localizado no save">
-      <span>HP</span><span class="meter"><i style="width:100%"></i></span><span>${m.stats.hp}</span>
-      <span class="hp-note">HP máximo (o HP atual ainda não é lido)</span>
-    </div>
-    <div class="facts">${natureChip(m.nature, m.pidNature)}${itemChip(m.item, true)}${abilityChip(m.ability)}${ballChip(m.ball)}${hiddenPowerChip(m.hiddenPower)}</div>
-    ${movesList(m.moves)}
-    ${statsTable(m)}
-  </article>`;
-}
-
 export function trainerWin(d, fileName) {
   const t = d.trainer;
   const pcTotal = d.pc.boxes.reduce((a, b) => a + b.slots.length, 0);
-  return `<section class="win" aria-labelledby="trainer-h">
-    <div class="win-title"><h2 id="trainer-h">Treinador</h2></div>
-    <p class="trainer-name pixel">${esc(t.name || '—')}</p>
-    <dl class="kv">
-      <dt>ID</dt><dd>${pad5(t.tid)}</dd>
-      <dt>SID</dt><dd>${pad5(t.sid)}</dd>
-      <dt>Equipe</dt><dd>${d.party.length}/6</dd>
-      <dt>PC</dt><dd>${pcTotal}</dd>
-      <dt>Save nº</dt><dd>${t.saveIndex}</dd>
-      <dt>Arquivo</dt><dd class="text">${esc(fileName)}</dd>
-    </dl>
+  const kv = (k, v, cls = '') => `<div><dt>${k}</dt><dd${cls ? ` class="${cls}"` : ''}>${v}</dd></div>`;
+  return `<section class="win trainer" aria-labelledby="trainer-h">
+    <div class="win-title"><h2 id="trainer-h">Treinador</h2><small class="file" title="${esc(fileName)}">${esc(fileName)}</small></div>
+    <div class="trainer-row">
+      <p class="trainer-name pixel">${esc(t.name || '—')}</p>
+      <dl class="kv">
+        ${kv('ID', pad5(t.tid))}${kv('SID', pad5(t.sid))}${kv('Equipe', `${d.party.length}/6`)}${kv('PC', pcTotal)}${kv('Save nº', t.saveIndex)}
+      </dl>
+    </div>
   </section>`;
 }
 
+/** Exportar: no fim da página, compacto. */
 export function exportWin() {
-  return `<section class="win" aria-labelledby="export-h">
+  return `<section class="win export" aria-labelledby="export-h">
     <div class="win-title"><h2 id="export-h">Exportar</h2><small>equipe + PC</small></div>
     <div class="export-btns">
-      <button class="btn" type="button" data-exp="csv">Planilha (CSV)</button>
-      <button class="btn btn-ghost" type="button" data-exp="txt">Showdown (TXT)</button>
-      <button class="btn btn-ghost" type="button" data-exp="json">JSON</button>
-      <button class="btn btn-ghost" type="button" data-copy="party">Copiar equipe (Showdown)</button>
+      <button class="btn btn-small" type="button" data-exp="csv">Planilha (CSV)</button>
+      <button class="btn btn-ghost btn-small" type="button" data-exp="txt">Showdown (TXT)</button>
+      <button class="btn btn-ghost btn-small" type="button" data-exp="json">JSON</button>
+      <button class="btn btn-ghost btn-small" type="button" data-copy="party">Copiar equipe (Showdown)</button>
     </div>
     <p class="status" id="status" role="status"></p>
   </section>`;
+}
+
+/** Bloco de Pokémon com sprite grande (equipe e equipes da IA). */
+export function monTile(m, attrs = '') {
+  const sp = m.species;
+  const t = sp.types[0] ? ` t-${esc(sp.types[0])}` : '';
+  const label = `${m.hasNickname ? m.nickname + ' (' + sp.name + ')' : sp.name}${m.shiny ? ', shiny' : ''}${m.level ? ', nível ' + m.level : ''}`;
+  const next = m.shiny && sp.spriteId ? ` data-next="${esc(spriteSrc(sp))}"` : '';
+  return `<button class="ptile${t}" type="button" ${attrs} aria-label="${esc(label)}">
+    <img data-sprite="1"${next} src="${esc(spriteSrc(sp, m.shiny))}" width="96" height="96" alt="" decoding="async" loading="lazy" crossorigin="anonymous">
+    <span class="ptile-name">${monShort(m)}${genderIcon(m.gender)}${m.shiny ? ' <span class="shiny" aria-hidden="true">★</span>' : ''}</span>
+    ${m.level ? `<span class="ptile-lv">Nv. ${m.level}</span>` : ''}
+  </button>`;
 }
 
 export function warningsWin(warnings) {
@@ -181,9 +180,11 @@ export function warningsWin(warnings) {
 }
 
 export function partyWin(d) {
-  return `<section aria-labelledby="party-h">
-    <div class="win-title"><h2 id="party-h" class="pixel">Equipe</h2><small>${d.party.length} de 6</small></div>
-    <div class="party">${d.party.map(partyCard).join('') || '<p class="hint">Nenhum Pokémon na equipe.</p>'}</div>
+  const tiles = d.party.map((m, i) => `<li>${monTile(m, `data-party="${i}"`)}</li>`).join('');
+  const empty = Array.from({ length: Math.max(0, 6 - d.party.length) }, () => '<li class="ptile-empty" aria-hidden="true"></li>').join('');
+  return `<section class="win" aria-labelledby="party-h">
+    <div class="win-title"><h2 id="party-h">Equipe</h2><small>${d.party.length} de 6 · toque para ver detalhes</small></div>
+    ${d.party.length ? `<ul class="party-grid">${tiles}${empty}</ul>` : '<p class="hint">Nenhum Pokémon na equipe.</p>'}
   </section>`;
 }
 

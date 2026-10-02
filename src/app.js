@@ -26,13 +26,14 @@ function render() {
   const { data, fileName } = state;
   const out = document.getElementById('out');
   out.innerHTML = `
-    <div class="top-grid">${R.trainerWin(data, fileName)}${R.exportWin()}</div>
+    ${R.trainerWin(data, fileName)}
     ${R.warningsWin(data.warnings)}
     ${R.partyWin(data)}
-    ${R.analysisWin(data, T)}
     ${R.aiWin(data, Object.values(PROVIDERS))}
+    ${R.analysisWin(data, T)}
     ${R.pcWin(data)}
     ${R.searchWin(data, T)}
+    ${R.exportWin()}
     ${R.notesWin()}`;
   out.classList.remove('hidden');
   renderBox();
@@ -41,6 +42,11 @@ function render() {
   out.querySelector('[data-copy="party"]').addEventListener('click', async () => {
     const ok = await copyText(toShowdown({ ...data, pc: { boxes: [] } }, { includePC: false }));
     status(ok ? 'Equipe copiada no formato Showdown.' : 'Não consegui copiar neste navegador. Use "Showdown (TXT)".');
+  });
+  const partyGrid = out.querySelector('.party-grid');
+  if (partyGrid) partyGrid.addEventListener('click', e => {
+    const btn = e.target.closest('[data-party]');
+    if (btn) openDetail(data.party[+btn.dataset.party], btn);
   });
   const sel = out.querySelector('#box-select');
   sel.addEventListener('change', () => { state.box = +sel.value; renderBox(); });
@@ -83,6 +89,11 @@ function render() {
     runSearch();
   });
   out.querySelector('#more').addEventListener('click', () => showResults());
+  // A lista fica numa caixa com rolagem própria; perto do fim, carrega a próxima página sozinha
+  const list = out.querySelector('#results');
+  list.addEventListener('scroll', () => {
+    if (state.shown < state.results.length && list.scrollTop + list.clientHeight >= list.scrollHeight - 120) showResults();
+  }, { passive: true });
   out.querySelector('#results').addEventListener('click', e => {
     const btn = e.target.closest('.result[data-i]');
     if (btn) openDetail(state.results[+btn.dataset.i], btn);
@@ -152,7 +163,7 @@ function setupAi(out) {
     const disabled = [...buttons].map(x => x.disabled);
     buttons.forEach(x => { x.disabled = true; });
     $('#ai-provider').disabled = true;
-    aiOut.innerHTML = `<p class="ai-wait"><span class="pixel">${b.dataset.ai === 'analyze' ? 'Analisando a equipe' : 'Montando a equipe'}</span><span class="dots" aria-hidden="true"></span><br><small>Pode levar até um minuto.</small></p>`;
+    aiOut.innerHTML = `<p class="ai-wait"><svg class="ai-spin" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true" shape-rendering="crispEdges"><use href="#logo"/></svg><span class="pixel">${b.dataset.ai === 'analyze' ? 'Analisando a equipe' : 'Montando a equipe'}</span><span class="dots" aria-hidden="true"></span><br><small>Pode levar até um minuto.</small></p>`;
     try {
       const ai = await import('./ai/index.js');
       const res = await ai.runAi(b.dataset.ai, { all: state.all, T, note: $('#ai-note').value });
@@ -187,7 +198,9 @@ function runSearch() {
   state.results = searchMons(state.all, f);
   state.filtered = !!(f.q.trim() || f.type || f.flag);
   state.shown = 0;
-  document.getElementById('results').innerHTML = '';
+  const list = document.getElementById('results');
+  list.innerHTML = '';
+  list.scrollTop = 0;
   showResults();
 }
 
