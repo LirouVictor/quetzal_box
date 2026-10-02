@@ -2,7 +2,7 @@
 
 import { spriteSrc, iconSrc, spriteUrl } from './sprites.js';
 import { SHOWDOWN_ORDER, STAT_LABEL } from '../export.js';
-import { analyzeTeam } from '../analysis.js';
+import { analyzeTeam, defenseMatchups } from '../analysis.js';
 
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const pad5 = n => String(n).padStart(5, '0');
@@ -222,7 +222,18 @@ export function boxGrid(box) {
   return cells;
 }
 
-export function monDetail(m) {
+/** Fraquezas e resistências deste Pokémon (só pelos tipos). */
+function matchupTable(m, T) {
+  const g = defenseMatchups(m.species.types, { types: T.types, chart: T.typechart });
+  const rows = [['4×', 4, 'weak'], ['2×', 2, 'weak'], ['½', 0.5, 'resist'], ['¼', 0.25, 'resist'], ['0', 0, 'immune']]
+    .filter(([, k]) => g[k].length)
+    .map(([label, k, cls]) => `<div class="mu-row"><span class="mu-x ${cls}">${label}</span><span class="mu-types">${g[k].map(typeChip).join(' ')}</span></div>`)
+    .join('');
+  if (!rows) return '';
+  return `<section class="dsec"><h3>Dano recebido</h3>${rows}<p class="hint">Só pelos tipos; não considera habilidade (Levitate etc.) nem item.</p></section>`;
+}
+
+export function monDetail(m, T) {
   const sp = m.species;
   const where = m.location === 'party' ? `Equipe, posição ${m.slot}` : `${m.where}, posição ${m.slot}`;
   const note = m.location === 'pc'
@@ -237,6 +248,8 @@ export function monDetail(m) {
     ${movesList(m.moves)}
     ${m.stats ? statsTable(m) : ivEvTable(m)}
     ${note}
+    ${T ? matchupTable(m, T) : ''}
+    <div class="dex-slot" data-dex></div>
     <div class="export-btns"><button class="btn btn-ghost" type="button" data-copy="mon">Copiar (Showdown)</button></div>
     <details><summary>Bytes do registro</summary><p class="raw">${esc(m.raw)}</p></details>
   </div>`;

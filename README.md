@@ -34,6 +34,7 @@ Também tem:
 - **Busca** na equipe e em todas as caixas (nome, espécie, golpe, habilidade, item), com filtros (tipo, shiny, habilidade oculta, gênero, 6 IVs 31) e ordenação;
 - **Análise da equipe**: fraquezas, resistências e imunidades por tipo, e cobertura dos golpes;
 - **Detalhes dos golpes** (poder, precisão, categoria, descrição) ao tocar no golpe;
+- No detalhe de cada Pokémon: **dano recebido** por tipo (4×, 2×, ½, ¼, imune), **linha evolutiva** com o método de cada evolução e **golpes por nível** (dos jogos oficiais, marcados como "provável");
 - **Hidden Power** de cada Pokémon.
 - **Assistente (IA, opcional)**: com uma chave grátis do Gemini ou do Groq, avalia a equipe (nota, pontos fortes e fracos, sinergia, trocas com o PC, dicas) ou monta uma equipe com os Pokémon da equipe e do PC. Veja a seção abaixo.
 
@@ -80,6 +81,7 @@ Os arquivos em `src/data/*.json` são gerados e versionados. O build não acessa
 
 ```bash
 npm run tables     # baixa do pokeemerald-expansion e da PokeAPI e regenera src/data/*.json
+npm run dex        # evoluções e golpes por nível (PokeAPI) → src/data/dex.json
 ```
 
 `src/data/quetzal-overrides.json` é mantido à mão: tem as espécies com ID próprio do Quetzal e as exceções de item.

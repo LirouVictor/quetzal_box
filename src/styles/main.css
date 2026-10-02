@@ -24,7 +24,7 @@
   --top-ink-on-gold: #fbf8ee;
   --px: 4px;
   --pixel: "Silkscreen", ui-monospace, monospace;
-  --body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --body: "Pixelify Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -347,6 +347,32 @@ button.cnt:focus-visible { outline-offset: 1px; }
 .r-main b { font-weight: 700; }
 .r-sub { display: block; color: var(--muted); font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .r-lv { font: .75rem var(--pixel); color: var(--accent); }
+
+/* Detalhe: dano recebido, evolução e golpes por nível */
+.dsec { margin: 4px 0 0; }
+.dsec > h3, .dsec > summary { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font: .78rem var(--pixel); text-transform: uppercase; }
+.mu-row { display: grid; grid-template-columns: 40px 1fr; gap: 8px; align-items: center; padding: 3px 0; }
+.mu-x { display: inline-block; text-align: center; padding: 2px 0; font: .72rem var(--pixel); }
+.mu-x.weak { background: var(--accent-2); color: #fff; }
+.mu-x.resist { background: var(--accent); color: var(--accent-ink); }
+.mu-x.immune { background: var(--edge); color: var(--win); }
+.mu-types { display: flex; flex-wrap: wrap; gap: 4px; }
+.evo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
+.evo-stage { display: grid; gap: 6px; }
+.evo-node { display: grid; justify-items: center; gap: 2px; min-width: 84px; max-width: 150px; padding: 4px 6px; text-align: center; background: var(--win); box-shadow: inset 0 -3px 0 var(--hi); }
+.evo-node.here { box-shadow: inset 0 0 0 2px var(--accent), inset 0 -3px 0 var(--accent); }
+.evo-node img { width: 48px; height: 40px; object-fit: contain; }
+.evo-node b { font-size: .85rem; }
+.evo-node small { color: var(--muted); font-size: .72rem; line-height: 1.25; }
+.evo-arrow { width: 0; height: 0; border: 7px solid transparent; border-left: 9px solid var(--accent-2); border-right: 0; }
+.learn > summary { min-height: 44px; }
+.learn-tab { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.learn-tab td { padding: 4px 6px; border-bottom: 2px solid var(--hi); vertical-align: middle; }
+.learn-tab .lv-col { width: 3.2em; font: .72rem var(--pixel); color: var(--accent); }
+.learn-tab td.k { color: var(--muted); font-size: .78rem; white-space: nowrap; }
+.learn-tab tr.has td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.learn-tab tr.future { opacity: .6; }
+.known { color: var(--accent); font-weight: 700; }
 
 /* Assistente (IA) */
 .ai-intro { margin: 0 0 6px; }

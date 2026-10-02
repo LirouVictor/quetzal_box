@@ -239,7 +239,8 @@ function renderBox() {
 
 function openDetail(m, opener) {
   const dlg = document.getElementById('detail');
-  dlg.innerHTML = R.monDetail(m);
+  dlg.innerHTML = R.monDetail(m, T);
+  fillDex(dlg, m);
   dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
   dlg.querySelector('[data-copy="mon"]').addEventListener('click', async e => {
     const ok = await copyText(toShowdown({ party: [m], pc: { boxes: [] } }, { includePC: false }).replace(/^=== Equipe ===\n\n/, ''));
@@ -252,6 +253,25 @@ function openDetail(m, opener) {
     if (window.scrollY !== scroll) window.scrollTo(0, scroll);
   }, { once: true });
   dlg.showModal();
+}
+
+// Linha evolutiva e golpes por nível: dados carregados na primeira vez que um detalhe é aberto
+let dexData = null;
+async function fillDex(dlg, m) {
+  const slot = dlg.querySelector('[data-dex]');
+  if (!slot) return;
+  try {
+    if (!dexData) {
+      slot.innerHTML = '<p class="hint">Carregando evolução e golpes…</p>';
+      const [data, ui] = await Promise.all([import('./data/dex.json'), import('./ui/dex.js')]);
+      dexData = { dex: data.default, ui };
+    }
+    if (!slot.isConnected) return; // o detalhe já foi trocado
+    slot.innerHTML = dexData.ui.evolutionHtml(m, dexData.dex, T) + dexData.ui.learnsetHtml(m, dexData.dex, T);
+  } catch (e) {
+    console.error(e);
+    slot.innerHTML = '';
+  }
 }
 
 function exportAs(kind) {
