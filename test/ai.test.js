@@ -255,3 +255,26 @@ suite('IA: reservas do Gemini', () => {
       .toEqual(['gemini-3.8-flash', 'gemini-3.8-flash-lite', 'gemini-3.9-flash-preview', 'gemini-3.7-flash']);
   });
 });
+
+suite('IA: transparência antes de enviar', () => {
+  it('prepara o pedido sem enviar e conta o que vai junto', async () => {
+    const { prepareAi, confirmHtml } = await import('../src/ai/index.js');
+    const prep = prepareAi('build', { all, T, game: { id: 'quetzal', name: 'Pokémon Quetzal' }, note: 'quero o Lucario' });
+    expect(prep.counts).toEqual({ party: 2, pc: 3, pcTotal: 4 });
+    expect(prep.prompt).toContain('Pedido do jogador: quero o Lucario');
+    const html = confirmHtml(prep);
+    expect(html).toContain('2 Pokémon da equipe e 3 do PC (de 4');
+    expect(html).toContain('Não vai');
+    expect(html).toContain('Seu pedido: “quero o Lucario”');
+    expect(html).toContain('data-send');
+    // o texto exato aparece escapado, com as instruções e as linhas dos Pokémon
+    expect(html).toContain('E1 | Lucario | Fighting/Steel');
+  });
+  it('o pedido não leva nível, EVs nem dados do treinador', async () => {
+    const { prepareAi } = await import('../src/ai/index.js');
+    const withTrainer = all.map(m => ({ ...m, level: 77, evs: { hp: 252, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, ot: { name: 'SEGREDO', tid: 4242, sid: 9999 } }));
+    const { system, prompt } = prepareAi('analyze', { all: withTrainer, T });
+    const text = system + prompt;
+    expect(text).not.toMatch(/SEGREDO|4242|9999|EVs|Nv\.? 77/);
+  });
+});

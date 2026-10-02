@@ -126,7 +126,7 @@ function setupAi(out) {
     link.textContent = P.keyUrl.replace(/^https:\/\//, '');
     $('#ai-key-steps').innerHTML = P.keySteps;
     $('#ai-key').placeholder = P.keyPlaceholder;
-    $('#ai-privacy').textContent = `Ao tocar, a lista dos seus Pokémon (espécie, tipos, golpes, habilidade, item, natureza e IVs) é enviada ao ${P.service}. O arquivo .sav não é enviado.${P.privacy ? ' ' + P.privacy : ''}`;
+    $('#ai-privacy').textContent = `A IA recebe só a lista dos seus Pokémon (espécie, tipos, golpes, habilidade, item, natureza e IVs), nunca o arquivo .sav. Antes de enviar ao ${P.service}, o app mostra exatamente o que vai. O resto do savDex funciona sem IA e sem chave.`;
     $('#ai-model').value = P.getModel();
     $('#ai-models').innerHTML = '';
     $('#ai-models-out').textContent = '';
@@ -174,10 +174,13 @@ function setupAi(out) {
     const disabled = [...buttons].map(x => x.disabled);
     buttons.forEach(x => { x.disabled = true; });
     $('#ai-provider').disabled = true;
-    aiOut.innerHTML = `<p class="ai-wait"><svg class="ai-spin" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true" shape-rendering="crispEdges"><use href="#logo"/></svg><span class="pixel">${b.dataset.ai === 'analyze' ? 'Analisando a equipe' : 'Montando a equipe'}</span><span class="dots" aria-hidden="true"></span><br><small>Pode levar até um minuto.</small></p>`;
     try {
       const ai = await import('./ai/index.js');
-      const res = await ai.runAi(b.dataset.ai, { all: state.all, T, game: state.data.game, note: $('#ai-note').value });
+      // Monta o pedido e mostra exatamente o que vai ser enviado antes de enviar
+      const prep = ai.prepareAi(b.dataset.ai, { all: state.all, T, game: state.data.game, note: $('#ai-note').value });
+      if (!skipConfirm() && !(await confirmSend(ai.confirmHtml(prep), b))) return;
+      aiOut.innerHTML = `<p class="ai-wait"><svg class="ai-spin" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true" shape-rendering="crispEdges"><use href="#logo"/></svg><span class="pixel">${b.dataset.ai === 'analyze' ? 'Analisando a equipe' : 'Montando a equipe'}</span><span class="dots" aria-hidden="true"></span><br><small>Pode levar até um minuto.</small></p>`;
+      const res = await ai.sendAi(prep);
       state.ai = res;
       aiOut.innerHTML = res.html;
       aiOut.scrollIntoView({ block: 'start' });
@@ -192,6 +195,9 @@ function setupAi(out) {
       $('#ai-provider').disabled = false;
     }
   }));
+  const ask = $('#ai-ask');
+  ask.checked = !skipConfirm();
+  ask.addEventListener('change', () => setSkipConfirm(!ask.checked));
   aiOut.addEventListener('click', async e => {
     const card = e.target.closest('[data-ref]');
     if (card && state.ai) { const m = state.ai.byRef.get(card.dataset.ref); if (m) openDetail(m, card); return; }
@@ -200,6 +206,38 @@ function setupAi(out) {
       const ok = await copyText(toShowdown({ party: state.ai.team, pc: { boxes: [] } }, { includePC: false }).replace(/^=== Equipe ===\n\n/, ''));
       copy.textContent = ok ? 'Copiado!' : 'Não foi possível copiar';
     }
+  });
+}
+
+// Confirmação antes de enviar à IA (pode ser desligada; a escolha fica neste aparelho)
+const SKIP_KEY = 'ai-confirm-skip';
+function skipConfirm() { try { return localStorage.getItem(SKIP_KEY) === '1'; } catch { return false; } }
+function setSkipConfirm(on) { try { if (on) localStorage.setItem(SKIP_KEY, '1'); else localStorage.removeItem(SKIP_KEY); } catch { /* sem armazenamento */ } }
+
+/** Mostra a janela "o que vai ser enviado"; resolve true se o usuário tocar em Enviar. */
+function confirmSend(html, opener) {
+  const dlg = document.getElementById('ai-confirm');
+  dlg.innerHTML = html;
+  return new Promise(resolve => {
+    let ok = false;
+    dlg.querySelector('[data-send]').addEventListener('click', () => {
+      ok = true;
+      if (dlg.querySelector('[data-skip]').checked) {
+        setSkipConfirm(true);
+        const ask = document.getElementById('ai-ask');
+        if (ask) ask.checked = false;
+      }
+      dlg.close();
+    });
+    dlg.querySelector('[data-cancel]').addEventListener('click', () => dlg.close());
+    const scroll = window.scrollY;
+    dlg.addEventListener('close', () => {
+      opener.focus({ preventScroll: true });
+      if (window.scrollY !== scroll) window.scrollTo(0, scroll);
+      resolve(ok);
+    }, { once: true });
+    dlg.showModal();
+    dlg.querySelector('[data-send]').focus();
   });
 }
 

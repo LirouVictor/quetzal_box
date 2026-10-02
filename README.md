@@ -61,7 +61,7 @@ Dois serviços, à escolha em **Serviço de IA** (cada um com chave grátis pró
 | **Groq** | <https://console.groq.com/keys> | modelos abertos (gpt-oss, Llama, Qwen), rápido; o limite grátis de tokens por minuto é menor, então vão até 60 Pokémon (equipe + PC) |
 
 1. Escolha o serviço, crie a chave no link e cole na janela **Assistente** (**Salvar chave**). Ela fica só neste aparelho (`localStorage`); **Apagar chave deste aparelho** remove.
-2. **Analisar minha equipe** ou **Montar equipe**. O campo **Pedido** aceita um desejo livre ("quero usar o Lucario", "sem lendários").
+2. **Analisar minha equipe** ou **Montar equipe**. Antes de enviar, abre uma janela com o que vai (quantos Pokémon e quais dados de cada um), o que não vai (o `.sav`, nome do treinador, ID/SID, nível, EVs…) e o texto exato do pedido, com **Cancelar** e **Enviar**. Dá para desligar essa pergunta em **Configurações da IA**. O resto do app funciona sem IA e sem chave. O campo **Pedido** aceita um desejo livre ("quero usar o Lucario", "sem lendários").
 
 Como funciona (`src/ai/`):
 - O navegador chama a API do serviço direto, com a chave do usuário (`gemini.js`, `groq.js`; peças comuns em `http.js`; escolha do serviço em `providers.js`).

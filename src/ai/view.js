@@ -146,3 +146,40 @@ export function buildView(r, byRef, model, T) {
     ${footer(model, r.dropped)}
   </div>`;
 }
+
+/** Janela "o que vai ser enviado à IA", com o texto exato do pedido. */
+export function confirmView(prep) {
+  const { P, counts, note, kind, system, prompt } = prep;
+  const model = P.getModel() || 'escolhido automaticamente';
+  const pc = counts.pc
+    ? `${counts.pc} do PC${counts.pc < counts.pcTotal ? ` (de ${counts.pcTotal}: os de maior total de stats base, no máximo 2 da mesma espécie)` : ''}`
+    : 'nenhum do PC';
+  const text = `${system}\n\n${prompt}`;
+  return `<h2 class="pixel" id="ai-confirm-title">Enviar ao ${esc(P.service)}?</h2>
+  <p class="hint">Serviço: <b>${esc(P.label)}</b> · modelo ${esc(model)}</p>
+  <div class="ai-cols">
+    <section class="ai-panel good"><h3><span class="ai-ico" aria-hidden="true"></span>Vai junto</h3>
+      <ul class="ai-list">
+        <li>${counts.party} Pokémon da equipe e ${esc(pc)}.</li>
+        <li>De cada um: espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes (tipo, categoria e poder).</li>
+        ${kind === 'analyze' ? '<li>A análise de tipos da equipe feita pelo app.</li>' : ''}
+        ${note ? `<li>Seu pedido: “${esc(note)}”.</li>` : ''}
+        <li>As instruções do savDex para a IA (como responder).</li>
+      </ul>
+    </section>
+    <section class="ai-panel bad"><h3><span class="ai-ico" aria-hidden="true"></span>Não vai</h3>
+      <ul class="ai-list">
+        <li>O arquivo .sav.</li>
+        <li>Seu nome de treinador, ID e SID, e o nome do arquivo.</li>
+        <li>Nível, EVs, PID e os demais dados do save.</li>
+      </ul>
+    </section>
+  </div>
+  ${P.privacy ? `<p class="hint">${esc(P.privacy)}</p>` : ''}
+  <details class="ai-raw"><summary>Ver o texto exato (${text.length.toLocaleString('pt-BR')} caracteres)</summary><pre>${esc(text)}</pre></details>
+  <label class="ai-skip"><input type="checkbox" data-skip> Não perguntar de novo neste aparelho</label>
+  <div class="export-btns ai-confirm-btns">
+    <button class="btn btn-ghost" type="button" data-cancel>Cancelar</button>
+    <button class="btn" type="button" data-send>Enviar ao ${esc(P.service)}</button>
+  </div>`;
+}

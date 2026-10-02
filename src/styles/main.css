@@ -499,6 +499,17 @@ button.cnt:focus-visible { outline-offset: 1px; }
 .ai-member-body small { color: var(--muted); font-size: .78rem; }
 .ai-why { font-size: .88rem; line-height: 1.4; }
 .ai-foot { font-size: .8rem; }
+/* Confirmação antes de enviar à IA */
+.ai-confirm[open] { display: grid; gap: 12px; } /* só quando aberta: fechada, o navegador esconde */
+.ai-confirm h2 { font-size: 1rem; margin: 0; }
+.ai-raw > summary { font-size: .85rem; color: var(--muted); }
+.ai-raw pre {
+  margin: 6px 0 0; padding: 8px; max-height: 40vh; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+  font: .72rem/1.45 ui-monospace, monospace; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi);
+}
+.ai-skip { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: .85rem; cursor: pointer; }
+.ai-skip input { width: 20px; height: 20px; accent-color: var(--accent); }
+.ai-confirm-btns { justify-content: flex-end; }
 /* Carregando: a esfera do logo girando (parada se o sistema pedir menos movimento) */
 .ai-spin { display: block; margin: 0 auto 8px; image-rendering: pixelated; }
 @media (prefers-reduced-motion: no-preference) {

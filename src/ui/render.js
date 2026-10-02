@@ -339,6 +339,7 @@ export function aiWin(d, providers) {
           <button class="btn btn-ghost btn-small" type="button" id="ai-model-save">Salvar modelo</button>
           <datalist id="ai-models"></datalist>
         </div>
+        <label class="ai-skip"><input type="checkbox" id="ai-ask" checked> Mostrar o que vai ser enviado antes de enviar</label>
         <button class="btn btn-ghost btn-small" type="button" id="ai-list">Ver modelos da chave</button>
         <p class="hint" id="ai-models-out" role="status"></p>
         <button class="btn btn-ghost btn-small" type="button" id="ai-forget">Apagar chave deste aparelho</button>
