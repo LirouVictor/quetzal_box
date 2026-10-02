@@ -73,7 +73,7 @@ Contagem em `0x6A4` (u8). Registros a partir de `0x6A8`, **104 bytes (0x68), sem
 | 0x00 | u32 | PID | confirmado |
 | 0x04 | u32 | OT ID (TID baixo, SID alto) | confirmado |
 | 0x08 | 10 bytes | apelido | confirmado |
-| 0x13 | u8 | flags: bit 3 (`0x08`) = **shiny**; bit 1 sempre 1 (desconhecido) | confirmado (3 shinys — Serperior, Tyranitar, Scorbunny — e 9 não shinys) |
+| 0x13 | u8 | flags: bit 3 (`0x08`) = **shiny**; bit 1 sempre 1 (desconhecido) | confirmado (3 shinys — Serperior, Tyranitar, Scorbunny, todos conferidos no jogo pelo autor — e 9 não shinys) |
 | 0x14 | 7 bytes | nome do OT | confirmado |
 | 0x23 | u16 (desalinhado) | provável **HP atual**: igual ao HP máximo em todos os Pokémon vistos (todos com HP cheio) | provável |
 | 0x28 | u16 | espécie | confirmado |
