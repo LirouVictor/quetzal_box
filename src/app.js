@@ -5,10 +5,13 @@ import BASE from './data/tables.js';
 import G3 from './data/gen3.json';
 import { toCSV, toShowdown, showdownTeam, toJSON, fileBase } from './export.js';
 import { t } from './i18n.js';
-import { download, copyText } from './ui/io.js';
+import { download, downloadBlob, copyText } from './ui/io.js';
 import * as R from './ui/render.js';
 import { searchMons } from './search.js';
 import { PROVIDERS, provider, providerId, setProviderId } from './ai/providers.js';
+import { saveKey, signature, diffSaves } from './history/diff.js';
+import { changesWin, historyStartWin, historyList } from './history/view.js';
+import { listHistory, addHistory, clearHistory } from './ui/store.js';
 
 const PAGE = 60;
 let moveText = null; // descrições dos golpes, carregadas na primeira vez que um golpe é aberto
@@ -18,7 +21,12 @@ let state = null;
 // Tabelas do jogo do save aberto (o Quetzal usa as do expansion; a Gen 3 oficial, as da época)
 let T = BASE;
 
-export function openSave(buffer, fileName) {
+/**
+ * @param {ArrayBuffer} buffer
+ * @param {string} fileName
+ * @param {{ history?: boolean }} [opts] history = guardar esta versão e mostrar o que mudou (não no exemplo)
+ */
+export function openSave(buffer, fileName, opts = {}) {
   const loaded = loadSave(buffer, BASE, G3);
   const data = loaded.data;
   T = loaded.T;
@@ -26,6 +34,7 @@ export function openSave(buffer, fileName) {
   const all = [...data.party, ...data.pc.boxes.flatMap(b => b.slots)];
   state = { data, fileName, box: firstFilled >= 0 ? firstFilled : 0, all, results: [], shown: 0 };
   render();
+  if (opts.history) setupHistory(buffer).catch(e => console.error(e));
   return data;
 }
 
@@ -41,6 +50,7 @@ function render() {
   out.innerHTML = `
     ${R.trainerWin(data, fileName)}
     ${R.warningsWin(data.warnings)}
+    <div id="changes-slot"></div>
     ${R.partyWin(data)}
     ${R.aiWin(data, Object.values(PROVIDERS))}
     ${R.analysisWin(data, T)}
@@ -55,6 +65,8 @@ function render() {
     const ok = await copyText(toShowdown({ ...data, pc: { boxes: [] } }, { includePC: false }));
     status(t(ok ? 'Equipe copiada no formato Showdown.' : 'Não consegui copiar neste navegador. Use "Showdown (TXT)".'));
   });
+  const imgBtn = out.querySelector('[data-team-image]');
+  if (imgBtn) imgBtn.addEventListener('click', () => openTeamImage(imgBtn));
   const partyGrid = out.querySelector('.party-grid');
   if (partyGrid) partyGrid.addEventListener('click', e => {
     const btn = e.target.closest('[data-party]');
@@ -322,6 +334,102 @@ async function fillDex(dlg, m) {
   } catch (e) {
     console.error(e);
     slot.innerHTML = '';
+  }
+}
+
+// Histórico: guarda esta versão do save (só neste aparelho) e compara com a versão anterior diferente.
+async function setupHistory(buffer) {
+  const cur = state;
+  const key = saveKey(cur.data), sig = signature(cur.data);
+  const before = await listHistory(key);
+  const base = before.find(e => e.signature !== sig);
+  const added = await addHistory({
+    saveKey: key, signature: sig, name: cur.fileName, bytes: buffer.slice(0), savedAt: Date.now(),
+    saveIndex: cur.data.trainer.saveIndex, total: cur.all.length,
+  });
+  if (state !== cur) return; // outro save foi aberto nesse meio-tempo
+  cur.history = { key, sig, list: await listHistory(key) };
+  if (base) showChanges(base);
+  else if (added || before.length) document.getElementById('changes-slot').innerHTML = historyStartWin(); // sem armazenamento: nada a mostrar
+}
+
+function showChanges(base) {
+  const cur = state;
+  let old;
+  try { old = loadSave(base.bytes, BASE, G3).data; } catch { return; }
+  const { html, mons } = changesWin(diffSaves(old, cur.data), base, cur.history.list.length);
+  cur.history.baseId = base.id;
+  const slot = document.getElementById('changes-slot');
+  slot.innerHTML = html;
+  slot.onclick = e => {
+    const b = e.target.closest('[data-ch]');
+    if (b) { openDetail(mons[+b.dataset.ch], b); return; }
+    if (e.target.closest('[data-history]')) openHistory(e.target.closest('[data-history]'));
+  };
+}
+
+function openHistory(opener) {
+  const dlg = document.getElementById('history');
+  const h = state.history;
+  const draw = () => {
+    dlg.innerHTML = historyList(h.list, h.sig, h.baseId);
+    dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
+    dlg.querySelectorAll('[data-compare]').forEach(b => b.addEventListener('click', () => {
+      const base = h.list.find(e => e.id === +b.dataset.compare);
+      if (base) showChanges(base);
+      dlg.close();
+    }));
+    dlg.querySelector('[data-clear]').addEventListener('click', async () => {
+      if (!confirm(t('Apagar todas as versões guardadas deste save? A versão atual continua aberta.'))) return;
+      await clearHistory(h.key);
+      h.list = [];
+      document.getElementById('changes-slot').innerHTML = '';
+      dlg.close();
+    });
+  };
+  draw();
+  const scroll = window.scrollY;
+  dlg.addEventListener('close', () => {
+    opener.focus({ preventScroll: true });
+    if (window.scrollY !== scroll) window.scrollTo(0, scroll);
+  }, { once: true });
+  dlg.showModal();
+}
+
+// Imagem da equipe: gerada no aparelho; Compartilhar (Android) ou Baixar
+async function openTeamImage(opener) {
+  const dlg = document.getElementById('image');
+  dlg.innerHTML = `<button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button>
+    <h2 class="pixel" id="image-title">${t('Imagem da equipe')}</h2><p class="hint">${t('Gerando a imagem…')}</p>`;
+  dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
+  const scroll = window.scrollY;
+  let url = '';
+  dlg.addEventListener('close', () => {
+    if (url) URL.revokeObjectURL(url);
+    opener.focus({ preventScroll: true });
+    if (window.scrollY !== scroll) window.scrollTo(0, scroll);
+  }, { once: true });
+  dlg.showModal();
+  try {
+    const { teamImage } = await import('./ui/team-image.js');
+    const blob = await teamImage(state.data);
+    if (!dlg.open) return;
+    url = URL.createObjectURL(blob);
+    const name = fileBase(state.data) + '-equipe.png';
+    const file = new File([blob], name, { type: 'image/png' });
+    const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+    dlg.querySelector('.hint').outerHTML = `<img class="team-img" src="${url}" alt="${R.esc(t('Imagem da equipe'))}">
+      <div class="export-btns">
+        ${canShare ? `<button class="btn" type="button" data-share>${t('Compartilhar')}</button>` : ''}
+        <button class="btn${canShare ? ' btn-ghost' : ''}" type="button" data-save>${t('Baixar imagem')}</button>
+      </div>`;
+    dlg.querySelector('[data-save]').addEventListener('click', () => downloadBlob(name, blob));
+    const share = dlg.querySelector('[data-share]');
+    if (share) share.addEventListener('click', () => navigator.share({ files: [file], title: t('Imagem da equipe') }).catch(() => {}));
+  } catch (e) {
+    console.error(e);
+    const hint = dlg.querySelector('.hint');
+    if (hint) hint.textContent = t('Não consegui gerar a imagem.');
   }
 }
 

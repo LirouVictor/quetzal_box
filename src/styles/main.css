@@ -564,3 +564,27 @@ button.cnt:focus-visible { outline-offset: 1px; }
   .search-form select option:hover, .box-nav select option:hover, #ai-provider option:hover { background: var(--win-2); }
   .search-form select option::checkmark, .box-nav select option::checkmark, #ai-provider option::checkmark { display: none; }
 }
+
+/* O que mudou (histórico) */
+.ch-sum { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 12px; }
+.ch-pill { padding: 4px 10px; font-size: .8rem; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
+.ch-pill.up b { color: var(--accent); }
+.ch-pill.down b { color: var(--accent-2); }
+.ch-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 6px; }
+.ch-mon {
+  width: 100%; min-height: 48px; display: flex; align-items: center; gap: 6px; padding: 4px 8px 4px 2px; text-align: left;
+  font: inherit; color: var(--ink); background: var(--win-2); border: 0; cursor: pointer; box-shadow: inset 0 0 0 2px var(--hi);
+}
+.ch-mon img { width: 56px; height: 46px; flex: none; image-rendering: pixelated; object-fit: contain; }
+.ch-mon > span { flex: 1; min-width: 0; display: grid; font-size: .8rem; line-height: 1.3; }
+.ch-mon b { overflow-wrap: anywhere; }
+.ch-mon small { color: var(--muted); font-size: .72rem; overflow-wrap: anywhere; }
+.changes [data-history] { margin-top: 12px; }
+.hist { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
+.hist-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; background: var(--win-2); }
+.hist-row > span { display: grid; min-width: 0; font-size: .85rem; }
+.hist-row small { color: var(--muted); font-size: .72rem; overflow-wrap: anywhere; }
+
+/* Imagem da equipe */
+.party-actions { margin-top: 12px; }
+.team-img { display: block; width: 100%; height: auto; margin-bottom: 12px; box-shadow: 0 0 0 3px var(--edge); image-rendering: auto; }

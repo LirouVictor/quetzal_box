@@ -48,6 +48,8 @@ Também tem:
 - **Detalhes dos golpes** (poder, precisão, categoria, descrição) ao tocar no golpe;
 - No detalhe de cada Pokémon: **dano recebido** por tipo (4×, 2×, ½, ¼, imune), **linha evolutiva** com o método de cada evolução e **golpes por nível** (dos jogos oficiais, marcados como "provável");
 - **Hidden Power** de cada Pokémon.
+- **O que mudou**: ao abrir o save de novo depois de jogar, mostra quem chegou, evoluiu, subiu de nível, aprendeu golpes ou saiu desde a versão anterior (histórico de até 30 versões, só neste aparelho).
+- **Imagem da equipe**: um PNG com sprites, tipos, item, habilidade, natureza e golpes, para compartilhar ou baixar.
 - **Assistente (IA, opcional)**: com uma chave grátis do Gemini ou do Groq, avalia a equipe (nota, pontos fortes e fracos, sinergia, trocas com o PC, dicas) ou monta uma equipe com os Pokémon da equipe e do PC. Veja a seção abaixo.
 
 Espécies com ID acima de 905 usam numeração própria do Quetzal. Elas são identificadas por uma tabela manual, e as que ainda não foram conferidas no jogo aparecem como **provável**. Itens com ID acima de 510 ainda não foram todos conferidos e aparecem como **provável**; a partir do 829 (megapedras novas) a numeração do Quetzal é diferente da tabela de referência, e só os itens já conferidos têm nome. Os detalhes técnicos estão em [`CLAUDE.md`](CLAUDE.md).

@@ -96,7 +96,7 @@ function showDemoNote() {
 async function openBytes(buf, name, opts = {}) {
   await ready;
   const app = await loadApp();
-  app.openSave(buf, name);
+  app.openSave(buf, name, { history: !opts.demo });
   showingDemo = !!opts.demo;
   $('#intro').classList.add('hidden');
   $('#reopen').classList.remove('hidden');

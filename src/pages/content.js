@@ -7,8 +7,18 @@ export const UPDATED = '2026-10-03';
 export const NEWS = [
   {
     date: '2026-10-03',
-    pt: ['Versão em inglês: segue o idioma do navegador, ou use o botão EN/PT.', 'Páginas de privacidade e termos de uso, e esta lista de novidades.'],
-    en: ['English version: follows your browser language, or use the EN/PT button.', 'Privacy and terms of use pages, and this list of what’s new.'],
+    pt: [
+      'O que mudou: ao abrir o save depois de jogar, o app mostra quem chegou, evoluiu, subiu de nível, aprendeu golpes ou saiu, comparando com a versão anterior. O histórico fica só neste aparelho.',
+      'Imagem da equipe: gera um PNG da equipe para compartilhar ou baixar.',
+      'Versão em inglês: segue o idioma do navegador, ou use o botão EN/PT.',
+      'Páginas de privacidade e termos de uso, e esta lista de novidades.',
+    ],
+    en: [
+      'What changed: when you open the save after playing, the app shows who arrived, evolved, leveled up, learned moves or left, compared with the previous version. The history stays on this device only.',
+      'Party image: creates a PNG of your party to share or download.',
+      'English version: follows your browser language, or use the EN/PT button.',
+      'Privacy and terms of use pages, and this list of what’s new.',
+    ],
   },
   {
     date: '2026-10-02',
@@ -55,6 +65,8 @@ const PRIVACY = {
 <ul>
   <li>O arquivo é lido no navegador. Ele <b>não é enviado</b> para nenhum servidor, nem para o savDex.</li>
   <li>Uma cópia do último save aberto fica guardada <b>só neste navegador</b> (IndexedDB), para abrir sozinha na próxima visita. O botão <b>Esquecer este save</b> apaga essa cópia. O save de exemplo não é guardado.</li>
+  <li><b>Histórico</b>: cada vez que você abre o save depois de jogar, uma versão dele fica guardada neste navegador (até 30 por save), para o app mostrar o que mudou. O botão <b>Apagar o histórico deste save</b>, na janela Histórico, apaga essas versões.</li>
+  <li>A <b>imagem da equipe</b> é desenhada no aparelho; ela só sai daqui se você a compartilhar.</li>
   <li>Quando você abre o save pelo menu Compartilhar do Android, o arquivo passa pelo cache do navegador só até a página lê-lo.</li>
 </ul>
 <h3>O que fica guardado neste aparelho</h3>
@@ -80,6 +92,8 @@ const PRIVACY = {
 <ul>
   <li>The file is read in the browser. It is <b>never uploaded</b> to any server, savDex included.</li>
   <li>A copy of the last save you opened is kept <b>only in this browser</b> (IndexedDB) so it opens by itself next time. The <b>Forget this save</b> button deletes that copy. The example save is not kept.</li>
+  <li><b>History</b>: each time you open the save after playing, a version of it is kept in this browser (up to 30 per save) so the app can show what changed. The <b>Delete this save’s history</b> button, in the History window, deletes those versions.</li>
+  <li>The <b>party image</b> is drawn on your device; it only leaves it if you share it.</li>
   <li>When you open the save from the Android Share menu, the file goes through the browser cache only until the page reads it.</li>
 </ul>
 <h3>What is stored on this device</h3>
