@@ -7,6 +7,7 @@ import { decodeText } from './charset.js';
 import { natureFromId } from './natures.js';
 import { calcStats, hiddenPowerType } from './stats.js';
 import { SaveError, STAT_ORDER } from './save.js';
+import { countBits, playTime, summary } from './summary.js';
 
 export const SECTORS_PER_SLOT = 14;
 const SECTOR_SIZE = 0x1000;
@@ -27,6 +28,36 @@ export const GAMES = {
   rs: { id: 'rs', name: 'Pokémon Ruby/Sapphire', short: 'Ruby/Sapphire' },
   frlg: { id: 'frlg', name: 'Pokémon FireRed/LeafGreen', short: 'FireRed/LeafGreen' },
 };
+
+// Resumo: tempo de jogo e Pokédex na seção 0 (SaveBlock2); dinheiro e insígnias (flags) no SaveBlock1,
+// que ocupa as seções 1–4 (0xF80 bytes cada). O dinheiro do Emerald e do FireRed/LeafGreen é guardado
+// com XOR da chave da seção 0. Conferido com saves reais de Emerald e FireRed (Ruby/Sapphire: provável).
+const SUMMARY = {
+  emerald: { key: 0xAC, money: 0x490, flags: 0x1270, badge: 0x867 },
+  rs: { key: null, money: 0x490, flags: 0x1220, badge: 0x807 },
+  frlg: { key: 0xF20, money: 0x290, flags: 0xEE0, badge: 0x820 },
+};
+const DEX3 = 386;
+
+function gen3Summary(u8, dv, S, gameId) {
+  const L = SUMMARY[gameId];
+  const confidence = gameId === 'rs' ? 'provável' : 'confirmado';
+  const s0 = S[0];
+  // Posição no SaveBlock1 → posição no arquivo
+  const sb1 = o => S[1 + Math.floor(o / 0xF80)] + (o % 0xF80);
+  const key = L.key == null ? 0 : dv.getUint32(s0 + L.key, true);
+  let badges = 0;
+  for (let i = 0; i < 8; i++) {
+    const f = L.badge + i;
+    badges += (u8[sb1(L.flags + (f >> 3))] >> (f & 7)) & 1;
+  }
+  return summary({
+    playTime: playTime(dv.getUint16(s0 + 0x0E, true), u8[s0 + 0x10], u8[s0 + 0x11], confidence),
+    money: { value: (dv.getUint32(sb1(L.money), true) ^ key) >>> 0, confidence },
+    badges: { count: badges, total: 8, confidence },
+    dex: { owned: countBits(u8, s0 + 0x28, DEX3), total: DEX3, confidence },
+  });
+}
 
 // Ordem dos 4 blocos de 12 bytes (Growth, Attacks, EVs/condição, Misc) para cada PID % 24
 const ORDERS = ['GAEM', 'GAME', 'GEAM', 'GEMA', 'GMAE', 'GMEA', 'AGEM', 'AGME', 'AEGM', 'AEMG', 'AMGE', 'AMEG',
@@ -138,7 +169,7 @@ export function detectGen3(u8) {
 /** Lê o save (já identificado por detectGen3). Só números e textos, como parseSave do Quetzal. */
 export function parseGen3(u8, found) {
   const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
-  const { slot, layout } = found;
+  const { slot, layout, game } = found;
   const S = slot.sections;
   const warnings = [];
   if (slot.badChecksums.length) warnings.push(t('Checksum inválido nos setores {list}; os dados podem estar corrompidos.', { list: slot.badChecksums.join(', ') }));
@@ -171,6 +202,7 @@ export function parseGen3(u8, found) {
   return {
     slot: { index: slot.slot, saveIndex: slot.saveIndex },
     warnings, trainer, party,
+    summary: gen3Summary(u8, dv, S, game.id),
     pc: { currentBox: pc[P.currentBox], boxCount: P.boxes, capacity: P.boxes * P.perBox, boxes },
   };
 }
@@ -287,6 +319,7 @@ export function describeGen3(raw, T, game) {
     game,
     trainer: { name: raw.trainer.name, tid: raw.trainer.tid, sid: raw.trainer.sid, saveIndex: raw.slot.saveIndex },
     warnings: raw.warnings,
+    summary: raw.summary || {},
     party: raw.party.map(p => mon(p, 'party', null)),
     pc: { ...raw.pc, boxes },
   };

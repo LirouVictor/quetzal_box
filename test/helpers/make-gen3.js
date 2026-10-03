@@ -78,6 +78,19 @@ export function makeGen3Save(o) {
   for (let b = 0; b < 14; b++) pc.set(encodeText(`BOX${b + 1}`, 9), GEN3.pc.boxNames + b * 9);
   let off = 0;
   for (let id = 5; id <= 13; id++) { const n = SIZES[id]; sections[id].set(pc.subarray(off, off + n)); off += n; }
+  // Resumo: tempo de jogo e Pokédex na seção 0; dinheiro (XOR com a chave) e insígnias no SaveBlock1 (seções 1–4)
+  if (o.summary) {
+    const S = o.summary;
+    const L = { emerald: [0xAC, 0x490, 0x1270, 0x867], rs: [null, 0x490, 0x1220, 0x807], frlg: [0xF20, 0x290, 0xEE0, 0x820] }[o.game || 'emerald'];
+    s0.setUint16(0x0E, S.hours, true);
+    sections[0][0x10] = S.minutes;
+    sections[0][0x11] = S.seconds;
+    for (const n of S.owned || []) sections[0][0x28 + ((n - 1) >> 3)] |= 1 << ((n - 1) & 7);
+    const sb1 = (off2, fn) => fn(sections[1 + Math.floor(off2 / 0xF80)], off2 % 0xF80);
+    const key = L[0] == null ? 0 : s0.getUint32(L[0], true);
+    sb1(L[1], (sec, k) => new DataView(sec.buffer).setUint32(k, (S.money ^ key) >>> 0, true));
+    for (let i = 0; i < S.badges; i++) { const f = L[3] + i; sb1(L[2] + (f >> 3), (sec, k) => { sec[k] |= 1 << (f & 7); }); }
+  }
   sections.forEach((sec, id) => {
     const o2 = id * 0x1000;
     u8.set(sec, o2);

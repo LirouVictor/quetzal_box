@@ -77,6 +77,7 @@ suite.skipIf(!SAVES.every(f => existsSync(f)))('Pokémon Unbound com saves reais
       expect(d.trainer).toMatchObject({ name: 'Kadhem', tid: 48855, sid: 16608 });
       expect(d.party.map(m => m.species.name).sort()).toEqual(['Absol', 'Gallade', 'Greninja', 'Tapu Lele']);
       for (const m of d.party) expect(calcStats(m.species.baseStats, m.ivs, m.evs, m.level, m.nature)).toEqual(m.stats);
+      expect(d.summary).toEqual({ playTime: { h: 999, m: 59, s: 59, confidence: 'provável' } });
     }
   });
 
