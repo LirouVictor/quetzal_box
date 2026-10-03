@@ -101,3 +101,25 @@ suite('telas em inglês (nenhum texto sem tradução)', () => {
     expect([...missing]).toEqual([]);
   });
 });
+
+suite('privacidade, termos e novidades', async () => {
+  const { page, NEWS } = await import('../src/pages/content.js');
+  const { NEWS_LATEST } = await import('../src/pages/latest.js');
+
+  it('as três janelas existem nos dois idiomas', () => {
+    for (const id of ['privacidade', 'termos', 'novidades']) {
+      for (const lang of ['pt', 'en']) {
+        const p = page(id, lang);
+        expect(p.title).toBeTruthy();
+        expect(p.html.length).toBeGreaterThan(200);
+      }
+    }
+    expect(page('x', 'pt')).toBeNull();
+  });
+
+  it('novidades: ordem da mais nova, mesmo número de itens nos dois idiomas, data mais nova em latest.js', () => {
+    expect(NEWS[0].date).toBe(NEWS_LATEST);
+    expect(NEWS.map(n => n.date)).toEqual([...NEWS.map(n => n.date)].sort().reverse());
+    for (const n of NEWS) expect(n.pt.length).toBe(n.en.length);
+  });
+});

@@ -7,6 +7,7 @@ import './styles/main.css';
 import { installImageFallback } from './ui/sprites.js';
 import { rememberSave, loadRememberedSave, forgetSave } from './ui/store.js';
 import { t, getLang, loadLang, saveLang, locale } from './i18n.js';
+import { NEWS_LATEST } from './pages/latest.js';
 
 const $ = s => document.querySelector(s);
 const loadApp = () => import('./app.js');
@@ -180,6 +181,37 @@ $('#file').addEventListener('change', e => {
   if (f) load(f);
   e.target.value = '';
 });
+
+// Privacidade, Termos de uso e Novidades: janelas abertas pelos links do rodapé (#privacidade…),
+// com os textos carregados só na hora. O endereço com # abre a janela direto.
+const PAGES = ['privacidade', 'termos', 'novidades'];
+const NEWS_SEEN = 'news-seen';
+function syncNewsMark() {
+  let seen = '';
+  try { seen = localStorage.getItem(NEWS_SEEN) || ''; } catch { /* sem armazenamento */ }
+  $('.news-link').classList.toggle('new', seen < NEWS_LATEST);
+}
+async function openPage(id) {
+  const dlg = $('#page');
+  const { page } = await import('./pages/content.js');
+  const p = page(id, getLang());
+  if (!p) return;
+  dlg.innerHTML = `<button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button>
+    <h2 class="pixel" id="page-title">${p.title}</h2><div class="page-body">${p.html}</div>`;
+  dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
+  if (!dlg.open) dlg.showModal();
+  dlg.scrollTop = 0;
+  if (id === 'novidades') {
+    try { localStorage.setItem(NEWS_SEEN, NEWS_LATEST); } catch { /* sem armazenamento */ }
+    syncNewsMark();
+  }
+}
+const pageFromHash = () => { const id = location.hash.slice(1); if (PAGES.includes(id)) openPage(id); };
+$('#page').addEventListener('close', () => {
+  if (PAGES.includes(location.hash.slice(1))) history.replaceState(null, '', location.pathname + location.search);
+});
+addEventListener('hashchange', pageFromHash);
+ready.then(() => { syncNewsMark(); pageFromHash(); });
 
 const drop = $('#drop');
 ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));

@@ -7,7 +7,7 @@ Visualizador de saves de Pokémon de GBA: **Pokémon Quetzal** (ROM hack) e os j
 - **Offline (PWA):** depois da primeira visita, o app funciona sem internet. Os sprites já vistos ficam guardados.
 - **Português e inglês:** o idioma segue o do navegador (português para `pt-*`, inglês para os demais) e pode ser trocado no botão **EN/PT** da barra superior. A escolha fica salva no aparelho. *English available: the app follows your browser language, or use the EN/PT button.*
 
-> Projeto de fã, sem vínculo com Nintendo, Game Freak, The Pokémon Company ou com os autores do Quetzal. Sprites carregados do repositório [PokeAPI/sprites](https://github.com/PokeAPI/sprites).
+> Projeto de fã, sem vínculo com Nintendo, Game Freak, The Pokémon Company ou com os autores do Quetzal. Privacidade, termos de uso e novidades: links no rodapé do app. Sprites carregados do repositório [PokeAPI/sprites](https://github.com/PokeAPI/sprites).
 
 ## Como usar
 

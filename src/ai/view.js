@@ -177,7 +177,7 @@ export function confirmView(prep) {
     </section>
   </div>
   ${P.privacy ? `<p class="hint">${esc(t(P.privacy))}</p>` : ''}
-  <details class="ai-raw"><summary>${t('Ver o texto exato ({n} caracteres)', { n: num(text.length) })}</summary><pre>${esc(text)}</pre></details>
+  <details class="ai-raw fold"><summary>${t('Ver o texto exato ({n} caracteres)', { n: num(text.length) })}</summary><pre>${esc(text)}</pre></details>
   <label class="ai-skip"><input type="checkbox" data-skip> ${t('Não perguntar de novo neste aparelho')}</label>
   <div class="export-btns ai-confirm-btns">
     <button class="btn btn-ghost" type="button" data-cancel>${t('Cancelar')}</button>
