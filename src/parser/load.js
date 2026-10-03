@@ -19,6 +19,7 @@ export const SUPPORTED = [
   'Pokémon FireRed / LeafGreen',
   'Pokémon Ruby / Sapphire (mesmo formato; ainda sem save real para testar)',
   'Pokémon Unbound (2.1)',
+  'Pokémon Diamond / Pearl',
   'Pokémon Platinum',
   'Pokémon HeartGold / SoulSilver',
   'Pokémon Black / White',
@@ -39,6 +40,11 @@ function ndsSource({ bytes, whole }) {
   if (id) return { id, bytes, lost: 0 };
   const alt = whole && detectNds(whole);
   return alt ? { id: alt, bytes: whole, lost: 500 } : null;
+}
+
+/** Save state (foto da memória do emulador), não o save do jogo: só o do DeSmuME é reconhecido. */
+function isSaveState(u8) {
+  return new TextDecoder('latin1').decode(u8.subarray(0, 14)) === 'DeSmuME SState';
 }
 
 /** O save é de um jogo de DS? (idem) */
@@ -75,6 +81,7 @@ function checkQuetzal(data) {
 export function loadSave(input, T, G, U = null, N = null) {
   const box = unwrap(input);
   const { bytes } = box;
+  if (isSaveState(bytes)) throw new SaveError(t('Este arquivo é um save state do DeSmuME (.dst), não o save do jogo. No DeSmuME, use o arquivo .dsv da pasta Battery ou exporte o save em Arquivo › Export Backup Memory.'));
   const nds = ndsSource(box);
   if (nds) {
     if (!N) throw new Error('Tabelas dos jogos de DS não carregadas');

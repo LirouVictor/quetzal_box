@@ -13,7 +13,30 @@ const shinyPid = (((trainer.tid ^ trainer.sid) << 16) | 3) >>> 0;
 const load = bytes => loadSave(bytes, T, G, null, N).data;
 const sameStats = m => calcStats(m.species.baseStats, m.ivs, m.evs, m.level, m.nature);
 
-suite('Jogos de DS: Platinum, HeartGold/SoulSilver, Black/White e Black 2/White 2', () => {
+suite('Jogos de DS: Diamond/Pearl, Platinum, HeartGold/SoulSilver, Black/White e Black 2/White 2', () => {
+  it('Diamond/Pearl: blocos menores que os do Platinum, treinador e equipe nas posições do HG/SS; .dsv do DeSmuME', () => {
+    const save = makeGen4Save({ game: 'dp', trainer, saveCount: 9, boxNames: ['BOX 1', 'FAVES'],
+      party: [{ pid: 7, otId, species: 483, ability: 46, exp: 1250000, level: 100, stats: [341, 220, 236, 279, 438, 277] }],
+      pc: { 30: { pid: 8, otId, species: 25, ability: 9, exp: 5000 } } });
+    // .dsv = save + rodapé do DeSmuME
+    const footer = new TextEncoder().encode('|<--Snip above here to create a raw sav by excluding this DeSmuME savedata footer:' + '\0'.repeat(24) + '|-DESMUME SAVE-|');
+    const dsv = new Uint8Array(save.length + footer.length);
+    dsv.set(save);
+    dsv.set(footer, save.length);
+    const d = load(dsv);
+    expect(d.game).toMatchObject({ id: 'dp', name: 'Pokémon Diamond/Pearl', gen: 4 });
+    expect(d.trainer).toMatchObject({ name: 'Lyra', tid: 12345, sid: 54321, saveIndex: 9 });
+    expect(d.party[0].species.name).toBe('Dialga');
+    expect(d.pc.boxes[1]).toMatchObject({ name: 'FAVES' });
+    expect(d.pc.boxes[1].slots[0].species.name).toBe('Pikachu');
+  });
+
+  it('save state do DeSmuME (.dst): erro explicando que não é o save', () => {
+    const dst = new Uint8Array(0x50000);
+    dst.set(new TextEncoder().encode('DeSmuME SState'));
+    expect(() => load(dst)).toThrow(/save state do DeSmuME/);
+  });
+
   it('HG/SS (.duc): treinador, equipe com stats salvos, PC, forma, gênero, natureza pelo PID e golpes da Gen 4', () => {
     const save = wrapDuc(makeHgssSave({
       trainer, boxNames: ['FAVES'],
@@ -120,6 +143,22 @@ suite.skipIf(!existsSync('fixtures/hgss.duc') || !existsSync('fixtures/bw.duc'))
     for (const m of d.party) expect(sameStats(m)).toEqual(m.stats);
     expect(d.pc.boxes.flatMap(b => b.slots)).toHaveLength(457);
     expect(d.pc.boxes[0].name).toBe('HAVE FUN');
+  });
+});
+
+suite.skipIf(!existsSync('fixtures/dp.duc'))('Diamond/Pearl com save real', () => {
+  it('checksums, stats da equipe = fórmula (menos um Pokémon editado) e 43 Pokémon no PC', () => {
+    const d = load(readFileSync('fixtures/dp.duc'));
+    expect(d.game.id).toBe('dp');
+    expect(d.trainer).toMatchObject({ name: 'Ash', tid: 49553, sid: 21680 });
+    expect(d.warnings).toEqual([]);
+    expect(d.party.map(m => m.species.name)).toEqual(['Squirtle', 'Vaporeon', 'Arceus', 'Empoleon', 'Pikachu', 'Dialga']);
+    // O Vaporeon tem 255 EVs em todos os stats (1530, impossível no jogo): foi editado, e os stats salvos não seguem a natureza do PID
+    expect(d.party.filter(m => { const c = sameStats(m); return Object.keys(c).some(k => c[k] !== m.stats[k]); }).map(m => m.species.name)).toEqual(['Vaporeon']);
+    expect(Object.values(d.party[1].evs)).toEqual([255, 255, 255, 255, 255, 255]);
+    const pc = d.pc.boxes.flatMap(b => b.slots);
+    expect(pc).toHaveLength(43);
+    expect(pc.filter(m => m.species.confidence !== 'confirmado' || m.ability.confidence !== 'confirmado')).toEqual([]);
   });
 });
 

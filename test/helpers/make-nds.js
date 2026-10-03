@@ -1,4 +1,4 @@
-// Monta saves sintéticos de Platinum, HeartGold/SoulSilver (Gen 4) e Black/White, Black 2/White 2 (Gen 5), com os Pokémon
+// Monta saves sintéticos de Diamond/Pearl, Platinum, HeartGold/SoulSilver (Gen 4) e Black/White, Black 2/White 2 (Gen 5), com os Pokémon
 // embaralhados e criptografados como no jogo.
 
 const ORDERS = ['ABCD', 'ABDC', 'ACBD', 'ACDB', 'ADBC', 'ADCB', 'BACD', 'BADC', 'BCAD', 'BCDA', 'BDAC', 'BDCA',
@@ -77,11 +77,12 @@ function crc16(u8) {
 
 // Gen 4: posições do bloco geral (treinador, equipe) e do bloco das caixas
 const GEN4 = {
+  dp: { general: 0xC100, storage: [0xC100, 0x121E0], footer: 0x14, trainer: 0x64, party: 0x94, box: b => 4 + b * 30 * 136, names: 0x11EE4 },
   hgss: { general: 0xF628, storage: [0xF700, 0x12310], footer: 0x10, trainer: 0x64, party: 0x94, box: b => b * 0x1000, names: 0x12008 },
   pt: { general: 0xCF2C, storage: [0xCF2C, 0x121E4], footer: 0x14, trainer: 0x68, party: 0x9C, box: b => 4 + b * 30 * 136, names: 0x11EE4 },
 };
 
-/** Gen 4 (game 'hgss' ou 'pt'): só a primeira metade (256 KB), como nos exports do Action Replay. */
+/** Gen 4 (game 'dp', 'pt' ou 'hgss'): só a primeira metade (256 KB), como nos exports do Action Replay. */
 export function makeGen4Save({ game = 'hgss', trainer, party = [], pc = {}, boxNames = [], saveCount = 5 }) {
   const L = GEN4[game];
   const u8 = new Uint8Array(0x40000);

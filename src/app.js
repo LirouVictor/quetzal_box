@@ -13,7 +13,7 @@ import { saveKey, signature, diffSaves } from './history/diff.js';
 import { changesWin, historyStartWin, historyList } from './history/view.js';
 import { listHistory, addHistory, clearHistory } from './ui/store.js';
 
-const PAGE = 60;
+const PAGE = 20; // resultados da busca por página
 let moveText = null; // descrições dos golpes, carregadas na primeira vez que um golpe é aberto
 
 let state = null;
@@ -32,7 +32,7 @@ export async function openSave(buffer, fileName, opts = {}) {
   T = loaded.T;
   const firstFilled = data.pc.boxes.findIndex(b => b.slots.length);
   const all = [...data.party, ...data.pc.boxes.flatMap(b => b.slots)];
-  state = { data, fileName, box: firstFilled >= 0 ? firstFilled : 0, all, results: [], shown: 0 };
+  state = { data, fileName, box: firstFilled >= 0 ? firstFilled : 0, all, results: [], page: 0, searched: false };
   render();
   if (opts.history) setupHistory(buffer).catch(e => console.error(e));
   return data;
@@ -126,18 +126,33 @@ function render() {
     state.flag = on ? b.dataset.flag : '';
     runSearch();
   });
-  out.querySelector('#more').addEventListener('click', () => showResults());
-  // A lista fica numa caixa com rolagem própria; perto do fim, carrega a próxima página sozinha
-  const list = out.querySelector('#results');
-  list.addEventListener('scroll', () => {
-    if (state.shown < state.results.length && list.scrollTop + list.clientHeight >= list.scrollHeight - 120) showResults();
-  }, { passive: true });
+  out.querySelector('#pager').addEventListener('click', e => {
+    const b = e.target.closest('[data-page]');
+    if (!b) return;
+    state.page += Number(b.dataset.page);
+    showResults();
+    const count = document.getElementById('search-count');
+    if (count.getBoundingClientRect().top < 0) count.scrollIntoView({ block: 'start' });
+  });
   out.querySelector('#results').addEventListener('click', e => {
     const btn = e.target.closest('.result[data-i]');
     if (btn) openDetail(state.results[+btn.dataset.i], btn);
   });
-  runSearch();
+
+  // Assistente e Busca ficam fechados até o usuário abrir; a lista só é montada quando a Busca abre
+  for (const id of ['ai-win', 'search-win']) {
+    const det = out.querySelector('#' + id);
+    det.addEventListener('toggle', () => {
+      setFoldOpen(id, det.open);
+      if (id === 'search-win' && det.open && !state.searched) runSearch();
+    });
+    if (foldOpen(id)) det.open = true;
+  }
 }
+
+// Janelas abertas/fechadas: preferência deste aparelho
+function foldOpen(id) { try { return localStorage.getItem('open-' + id) === '1'; } catch { return false; } }
+function setFoldOpen(id, on) { try { if (on) localStorage.setItem('open-' + id, '1'); else localStorage.removeItem('open-' + id); } catch { /* sem armazenamento */ } }
 
 // Assistente (IA): a chave fica no aparelho; o código das análises só carrega ao tocar num botão.
 function setupAi(out) {
@@ -273,23 +288,26 @@ function runSearch() {
   const f = { q: v('q'), type: v('f-type'), flag: state.flag || '', sort: v('f-sort') };
   state.results = searchMons(state.all, f);
   state.filtered = !!(f.q.trim() || f.type || f.flag);
-  state.shown = 0;
-  const list = document.getElementById('results');
-  list.innerHTML = '';
-  list.scrollTop = 0;
+  state.page = 0;
+  state.searched = true;
   showResults();
 }
 
+/** Mostra só a página atual dos resultados (no máximo PAGE linhas na tela). */
 function showResults() {
-  const list = document.getElementById('results');
-  const next = state.results.slice(state.shown, state.shown + PAGE);
-  list.insertAdjacentHTML('beforeend', next.map((m, j) => R.resultRow(m, state.shown + j)).join(''));
-  state.shown += next.length;
   const total = state.results.length;
+  const pages = Math.max(1, Math.ceil(total / PAGE));
+  state.page = Math.min(Math.max(0, state.page), pages - 1);
+  const start = state.page * PAGE;
+  document.getElementById('results').innerHTML = state.results.slice(start, start + PAGE).map((m, j) => R.resultRow(m, start + j)).join('');
   document.getElementById('search-count').textContent = state.filtered
     ? t(total === 1 ? '1 resultado.' : '{n} resultados.', { n: total })
     : t('{n} Pokémon na equipe e no PC.', { n: total });
-  document.getElementById('more').classList.toggle('hidden', state.shown >= total);
+  const pager = document.getElementById('pager');
+  pager.classList.toggle('hidden', pages <= 1);
+  pager.querySelector('[data-page="-1"]').disabled = state.page === 0;
+  pager.querySelector('[data-page="1"]').disabled = state.page >= pages - 1;
+  document.getElementById('page-info').textContent = t('Página {p} de {n}', { p: state.page + 1, n: pages });
 }
 
 // Descrição do golpe: carrega o arquivo de textos na primeira vez que um golpe é aberto

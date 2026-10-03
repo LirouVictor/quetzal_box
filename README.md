@@ -1,6 +1,6 @@
 # savDex
 
-Visualizador de saves de Pokémon de GBA: **Pokémon Quetzal** e **Pokémon Unbound** (ROM hacks) e os jogos oficiais da Gen 3 (**Emerald**, **FireRed/LeafGreen**, **Ruby/Sapphire**). Também lê saves de DS (**Platinum**, **HeartGold/SoulSilver**, **Black/White**, **Black 2/White 2**). Abra o `.sav` do emulador (ou o `.sps` do GameShark/SharkPort, ou o `.duc` do Action Replay DS) e veja treinador, equipe e PC. Dá para exportar tudo em planilha (CSV), texto do Pokémon Showdown ou JSON.
+Visualizador de saves de Pokémon de GBA: **Pokémon Quetzal** e **Pokémon Unbound** (ROM hacks) e os jogos oficiais da Gen 3 (**Emerald**, **FireRed/LeafGreen**, **Ruby/Sapphire**). Também lê saves de DS (**Diamond/Pearl**, **Platinum**, **HeartGold/SoulSilver**, **Black/White**, **Black 2/White 2**). Abra o `.sav` do emulador (ou o `.dsv` do DeSmuME, o `.sps` do GameShark/SharkPort ou o `.duc` do Action Replay DS) e veja treinador, equipe e PC. Dá para exportar tudo em planilha (CSV), texto do Pokémon Showdown ou JSON.
 
 - **100% local:** o save é lido no navegador e não é enviado a nenhum servidor. A única exceção é opcional: o **Assistente (IA)** manda a lista dos Pokémon (nunca o `.sav`) ao serviço de IA escolhido (Gemini ou Groq) quando você toca num dos botões dele.
 - **Leve:** sem framework. A página inicial pesa uns 8 KB comprimidos (sem as fontes). O parser e as tabelas (~29 KB comprimidos) só carregam quando você abre um save.
@@ -24,7 +24,7 @@ Sem jogo ou sem arquivo? Toque em **Ver um save de exemplo** na tela inicial: ab
 - **Pokémon Quetzal** (testado na Alpha 9 PT-BR; o save não guarda a versão do jogo).
 - **Pokémon Emerald** e **FireRed/LeafGreen** (conferidos com saves reais).
 - **Pokémon Ruby/Sapphire** (mesmo formato do Emerald; ainda sem save real para testar).
-- **Pokémon Platinum**, **HeartGold/SoulSilver**, **Black/White** e **Black 2/White 2** (DS; conferidos com saves reais). Diamond/Pearl ainda não (posições diferentes do Platinum; falta um save para conferir).
+- **Pokémon Diamond/Pearl**, **Platinum**, **HeartGold/SoulSilver**, **Black/White** e **Black 2/White 2** (DS; conferidos com saves reais). Save state do emulador (`.dst`) não é o save do jogo e mostra um aviso.
 - **Pokémon Unbound** (versão 2.1 em diante; conferido com saves reais da 2.1.1). Versões mais novas abrem com um aviso, e a 2.0 ainda não é suportada.
 - Hacks que mantêm o formato de um desses jogos também abrem, mas nomes de espécies, golpes e itens podem não bater se o hack os mudou.
 

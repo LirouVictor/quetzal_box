@@ -134,6 +134,8 @@ main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 32px; display: grid
 .foot-links a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 700; }
 /* Ponto ao lado de "Novidades" enquanto houver novidade não vista */
 .news-link.new::after { content: ""; width: 8px; height: 8px; margin-left: 6px; background: var(--accent-2); }
+.err-sheet { --hi: var(--accent-2); }
+.err-msg { margin: 0 0 14px; line-height: 1.5; }
 .page-sheet h2 { font-size: 1rem; min-height: 44px; display: flex; align-items: center; margin: 0 52px 8px 0; }
 .page-body h3 { font: .78rem var(--pixel); text-transform: uppercase; margin: 18px 0 6px; }
 .page-body ul { padding-left: 1.2em; margin: 0 0 10px; }
@@ -202,6 +204,14 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 main > *, #out > * { min-width: 0; }
 .trainer .win-title small.file { min-width: 0; }
 #out > section > .win-title { margin: 0 4px 4px; }
+
+/* Janela que abre e fecha (Assistente, Buscar): o título é o botão */
+.win-fold > summary.win-title { margin: -4px 0 -4px; justify-content: flex-start; list-style: none; cursor: pointer; }
+.win-fold[open] > summary.win-title { margin-bottom: 12px; }
+.win-fold > summary::-webkit-details-marker { display: none; }
+.win-fold > summary small { margin-left: auto; }
+.win-fold > summary::after { content: ""; flex: none; width: 0; height: 0; border: 7px solid transparent; border-top: 9px solid currentColor; border-bottom: 0; }
+.win-fold[open] > summary::after { transform: rotate(180deg); }
 .warnings ul { margin: 0; padding-left: 18px; }
 
 /* Equipe: sprites lado a lado, como no PC; toque abre os detalhes */
@@ -367,11 +377,14 @@ button.cnt:focus-visible { outline-offset: 1px; }
 .search-row select { font-size: .85rem; padding: 6px; }
 .results {
   list-style: none; margin: 8px 0 0; padding: 4px; display: grid; gap: 4px; align-content: start;
-  max-height: min(60vh, 480px); overflow-y: auto; overscroll-behavior: contain;
   background: var(--win-2); box-shadow: inset 0 0 0 3px var(--hi);
   scrollbar-color: var(--edge) transparent;
 }
 .results:empty { display: none; }
+.pager { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.pager .btn { white-space: nowrap; flex: none; }
+.pager #page-info { flex: 1; font-size: .85rem; color: var(--muted); text-align: center; }
+.pager .btn:disabled { visibility: hidden; }
 .result { background: var(--win); }
 .result {
   width: 100%; min-height: 52px; display: grid; grid-template-columns: 48px 1fr auto; gap: 8px; align-items: center;
