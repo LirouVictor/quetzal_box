@@ -190,6 +190,7 @@ export function partyWin(d) {
   return `<section class="win" aria-labelledby="party-h">
     <div class="win-title"><h2 id="party-h">${t('Equipe')}</h2><small>${t('{n} de 6 · toque para ver detalhes', { n: d.party.length })}</small></div>
     ${d.party.length ? `<ul class="party-grid">${tiles}${empty}</ul>` : `<p class="hint">${t('Nenhum Pokémon na equipe.')}</p>`}
+    ${d.party.length ? `<div class="export-btns party-actions"><button class="btn btn-ghost btn-small" type="button" data-team-image>${t('Imagem da equipe')}</button></div>` : ''}
   </section>`;
 }
 

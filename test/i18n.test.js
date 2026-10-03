@@ -17,6 +17,8 @@ import T from '../src/data/tables.js';
 import G from '../src/data/gen3.json';
 import dex from '../src/data/dex.json';
 import overrides from '../src/data/quetzal-overrides.json';
+import { diffSaves } from '../src/history/diff.js';
+import { changesWin, historyStartWin, historyList } from '../src/history/view.js';
 
 const placeholders = s => [...s.matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort();
 
@@ -61,6 +63,11 @@ suite('telas em inglês (nenhum texto sem tradução)', () => {
       html += evolutionHtml(m, dex, T2) + learnsetHtml(m, dex, T2);
     });
     html += toCSV(data) + toShowdown(data);
+    // Histórico: compara com uma versão sem o primeiro Pokémon e com outro nível, para passar por todas as listas
+    const fewer = { ...data, party: data.party.slice(1) };
+    html += changesWin(diffSaves(data, data), { savedAt: 0 }, 2).html + changesWin(diffSaves(fewer, data), { savedAt: 0 }, 2).html
+      + changesWin(diffSaves(data, fewer), { savedAt: 0 }, 2).html + historyStartWin()
+      + historyList([{ id: 1, signature: 'a', savedAt: 0, name: 'x', total: 1, saveIndex: 1 }, { id: 2, signature: 'b', savedAt: 0, name: 'x', total: 1, saveIndex: 1 }], 'a', 2);
     return { html, all };
   }
 

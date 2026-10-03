@@ -1,7 +1,10 @@
 // Download (Blob + <a download>) e cópia para a área de transferência.
 
 export function download(filename, text, type = 'text/plain') {
-  const blob = new Blob([text], { type: type + ';charset=utf-8' });
+  downloadBlob(filename, new Blob([text], { type: type + ';charset=utf-8' }));
+}
+
+export function downloadBlob(filename, blob) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
