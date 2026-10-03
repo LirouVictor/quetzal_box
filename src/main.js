@@ -1,4 +1,4 @@
-// Entrada leve: tema, abertura de arquivo e service worker.
+// Entrada leve: idioma, tema, abertura de arquivo e service worker.
 // O parser, as tabelas e a renderização vêm em app.js, carregado sob demanda.
 
 import '@fontsource/silkscreen/latin-400.css';
@@ -6,20 +6,54 @@ import '@fontsource/silkscreen/latin-700.css';
 import './styles/main.css';
 import { installImageFallback } from './ui/sprites.js';
 import { rememberSave, loadRememberedSave, forgetSave } from './ui/store.js';
+import { t, getLang, loadLang, saveLang, locale } from './i18n.js';
 
 const $ = s => document.querySelector(s);
 const loadApp = () => import('./app.js');
 
 installImageFallback();
 
-// Tema: segue o sistema até o usuário escolher; a escolha fica salva neste aparelho.
+// Idioma: em inglês, troca os textos fixos do index.html (marcados com data-i18n) antes de mostrar a página.
 const root = document.documentElement;
+const norm = s => s.trim().replace(/\s+/g, ' ');
+function applyStaticTexts() {
+  root.lang = getLang() === 'en' ? 'en' : 'pt-BR';
+  if (getLang() === 'pt') return;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(norm(el.innerHTML)); });
+  document.querySelectorAll('[data-i18n-attr]').forEach(el => {
+    el.dataset.i18nAttr.split(',').forEach(a => el.setAttribute(a, t(norm(el.getAttribute(a) || ''))));
+  });
+}
+// Botão PT/EN: mostra o outro idioma; a troca recarrega a página (o último save reabre sozinho)
+const DEMO_FLAG = 'savdex-reopen-demo';
+function setupLangButton() {
+  const other = getLang() === 'en' ? 'pt' : 'en';
+  const btn = $('#lang');
+  btn.textContent = other.toUpperCase();
+  btn.lang = other === 'en' ? 'en' : 'pt-BR';
+  btn.setAttribute('aria-label', other === 'en' ? 'Switch to English' : 'Mudar para português');
+  btn.title = btn.getAttribute('aria-label');
+  btn.addEventListener('click', () => {
+    saveLang(other);
+    try { if (showingDemo) sessionStorage.setItem(DEMO_FLAG, '1'); } catch { /* sem armazenamento */ }
+    location.reload();
+  });
+}
+const ready = loadLang().catch(e => console.error(e)).then(() => {
+  applyStaticTexts();
+  setupLangButton();
+  syncThemeButton();
+  delete root.dataset.langWait;
+});
+let showingDemo = false;
+
+// Tema: segue o sistema até o usuário escolher; a escolha fica salva neste aparelho.
 const systemDark = matchMedia('(prefers-color-scheme: dark)');
 const currentTheme = () => root.dataset.theme || (systemDark.matches ? 'dark' : 'light');
 function syncThemeButton() {
   const dark = currentTheme() === 'dark';
   $('#theme use').setAttribute('href', dark ? '#sun' : '#moon');
-  $('#theme').setAttribute('aria-label', dark ? 'Usar tema claro' : 'Usar tema escuro');
+  $('#theme').setAttribute('aria-label', t(dark ? 'Usar tema claro' : 'Usar tema escuro'));
 }
 $('#theme').addEventListener('click', () => {
   const next = currentTheme() === 'dark' ? 'light' : 'dark';
@@ -38,16 +72,16 @@ function showError(msg) {
 }
 
 function showSavedNote(name, savedAt) {
-  const when = new Date(savedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-  $('#saved-text').textContent = `Mostrando a cópia guardada de "${name}" (aberta em ${when}). Se você jogou depois disso, abra o .sav de novo para atualizar.`;
-  $('#saved-open').textContent = 'Abrir save atualizado';
+  const when = new Date(savedAt).toLocaleString(locale(), { dateStyle: 'short', timeStyle: 'short' });
+  $('#saved-text').textContent = t('Mostrando a cópia guardada de "{name}" (aberta em {when}). Se você jogou depois disso, abra o .sav de novo para atualizar.', { name, when });
+  $('#saved-open').textContent = t('Abrir save atualizado');
   $('#forget').classList.remove('hidden');
   $('#saved-note').classList.remove('hidden');
 }
 
 function showDemoNote() {
-  $('#saved-text').textContent = 'Você está vendo um save de exemplo, com Pokémon fictícios. Abra o seu .sav para ver os seus.';
-  $('#saved-open').textContent = 'Abrir meu save';
+  $('#saved-text').textContent = t('Você está vendo um save de exemplo, com Pokémon fictícios. Abra o seu .sav para ver os seus.');
+  $('#saved-open').textContent = t('Abrir meu save');
   $('#forget').classList.add('hidden');
   $('#saved-note').classList.remove('hidden');
 }
@@ -59,8 +93,10 @@ function showDemoNote() {
  * @param {{ fromCopy?: number }} [opts] fromCopy = data em que a cópia guardada foi feita
  */
 async function openBytes(buf, name, opts = {}) {
+  await ready;
   const app = await loadApp();
   app.openSave(buf, name);
+  showingDemo = !!opts.demo;
   $('#intro').classList.add('hidden');
   $('#reopen').classList.remove('hidden');
   if (opts.fromCopy) showSavedNote(name, opts.fromCopy);
@@ -80,22 +116,23 @@ async function load(file) {
     console.error(e);
     showError(e && e.name === 'SaveError'
       ? e.message
-      : 'Não consegui ler este arquivo. Confira se é o .sav (ou .sps) de um jogo suportado e tente de novo.');
+      : t('Não consegui ler este arquivo. Confira se é o .sav (ou .sps) de um jogo suportado e tente de novo.'));
     $('#intro').classList.remove('hidden');
   }
 }
 
 // Save de exemplo: montado na hora (Pokémon fictícios); não fica guardado como "último save"
-$('#demo').addEventListener('click', async () => {
+async function openDemo() {
   $('#err').classList.add('hidden');
   try {
     const app = await loadApp();
-    await openBytes(await app.demoBytes(), 'exemplo-savdex.sav', { demo: true });
+    await openBytes(await app.demoBytes(), t('exemplo-savdex.sav'), { demo: true });
   } catch (e) {
     console.error(e);
-    showError('Não consegui abrir o save de exemplo.');
+    showError(t('Não consegui abrir o save de exemplo.'));
   }
-});
+}
+$('#demo').addEventListener('click', openDemo);
 
 $('#forget').addEventListener('click', async () => {
   await forgetSave();
@@ -104,6 +141,7 @@ $('#forget').addEventListener('click', async () => {
   $('#out').innerHTML = '';
   $('#reopen').classList.add('hidden');
   $('#intro').classList.remove('hidden');
+  showingDemo = false;
   scrollTo(0, 0);
 });
 
@@ -125,9 +163,13 @@ async function takeSharedSave() {
   }
 }
 
-// Abre o save compartilhado; se não houver, a cópia do último save, se houver.
-takeSharedSave().then(async shared => {
+// Abre o save compartilhado; se não houver, o exemplo (se estava aberto antes de trocar o idioma)
+// ou a cópia do último save, se houver.
+ready.then(takeSharedSave).then(async shared => {
   if (shared) return load(shared);
+  let demo = false;
+  try { demo = sessionStorage.getItem(DEMO_FLAG) === '1'; sessionStorage.removeItem(DEMO_FLAG); } catch { /* sem armazenamento */ }
+  if (demo) return openDemo();
   const saved = await loadRememberedSave();
   if (!saved || !$('#out').classList.contains('hidden')) return;
   openBytes(saved.bytes, saved.name, { fromCopy: saved.savedAt }).catch(() => forgetSave());

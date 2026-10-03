@@ -1,5 +1,7 @@
 // Peças comuns aos serviços de IA: erro amigável, chamada com tempo-limite e armazenamento local.
 
+import { t } from '../i18n.js';
+
 const TIMEOUT = 120000;
 
 export class AiError extends Error {
@@ -18,8 +20,8 @@ export async function call(url, init, fetchImpl, service) {
   try {
     return await fetchImpl(url, { ...init, signal: ctl.signal });
   } catch (e) {
-    if (e && e.name === 'AbortError') throw new AiError(`O ${service} demorou demais para responder. Tente de novo.`, 'timeout');
-    throw new AiError(`Sem conexão com o ${service}. Confira a internet.`, 'network');
+    if (e && e.name === 'AbortError') throw new AiError(t('O {service} demorou demais para responder. Tente de novo.', { service }), 'timeout');
+    throw new AiError(t('Sem conexão com o {service}. Confira a internet.', { service }), 'network');
   } finally {
     clearTimeout(timer);
   }

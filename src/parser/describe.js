@@ -1,6 +1,7 @@
 // Converte os dados crus de parseSave() em objetos prontos para a UI e exportações,
 // resolvendo nomes e tipos com as tabelas de src/data.
 
+import { t } from '../i18n.js';
 import { STAT_ORDER } from './save.js';
 
 import { NATURES, natureFromPid, natureFromId } from './natures.js';
@@ -67,7 +68,7 @@ export function makeResolver(T) {
       };
     }
     return {
-      name: nickname || `Espécie ${id}`,
+      name: nickname || t('Espécie {id}', { id }),
       form: null,
       showdown: nickname || null,
       confidence: UNKNOWN,
@@ -78,10 +79,10 @@ export function makeResolver(T) {
 
   /** Habilidade pelo número guardado no save (0 = 1ª, 1 = 2ª, 2 = oculta). */
   function ability(sp, num) {
-    if (num > 2) return { num, name: `Habilidade nº ${num}`, hidden: false, confidence: UNKNOWN };
+    if (num > 2) return { num, name: t('Habilidade nº {n}', { n: num }), hidden: false, confidence: UNKNOWN };
     // Como no expansion: se o slot estiver vazio, vale a primeira habilidade existente.
     const name = sp.abilities[num] || sp.abilities.find(Boolean) || null;
-    if (!name) return { num, name: num === 2 ? 'Habilidade oculta' : `Habilidade ${num + 1}`, hidden: num === 2, confidence: UNKNOWN };
+    if (!name) return { num, name: num === 2 ? t('Habilidade oculta') : t('Habilidade {n}', { n: num + 1 }), hidden: num === 2, confidence: UNKNOWN };
     return { num, name, hidden: num === 2, confidence: sp.confidence === CONFIRMED && !sp.traitsFromBase ? CONFIRMED : PROBABLE };
   }
 

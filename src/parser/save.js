@@ -2,6 +2,7 @@
 // diretamente dos bytes. Nomes de espécie/golpe/item são resolvidos em describe.js.
 // O formato está documentado em CLAUDE.md.
 
+import { t } from '../i18n.js';
 import { decodeText } from './charset.js';
 
 export const SAVE_SIZE = 0x20000;
@@ -115,18 +116,18 @@ export function isQuetzalLayout(input) {
 export function parseSave(input) {
   const u8 = input instanceof Uint8Array ? input : new Uint8Array(input);
   if (u8.length < SAVE_SIZE) {
-    throw new SaveError(`O arquivo tem ${u8.length} bytes; um save de Pokémon de GBA tem ${SAVE_SIZE} (128 KB).`);
+    throw new SaveError(t('O arquivo tem {n} bytes; um save de Pokémon de GBA tem {size} (128 KB).', { n: u8.length, size: SAVE_SIZE }));
   }
   const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
   const warnings = [];
 
   const slots = readSlots(dv).filter(s => s.usable);
-  if (!slots.length) throw new SaveError('Não encontrei a assinatura de save do GBA neste arquivo. Confira se é o .sav do Quetzal.');
+  if (!slots.length) throw new SaveError(t('Não encontrei a assinatura de save do GBA neste arquivo. Confira se é o .sav do Quetzal.'));
   // Prefere o slot mais recente com todos os checksums válidos; se nenhum estiver íntegro, usa o mais recente.
   slots.sort((a, b) => (a.badChecksums.length === 0 ? 0 : 1) - (b.badChecksums.length === 0 ? 0 : 1) || b.saveIndex - a.saveIndex);
   const active = slots[0];
   if (active.badChecksums.length) {
-    warnings.push(`Checksum inválido nos setores ${active.badChecksums.join(', ')}; os dados podem estar corrompidos.`);
+    warnings.push(t('Checksum inválido nos setores {list}; os dados podem estar corrompidos.', { list: active.badChecksums.join(', ') }));
   }
   const S = active.sections;
 
@@ -176,7 +177,7 @@ export function parseSave(input) {
   // PC: setores 5..15 concatenados (0xFF4 bytes úteis de cada)
   const parts = [];
   for (let id = PC.firstSection; id <= PC.lastSection; id++) {
-    if (S[id] === undefined) { warnings.push(`Setor ${id} do PC ausente.`); continue; }
+    if (S[id] === undefined) { warnings.push(t('Setor {id} do PC ausente.', { id })); continue; }
     parts.push(u8.subarray(S[id], S[id] + SECTOR_DATA));
   }
   const pc = new Uint8Array(parts.reduce((a, p) => a + p.length, 0));
@@ -189,7 +190,7 @@ export function parseSave(input) {
   const capacity = Math.max(0, Math.floor((pc.length - PC.monStart) / PC.monSize));
   const readableBoxes = Math.min(PC.boxCount, Math.ceil(capacity / PC.perBox));
   if (capacity < PC.boxCount * PC.perBox) {
-    warnings.push(`Os setores do PC só comportam ${capacity} Pokémon; o esperado eram ${PC.boxCount * PC.perBox}. As caixas que não couberam não são lidas.`);
+    warnings.push(t('Os setores do PC só comportam {n} Pokémon; o esperado eram {total}. As caixas que não couberam não são lidas.', { n: capacity, total: PC.boxCount * PC.perBox }));
   }
 
   const boxes = [];

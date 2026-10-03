@@ -3,7 +3,7 @@
 // sendAi envia e desenha a resposta.
 
 import { provider } from './providers.js';
-import { refOf, systemPrompt, ANALYSIS_SCHEMA, BUILD_SCHEMA, analysisPrompt, buildPrompt, checkAnalysis, checkBuild } from './prompt.js';
+import { refOf, systemPrompt, localizedSchema, ANALYSIS_SCHEMA, BUILD_SCHEMA, analysisPrompt, buildPrompt, checkAnalysis, checkBuild } from './prompt.js';
 import { analysisView, buildView, confirmView } from './view.js';
 
 /**
@@ -21,7 +21,7 @@ export function prepareAi(kind, { all, T, game = null, note = '' }) {
     pc: lines.filter(l => /^C\d+-\d+ \|/.test(l)).length,
     pcTotal: all.filter(m => m.location !== 'party').length,
   };
-  return { kind, P, system, prompt, schema: kind === 'analyze' ? ANALYSIS_SCHEMA : BUILD_SCHEMA, all, T, note: note.trim(), counts };
+  return { kind, P, system, prompt, schema: localizedSchema(kind === 'analyze' ? ANALYSIS_SCHEMA : BUILD_SCHEMA), all, T, note: note.trim(), counts };
 }
 
 /** HTML da janela de confirmação ("o que vai ser enviado"). */

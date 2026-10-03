@@ -115,7 +115,18 @@ h1, h2, h3 { margin: 0; line-height: 1.15; }
 .brand-mark { flex: none; }
 .brand-name { font-family: var(--pixel); font-size: 1.05rem; line-height: 1; }
 .brand-name b { font-weight: 700; color: #8fe3c6; } /* verde-claro do ícone: contraste bom na barra escura nos dois temas */
-.topbar-actions { display: flex; gap: 10px; align-items: center; }
+.topbar-actions { display: flex; gap: 6px; align-items: center; }
+.topbar-actions .btn { white-space: nowrap; padding-inline: 10px; }
+.topbar-actions .btn-icon { padding: 0; }
+.lang-btn { min-width: 44px; }
+#reopen { gap: 8px; }
+/* No celular, "Trocar save" vira só o ícone de pasta (o texto continua para leitores de tela) */
+@media (max-width: 440px) {
+  #reopen { width: 44px; padding: 0; }
+  .reopen-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+/* Em inglês, a página fica escondida até os textos serem trocados (ver index.html e main.js) */
+html[data-lang-wait] body { visibility: hidden; }
 
 main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 32px; display: grid; gap: 20px; }
 .foot { max-width: 1040px; margin: 0 auto; padding: 0 20px 40px; color: var(--muted); font-size: .85rem; }

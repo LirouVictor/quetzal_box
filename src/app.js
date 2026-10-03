@@ -3,7 +3,8 @@
 import { loadSave } from './parser/index.js';
 import BASE from './data/tables.js';
 import G3 from './data/gen3.json';
-import { toCSV, toShowdown, toJSON, fileBase } from './export.js';
+import { toCSV, toShowdown, showdownTeam, toJSON, fileBase } from './export.js';
+import { t } from './i18n.js';
 import { download, copyText } from './ui/io.js';
 import * as R from './ui/render.js';
 import { searchMons } from './search.js';
@@ -52,7 +53,7 @@ function render() {
   out.querySelectorAll('[data-exp]').forEach(b => b.addEventListener('click', () => exportAs(b.dataset.exp)));
   out.querySelector('[data-copy="party"]').addEventListener('click', async () => {
     const ok = await copyText(toShowdown({ ...data, pc: { boxes: [] } }, { includePC: false }));
-    status(ok ? 'Equipe copiada no formato Showdown.' : 'Não consegui copiar neste navegador. Use "Showdown (TXT)".');
+    status(t(ok ? 'Equipe copiada no formato Showdown.' : 'Não consegui copiar neste navegador. Use "Showdown (TXT)".'));
   });
   const partyGrid = out.querySelector('.party-grid');
   if (partyGrid) partyGrid.addEventListener('click', e => {
@@ -120,13 +121,13 @@ function setupAi(out) {
   const sync = () => {
     const P = provider();
     $('#ai-provider').value = P.id;
-    $('#ai-svc').textContent = `IA · ${P.service}`;
+    $('#ai-svc').textContent = `${t('IA')} · ${P.service}`;
     const link = $('#ai-key-link');
     link.href = P.keyUrl;
     link.textContent = P.keyUrl.replace(/^https:\/\//, '');
-    $('#ai-key-steps').innerHTML = P.keySteps;
-    $('#ai-key').placeholder = P.keyPlaceholder;
-    $('#ai-privacy').textContent = `A IA recebe só a lista dos seus Pokémon (espécie, tipos, golpes, habilidade, item, natureza e IVs), nunca o arquivo .sav. Antes de enviar ao ${P.service}, o app mostra exatamente o que vai. O resto do savDex funciona sem IA e sem chave.`;
+    $('#ai-key-steps').innerHTML = t(P.keySteps);
+    $('#ai-key').placeholder = t(P.keyPlaceholder);
+    $('#ai-privacy').textContent = t('A IA recebe só a lista dos seus Pokémon (espécie, tipos, golpes, habilidade, item, natureza e IVs), nunca o arquivo .sav. Antes de enviar ao {service}, o app mostra exatamente o que vai. O resto do savDex funciona sem IA e sem chave.', { service: P.service });
     $('#ai-model').value = P.getModel();
     $('#ai-models').innerHTML = '';
     $('#ai-models-out').textContent = '';
@@ -138,7 +139,7 @@ function setupAi(out) {
   $('#ai-provider').addEventListener('change', e => { setProviderId(e.target.value); aiOut.innerHTML = ''; sync(); });
   $('#ai-save').addEventListener('click', () => {
     const v = $('#ai-key').value.trim();
-    if (!v) { aiOut.innerHTML = '<p class="error">Cole a chave antes de salvar.</p>'; return; }
+    if (!v) { aiOut.innerHTML = `<p class="error">${t('Cole a chave antes de salvar.')}</p>`; return; }
     provider().setKey(v);
     $('#ai-key').value = '';
     aiOut.innerHTML = '';
@@ -153,20 +154,20 @@ function setupAi(out) {
     const P = provider();
     P.setModel($('#ai-model').value);
     $('#ai-model').value = P.getModel();
-    $('#ai-models-out').textContent = P.getModel() ? `Modelo salvo: ${P.getModel()}.` : 'Modelo automático.';
+    $('#ai-models-out').textContent = P.getModel() ? t('Modelo salvo: {model}.', { model: P.getModel() }) : t('Modelo automático.');
   });
   $('#ai-list').addEventListener('click', async () => {
     const P = provider();
     const info = $('#ai-models-out');
-    info.textContent = 'Buscando…';
+    info.textContent = t('Buscando…');
     try {
       const names = await P.listModels(P.getKey());
       $('#ai-models').innerHTML = names.map(n => `<option value="${R.esc(n)}"></option>`).join('');
       info.textContent = names.length
-        ? `Disponíveis (do mais indicado ao menos): ${names.join(', ')}. Toque no campo Modelo para escolher.`
-        : 'Nenhum modelo disponível para esta chave.';
+        ? t('Disponíveis (do mais indicado ao menos): {list}. Toque no campo Modelo para escolher.', { list: names.join(', ') })
+        : t('Nenhum modelo disponível para esta chave.');
     } catch (e) {
-      info.textContent = e && e.name === 'AiError' ? e.message : 'Não consegui buscar os modelos.';
+      info.textContent = e && e.name === 'AiError' ? e.message : t('Não consegui buscar os modelos.');
     }
   });
   const buttons = out.querySelectorAll('[data-ai]');
@@ -179,7 +180,7 @@ function setupAi(out) {
       // Monta o pedido e mostra exatamente o que vai ser enviado antes de enviar
       const prep = ai.prepareAi(b.dataset.ai, { all: state.all, T, game: state.data.game, note: $('#ai-note').value });
       if (!skipConfirm() && !(await confirmSend(ai.confirmHtml(prep), b))) return;
-      aiOut.innerHTML = `<p class="ai-wait"><svg class="ai-spin" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true" shape-rendering="crispEdges"><use href="#logo"/></svg><span class="pixel">${b.dataset.ai === 'analyze' ? 'Analisando a equipe' : 'Montando a equipe'}</span><span class="dots" aria-hidden="true"></span><br><small>Pode levar até um minuto.</small></p>`;
+      aiOut.innerHTML = `<p class="ai-wait"><svg class="ai-spin" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true" shape-rendering="crispEdges"><use href="#logo"/></svg><span class="pixel">${b.dataset.ai === 'analyze' ? t('Analisando a equipe') : t('Montando a equipe')}</span><span class="dots" aria-hidden="true"></span><br><small>${t('Pode levar até um minuto.')}</small></p>`;
       const res = await ai.sendAi(prep);
       state.ai = res;
       aiOut.innerHTML = res.html;
@@ -187,7 +188,7 @@ function setupAi(out) {
       $('#ai-model').value = provider().getModel();
     } catch (e) {
       console.error(e);
-      const msg = e && e.name === 'AiError' ? e.message : `Algo deu errado ao falar com o ${provider().service}. Tente de novo.`;
+      const msg = e && e.name === 'AiError' ? e.message : t('Algo deu errado ao falar com o {service}. Tente de novo.', { service: provider().service });
       aiOut.innerHTML = `<p class="error">${R.esc(msg)}</p>`;
       if (e && e.code === 'key') { $('#ai-setup').classList.remove('hidden'); $('#ai-main').classList.add('hidden'); }
     } finally {
@@ -203,8 +204,8 @@ function setupAi(out) {
     if (card && state.ai) { const m = state.ai.byRef.get(card.dataset.ref); if (m) openDetail(m, card); return; }
     const copy = e.target.closest('[data-ai-copy]');
     if (copy && state.ai && state.ai.team) {
-      const ok = await copyText(toShowdown({ party: state.ai.team, pc: { boxes: [] } }, { includePC: false }).replace(/^=== Equipe ===\n\n/, ''));
-      copy.textContent = ok ? 'Copiado!' : 'Não foi possível copiar';
+      const ok = await copyText(showdownTeam(state.ai.team));
+      copy.textContent = t(ok ? 'Copiado!' : 'Não foi possível copiar');
     }
   });
 }
@@ -260,8 +261,8 @@ function showResults() {
   state.shown += next.length;
   const total = state.results.length;
   document.getElementById('search-count').textContent = state.filtered
-    ? `${total} resultado${total === 1 ? '' : 's'}.`
-    : `${total} Pokémon na equipe e no PC.`;
+    ? t(total === 1 ? '1 resultado.' : '{n} resultados.', { n: total })
+    : t('{n} Pokémon na equipe e no PC.', { n: total });
   document.getElementById('more').classList.toggle('hidden', state.shown >= total);
 }
 
@@ -280,11 +281,11 @@ function renderBox() {
   const { data } = state;
   const box = data.pc.boxes[state.box];
   const grid = document.getElementById('box-grid');
-  if (!box) { grid.innerHTML = '<p class="hint">O PC não pôde ser lido.</p>'; return; }
+  if (!box) { grid.innerHTML = `<p class="hint">${t('O PC não pôde ser lido.')}</p>`; return; }
   grid.innerHTML = R.boxGrid(box);
   document.getElementById('box-select').value = String(state.box);
   const total = data.pc.boxes.reduce((a, b) => a + b.slots.length, 0);
-  document.getElementById('pc-count').textContent = `${total} Pokémon no total`;
+  document.getElementById('pc-count').textContent = t('{n} Pokémon no total', { n: total });
 }
 
 function openDetail(m, opener) {
@@ -293,8 +294,8 @@ function openDetail(m, opener) {
   fillDex(dlg, m);
   dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
   dlg.querySelector('[data-copy="mon"]').addEventListener('click', async e => {
-    const ok = await copyText(toShowdown({ party: [m], pc: { boxes: [] } }, { includePC: false }).replace(/^=== Equipe ===\n\n/, ''));
-    e.target.textContent = ok ? 'Copiado!' : 'Não foi possível copiar';
+    const ok = await copyText(showdownTeam([m]));
+    e.target.textContent = t(ok ? 'Copiado!' : 'Não foi possível copiar');
   });
   // Ao fechar, volta exatamente para onde a página estava.
   const scroll = window.scrollY;
@@ -312,7 +313,7 @@ async function fillDex(dlg, m) {
   if (!slot) return;
   try {
     if (!dexData) {
-      slot.innerHTML = '<p class="hint">Carregando evolução e golpes…</p>';
+      slot.innerHTML = `<p class="hint">${t('Carregando evolução e golpes…')}</p>`;
       const [data, ui] = await Promise.all([import('./data/dex.json'), import('./ui/dex.js')]);
       dexData = { dex: data.default, ui };
     }
@@ -330,7 +331,7 @@ function exportAs(kind) {
   if (kind === 'csv') download(base + '.csv', toCSV(data), 'text/csv');
   else if (kind === 'txt') download(base + '-showdown.txt', toShowdown(data), 'text/plain');
   else download(base + '.json', toJSON(data, { exportedAt: new Date().toISOString(), sourceFile: state.fileName }), 'application/json');
-  status('Arquivo gerado. Confira a pasta de downloads.');
+  status(t('Arquivo gerado. Confira a pasta de downloads.'));
 }
 
 function status(msg) {
