@@ -1,6 +1,6 @@
 # savDex
 
-Site estático (Vite + JS puro) que lê saves de GBA — **Pokémon Quetzal** (ROM hack sobre pokeemerald com engine expandida) e os **jogos oficiais da Gen 3** (Emerald, FireRed/LeafGreen, Ruby/Sapphire) —, mostra treinador, equipe e PC e exporta CSV / Showdown / JSON. Aceita `.sav` e exports do GameShark/SharkPort (`.sps`). Tudo roda no navegador; nada é enviado a servidor. Alvo principal: Chrome no Android em aparelho de entrada (Redmi Note 11), então **leveza é requisito**: sem framework, sem dependências de runtime, renderizar só o que está visível (uma caixa do PC por vez), sem efeitos caros de CSS.
+Site estático (Vite + JS puro) que lê saves de GBA — **Pokémon Quetzal** (ROM hack sobre pokeemerald com engine expandida), **Pokémon Unbound** (ROM hack de FireRed com o motor CFRU), os **jogos oficiais da Gen 3** (Emerald, FireRed/LeafGreen, Ruby/Sapphire) e os de **DS** (HeartGold/SoulSilver, Black/White) —, mostra treinador, equipe e PC e exporta CSV / Showdown / JSON. Aceita `.sav` e exports do GameShark/SharkPort (`.sps`) e do Action Replay DS (`.duc`). Tudo roda no navegador; nada é enviado a servidor. Alvo principal: Chrome no Android em aparelho de entrada (Redmi Note 11), então **leveza é requisito**: sem framework, sem dependências de runtime, renderizar só o que está visível (uma caixa do PC por vez), sem efeitos caros de CSS.
 
 ## Comandos
 
@@ -10,6 +10,8 @@ Site estático (Vite + JS puro) que lê saves de GBA — **Pokémon Quetzal** (R
 - `npm run dex`: regenera `src/data/dex.json` (linhas evolutivas com o método em português e em inglês e golpes por nível do jogo oficial mais recente; golpes ligados aos IDs do expansion pelo nome). Carregado sob demanda ao abrir o detalhe de um Pokémon; aparece como "provável" (o Quetzal pode ter mudado).
 - `npm run gen3`: regenera `src/data/gen3.json` (tabelas da Gen 3 oficial a partir do decomp pret/pokeemerald + nomes da PokeAPI).
 - Saves reais da Gen 3 para os testes (opcionais, não versionados): `fixtures/emerald.sav` e `fixtures/firered.sav`.
+- `npm run nds`: regenera `src/data/nds.json` (itens da Gen 4 e da Gen 5, habilidades, tipos/stats e golpes como eram na época, formas; tudo da PokeAPI). Saves reais para os testes (opcionais): `fixtures/hgss.duc` e `fixtures/bw.duc`.
+- `npm run unbound`: regenera `src/data/unbound.json` (tabelas do Unbound 2.1; ver a seção do Unbound). Saves reais para os testes (opcionais): `fixtures/unbound-a.sav` e `fixtures/unbound-b.sav`. Tudo em `fixtures/` fica fora do git.
 - `npm run diff-saves -- a.sav b.sav`: compara dois saves para engenharia reversa (ver `tools/`).
 
 ## Estrutura
@@ -17,6 +19,8 @@ Site estático (Vite + JS puro) que lê saves de GBA — **Pokémon Quetzal** (R
 - `src/parser/load.js`: **porta de entrada**. Tira o embrulho (`container.js`: SharkPort `.sps`), identifica o formato (layout de 16 setores do Quetzal ou 14 setores da Gen 3 oficial) e confere a coerência antes de mostrar qualquer coisa. Save que não bate com nenhum formato gera `SaveError` claro ("não é de um jogo suportado"), nunca dados parciais. `SUPPORTED` lista os jogos (também na tela inicial do `index.html`).
 - `src/parser/save.js`: leitura crua do **Quetzal** (só números/textos). Offsets em constantes exportadas (`PARTY`, `PC`, ...).
 - `src/parser/gen3.js`: leitura e descrição dos **jogos oficiais da Gen 3** (formato público: Pokémon de 80/100 bytes criptografados com PID ^ OT ID e embaralhados por PID % 24; checksums por Pokémon e por setor). Produz o mesmo formato de `describe()`; `gen3Tables()` adapta as tabelas do app (golpes 1–354 com tipo/poder da Gen 3, tabela de tipos sem Fairy).
+- `src/parser/nds.js`: leitura e descrição dos **jogos de DS** (ver a seção abaixo); `nds.json` só é carregado quando o save é de DS (`isNds`). `container.js` tira o cabeçalho do Action Replay DS (`.duc`).
+- `src/parser/unbound.js`: leitura e descrição do **Pokémon Unbound** (ver a seção abaixo); as tabelas (`src/data/unbound.json`) só são carregadas quando o save é do Unbound (`isUnbound` em `load.js`, `extraTables` em `app.js`).
 - `src/parser/describe.js`: resolve nomes, tipos, natureza, habilidade, nível (pela exp) e marca a confiança de cada dado.
 - `src/parser/stats.js`: stats pela fórmula (stats base da PokeAPI), conferência da natureza contra os stats salvos e Hidden Power. `src/parser/natures.js`: tabela de naturezas e natureza pelo PID (byte baixo).
 - `src/analysis.js`: fraquezas/resistências e cobertura da equipe (tabela de tipos em `src/data/typechart.json`).
@@ -52,6 +56,27 @@ Implementado a partir da documentação pública (Bulbapedia/PKHeX) e conferido 
 - PC: seções 5–13 concatenadas (8 × 3968 + 2000 bytes): caixa atual (u32), 420 Pokémon de 80 bytes, nomes das 14 caixas em `0x8344`.
 - Natureza = PID % 25; shiny pela fórmula (TID ^ SID ^ PID alto ^ PID baixo) < 8; gênero pelo byte baixo do PID contra a taxa da espécie; habilidade pelo bit 31 da palavra de IVs; nível do PC pela curva de experiência da espécie.
 - O save guarda a **numeração interna** da Gen 3 (Treecko = 277); a tabela `gen3.json` converte para a Dex Nacional (sprites, evoluções, nomes).
+
+## Jogos de DS (Gen 4 e Gen 5) — CONFIRMADO com saves reais de HeartGold/SoulSilver e Black
+
+Formato público (Project Pokémon/PKHeX), conferido com 2 exports do Action Replay DS (`.duc`: cabeçalho de 500 bytes `ARDS000000000001` + 256 KB de save): checksums de todos os Pokémon (354 no HG/SS, 457 no Black) e stats salvos da equipe = fórmula com os stats base da época.
+
+- **Pokémon** de 136 bytes (+100 de batalha na equipe da Gen 4, +84 na Gen 5): PID, checksum (soma dos u16 dos 128 bytes), 4 blocos de 32 bytes na ordem `ORDERS[((PID >> 13) & 31) % 24]`, criptografados com o gerador do jogo (semente = checksum; dados de batalha com semente = PID). Bloco A: espécie (Dex Nacional), item (numeração da geração), OT ID, exp, amizade, **habilidade (nº nacional)**, EVs. B: golpes, PP, IVs (bit 30 ovo, bit 31 apelido), byte 0x40 (bit 1 fêmea, bit 2 sem gênero, bits 3+ forma); Gen 5: **natureza** em 0x41 e habilidade oculta no bit 0 de 0x42 (Gen 4: natureza = PID % 25). C: apelido. D: OT, bola em 0x83 (HG/SS: 0x86 se preenchido). Posição vazia = PID e checksum 0.
+- **HeartGold/SoulSilver**: bloco geral em `0x0` (0xF628 bytes) e caixas em `0xF700` (0x12310), cada um com rodapé de 16 bytes (contador, tamanho, `0x20060623`, CRC-16-CCITT dos dados); metades em `0x0` e `0x40000`, vale a mais nova de cada bloco. Treinador `0x64` (nome, texto da Gen 4), TID `0x74`, SID `0x76`; equipe: contagem `0x94`, Pokémon de 236 bytes em `0x98`; 18 caixas de `0x1000` a partir de `0xF700`, nomes em `0xF700 + 0x12008` (0x28 cada).
+- **Black/White**: treinador em `0x19404` (UTF-16), TID `0x19414`, SID `0x19416`, versão em `0x1941F` (20 White, 21 Black, 22/23 White 2/Black 2); equipe: contagem `0x18E04`, Pokémon de 220 bytes em `0x18E08`; 24 caixas de `0x1000` a partir de `0x400`, nomes em `0x04` (0x28 cada). **Black 2/White 2**: mesmas posições (PKHeX), aberto com aviso porque ainda não foi conferido com save real. Diamond/Pearl/Platinum ainda não (posições diferentes; falta save).
+- Texto da Gen 4: tabela de 16 bits própria; só os caracteres conferidos (A–Z, a–z, 0–9, espaço, `.` `’` `-` `?`), o resto vira `?` (ex.: Pokémon japoneses de evento). Gen 5: UTF-16.
+- Shiny = (TID ^ SID ^ PID alto ^ PID baixo) < 8; nível do PC pela curva da espécie; tipos, stats base e golpes **da época** (`nds.json`: Clefairy Normal, Rotom-Wash Electric/Ghost na Gen 4, Charm Normal, sem Fairy); tabela de tipos da Gen 2–5 (a mesma de `gen3.json`). Formas pelo número da forma = `form_order − 1` da PokeAPI.
+
+## Pokémon Unbound (CFRU) — CONFIRMADO com 2 saves reais da versão 2.1
+
+Conferido com 2 saves reais (2.1.1, mesmo treinador): os stats salvos dos 8 Pokémon de equipe batem exatamente com a fórmula usando os stats base do Unbound, o que valida espécie, stats base, natureza (PID % 25), IVs e EVs. Formato e posições das caixas também conferidos com o leitor do Unbound Cloud (Skeli789/Unbound-Cloud, do autor do Unbound; sem licença declarada, usado só como referência).
+
+- 2 slots de **14 setores** (como o FireRed). Assinatura `0x01121999` = Unbound 2.1.0–2.1.1.1 (suportado); `0x01122000` = versões seguintes (abre com aviso: as tabelas são as da 2.1, que só ganharam itens no fim nas versões novas; 31 espécies tiveram stats/habilidades ajustados); `0x01121998` = 2.0 (erro claro, não suportado). Checksum com 0xFF0 bytes (seções 0, 4 e 13: 0xF24, 0xD98, 0x450).
+- Treinador na seção 0 (nome, TID `0xA`, SID `0xC`).
+- **Equipe**: seção 1, contagem `0x34` (u32), Pokémon de 100 bytes em `0x38`, **sem criptografia** e com os blocos sempre na ordem Growth/Attacks/EVs/Misc (checksum 0). Poké Ball no byte 10 do bloco Growth; IVs/ovo/habilidade oculta na palavra em +4 do bloco Misc (bit 30 ovo, bit 31 oculta). Nível e stats salvos.
+- **PC**: 25 caixas de Pokémon de **58 bytes** ("comprimidos", sem criptografia): PID, OT ID, apelido, OT, espécie (28), item (30), exp (32), PP Ups (36), amizade (37), bola (38), 4 golpes de 10 bits (39–43), EVs (44–49), origem (52), IVs/ovo/oculta (54). Sem PP (calculado com o PP oficial e os PP Ups) nem stats (fórmula). Caixas 1–19 nas seções 5–13 (depois da caixa atual, u32); 20–22 nos setores **físicos** 30 (`0xB0C`–`0xFF0`) e 31 (`0`–`0xF80`); 23–24 nas seções 2 (`0xF18`–`0xFF0`) e 3 (`0`–`0xCC0`); 25 na seção 0 (`0xB0`). Nomes das caixas na seção 13, `0x361`, 9 bytes cada. **Conferidos com dados**: caixas 1–7 e 25 (3 Eternatus); 20–24 estavam vazias nos saves vistos.
+- Natureza = PID % 25; shiny = (TID ^ SID ^ PID alto ^ PID baixo) < **16** (1/4096); habilidade: oculta pelo bit, senão PID & 1 (1ª/2ª); gênero pelo byte baixo do PID contra a taxa da espécie; nível do PC pela curva da espécie.
+- **Tabelas** (`tools/build-unbound.mjs`): espécies, Dex Nacional, stats base, tipos, habilidades, gênero e curva do Unbound vêm do branch `Unbound` do Skeli789/Dynamic-Pokemon-Expansion (WTFPL); bolas do CFRU (`catching.h`, enum começando em 0 = Master Ball); 97 itens que os cabeçalhos públicos deixam sem nome (ex.: `0x37` Life Orb, `0xB1` Choice Specs) conferidos com as tabelas do Unbound 2.1 do Unbound Cloud. Golpes ligados aos IDs do app pelo nome (tipo, poder, descrição); PP oficial da PokeAPI (o expansion difere em alguns, ex.: Night Slash). Formas pelo nome da constante (`RAICHU_A` = Raichu de Alola) e sprites pelas formas da PokeAPI; sem forma correspondente, sprite da espécie base. Leech Fang e Steely Hit são golpes próprios (só nome).
 
 ## Formato do save (Quetzal)
 

@@ -1,6 +1,6 @@
 // Carregado sob demanda quando o usuário abre um save (parser + tabelas + renderização).
 
-import { loadSave } from './parser/index.js';
+import { loadSave, isUnbound, isNds } from './parser/index.js';
 import BASE from './data/tables.js';
 import G3 from './data/gen3.json';
 import { toCSV, toShowdown, showdownTeam, toJSON, fileBase } from './export.js';
@@ -26,8 +26,8 @@ let T = BASE;
  * @param {string} fileName
  * @param {{ history?: boolean }} [opts] history = guardar esta versão e mostrar o que mudou (não no exemplo)
  */
-export function openSave(buffer, fileName, opts = {}) {
-  const loaded = loadSave(buffer, BASE, G3);
+export async function openSave(buffer, fileName, opts = {}) {
+  const loaded = loadSave(buffer, BASE, G3, ...(await extraTables(buffer)));
   const data = loaded.data;
   T = loaded.T;
   const firstFilled = data.pc.boxes.findIndex(b => b.slots.length);
@@ -36,6 +36,20 @@ export function openSave(buffer, fileName, opts = {}) {
   render();
   if (opts.history) setupHistory(buffer).catch(e => console.error(e));
   return data;
+}
+
+/** Tabelas de jogos que só alguns saves usam, carregadas sob demanda: [Unbound, DS]. */
+let unboundTables = null, ndsTables = null;
+async function extraTables(buffer) {
+  if (isUnbound(buffer)) {
+    if (!unboundTables) unboundTables = (await import('./data/unbound.json')).default;
+    return [unboundTables, null];
+  }
+  if (isNds(buffer)) {
+    if (!ndsTables) ndsTables = (await import('./data/nds.json')).default;
+    return [null, ndsTables];
+  }
+  return [null, null];
 }
 
 /** Bytes do save de demonstração (montado na hora, num pacote carregado só quando pedido). */
@@ -349,14 +363,15 @@ async function setupHistory(buffer) {
   });
   if (state !== cur) return; // outro save foi aberto nesse meio-tempo
   cur.history = { key, sig, list: await listHistory(key) };
-  if (base) showChanges(base);
+  if (base) await showChanges(base);
   else if (added || before.length) document.getElementById('changes-slot').innerHTML = historyStartWin(); // sem armazenamento: nada a mostrar
 }
 
-function showChanges(base) {
+async function showChanges(base) {
   const cur = state;
   let old;
-  try { old = loadSave(base.bytes, BASE, G3).data; } catch { return; }
+  try { old = loadSave(base.bytes, BASE, G3, ...(await extraTables(base.bytes))).data; } catch { return; }
+  if (state !== cur) return; // outro save foi aberto nesse meio-tempo
   const { html, mons } = changesWin(diffSaves(old, cur.data), base, cur.history.list.length);
   cur.history.baseId = base.id;
   const slot = document.getElementById('changes-slot');

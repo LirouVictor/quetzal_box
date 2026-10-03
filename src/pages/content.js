@@ -8,12 +8,16 @@ export const NEWS = [
   {
     date: '2026-10-03',
     pt: [
+      'Suporte ao Pokémon Unbound (versão 2.1 em diante): equipe e as 25 caixas do PC, com as espécies, formas, stats e itens do Unbound.',
+      'Jogos de DS: HeartGold/SoulSilver e Black/White (e exports do Action Replay DS, .duc), com tipos, stats e golpes como eram na época.',
       'O que mudou: ao abrir o save depois de jogar, o app mostra quem chegou, evoluiu, subiu de nível, aprendeu golpes ou saiu, comparando com a versão anterior. O histórico fica só neste aparelho.',
       'Imagem da equipe: gera um PNG da equipe para compartilhar ou baixar.',
       'Versão em inglês: segue o idioma do navegador, ou use o botão EN/PT.',
       'Páginas de privacidade e termos de uso, e esta lista de novidades.',
     ],
     en: [
+      'Pokémon Unbound support (version 2.1 onward): party and all 25 PC boxes, with Unbound’s species, forms, stats and items.',
+      'DS games: HeartGold/SoulSilver and Black/White (and Action Replay DS exports, .duc), with types, stats and moves as they were back then.',
       'What changed: when you open the save after playing, the app shows who arrived, evolved, leveled up, learned moves or left, compared with the previous version. The history stays on this device only.',
       'Party image: creates a PNG of your party to share or download.',
       'English version: follows your browser language, or use the EN/PT button.',

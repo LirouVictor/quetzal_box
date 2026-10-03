@@ -3,5 +3,5 @@ dist/
 *.log
 .DS_Store
 # Saves reais ficam só na máquina local (os testes com save real pulam se não houver arquivo).
-fixtures/*.sav
-fixtures/*.srm
+fixtures/*
+!fixtures/.gitkeep

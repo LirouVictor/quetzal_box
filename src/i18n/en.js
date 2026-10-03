@@ -10,8 +10,8 @@ export default {
   'Veja treinador, equipe e PC, e exporte para planilha, Showdown ou JSON. A leitura acontece no seu aparelho: o arquivo não é enviado para lugar nenhum. Uma cópia do último save fica guardada neste navegador para abrir sozinha na próxima visita.':
     'See your trainer, party and PC, and export to a spreadsheet, Showdown or JSON. Everything is read on your device: the file is never uploaded anywhere. A copy of the last save is kept in this browser so it opens by itself on your next visit.',
   'Abrir arquivo .sav': 'Open .sav file',
-  'No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui. Aceita .sav e exports do GameShark (.sps).':
-    'On Android, look in your emulator’s save folder (My Boy!, Pizza Boy, RetroArch…). On a computer, you can drag the file here. Accepts .sav files and GameShark exports (.sps).',
+  'No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui. Aceita .sav e exports do GameShark (.sps) e do Action Replay DS (.duc).':
+    'On Android, look in your emulator’s save folder (My Boy!, Pizza Boy, RetroArch…). On a computer, you can drag the file here. Accepts .sav files and GameShark (.sps) and Action Replay DS (.duc) exports.',
   'Ver um save de exemplo': 'See an example save',
   'Sem jogo, sem arquivo: um save do Quetzal com Pokémon fictícios para experimentar o savDex.':
     'No game, no file: a Quetzal save with made-up Pokémon to try savDex.',
@@ -24,8 +24,9 @@ export default {
   'Esquecer este save': 'Forget this save',
   'Projeto de fã, sem vínculo com Nintendo, Game Freak, The Pokémon Company ou com os autores dos hacks (como o Quetzal). Sprites do repositório <a href="https://github.com/PokeAPI/sprites" rel="noopener">PokeAPI/sprites</a>.':
     'Fan project, not affiliated with Nintendo, Game Freak, The Pokémon Company or the authors of the hacks (such as Quetzal). Sprites from the <a href="https://github.com/PokeAPI/sprites" rel="noopener">PokeAPI/sprites</a> repository.',
-  'savDex: veja a equipe e o PC do seu save de Pokémon (Quetzal, Emerald, FireRed/LeafGreen, Ruby/Sapphire) e exporte em CSV, Showdown ou JSON. Tudo roda no navegador.':
-    'savDex: see the party and PC of your Pokémon save (Quetzal, Emerald, FireRed/LeafGreen, Ruby/Sapphire) and export to CSV, Showdown or JSON. Everything runs in the browser.',
+  'savDex: veja a equipe e o PC do seu save de Pokémon (Quetzal, Unbound, Emerald, FireRed/LeafGreen, Ruby/Sapphire, HeartGold/SoulSilver, Black/White) e exporte em CSV, Showdown ou JSON. Tudo roda no navegador.':
+    'savDex: see the party and PC of your Pokémon save (Quetzal, Unbound, Emerald, FireRed/LeafGreen, Ruby/Sapphire, HeartGold/SoulSilver, Black/White) and export to CSV, Showdown or JSON. Everything runs in the browser.',
+  'Pokémon Unbound <small>(versão 2.1 em diante)</small>': 'Pokémon Unbound <small>(version 2.1 onward)</small>',
   'Alternar tema': 'Toggle theme',
   'Save guardado': 'Saved copy',
   'Sobre o savDex': 'About savDex',
@@ -197,7 +198,7 @@ export default {
   'Mostrar mais': 'Show more',
 
   // Detalhe: evolução e golpes por nível (ui/dex.js)
-  'Dos jogos oficiais; o Quetzal pode ter mudado': 'From the official games; Quetzal may have changed it',
+  'Dos jogos oficiais mais recentes; o jogo do save pode ser diferente': 'From the latest official games; the save’s game may differ',
   'Evolução': 'Evolution',
   'Não evolui (nos jogos oficiais).': 'Doesn’t evolve (in the official games).',
   'Evo.': 'Evo.',
@@ -436,4 +437,21 @@ export default {
   'Baixar imagem': 'Download image',
   'Não consegui gerar a imagem.': 'Couldn’t create the image.',
   'Feito com savDex · savdex.pages.dev': 'Made with savDex · savdex.pages.dev',
+  // Unbound
+  'Este save é do Pokémon Unbound 2.0, que o savDex ainda não lê. Saves da versão 2.1 em diante são suportados.': 'This save is from Pokémon Unbound 2.0, which savDex can’t read yet. Saves from version 2.1 onward are supported.',
+  'Este save parece ser do Pokémon Unbound, mas está incompleto ou corrompido.': 'This save looks like Pokémon Unbound, but it is incomplete or corrupted.',
+  'Save de uma versão do Unbound mais nova que a 2.1: espécies, golpes e itens novos podem aparecer como não mapeados.': 'Save from an Unbound version newer than 2.1: new species, moves and items may show as unmapped.',
+  'Pokémon Unbound, uma ROM hack de Pokémon FireRed com o motor CFRU': 'Pokémon Unbound, a ROM hack of Pokémon FireRed built on the CFRU engine',
+  '(tipo Fairy, divisão físico/especial por golpe, megaevoluções, Pokémon até a geração 8 e formas regionais).': '(Fairy type, physical/special split per move, Mega Evolutions, Pokémon up to Generation 8 and regional forms).',
+  '- O Unbound mudou stats e habilidades de algumas espécies; confie nos dados enviados, não na sua memória.': '- Unbound changed the stats and abilities of some species; trust the data sent, not your memory.',
+  // Jogos de DS
+  'Pokémon HeartGold / SoulSilver <small>(DS)</small>': 'Pokémon HeartGold / SoulSilver <small>(DS)</small>',
+  'Pokémon Black / White <small>(DS; Black 2 / White 2 ainda sem save real para testar)</small>': 'Pokémon Black / White <small>(DS; Black 2 / White 2 not yet tested with a real save)</small>',
+  '{n} Pokémon com checksum inválido (dados corrompidos) foram ignorados.': '{n} Pokémon with an invalid checksum (corrupted data) were skipped.',
+  'Black 2/White 2 usa as mesmas posições do Black/White, mas ainda não foi conferido com um save real.': 'Black 2/White 2 uses the same positions as Black/White, but it hasn’t been checked with a real save yet.',
+  'um jogo oficial da Geração 4': 'an official Generation 4 game',
+  'um jogo oficial da Geração 5': 'an official Generation 5 game',
+  '(sem tipo Fairy, sem megaevoluções; a categoria física/especial é de cada golpe).': '(no Fairy type, no Mega Evolutions; the physical/special category belongs to each move).',
+  '- Use os dados da época enviados (tipos, golpes, poder), não os de jogos mais novos.': '- Use the data from that era sent to you (types, moves, power), not data from newer games.',
+  '- Não sugira itens, golpes ou mecânicas que não existem nesse jogo.': '- Don’t suggest items, moves or mechanics that don’t exist in that game.',
 };

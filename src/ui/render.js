@@ -1,7 +1,7 @@
 // Templates HTML da interface. Strings simples, sem framework.
 
 import { spriteSrc, iconSrc, spriteUrl } from './sprites.js';
-import { SHOWDOWN_ORDER, STAT_LABEL } from '../export.js';
+import { SHOWDOWN_ORDER, STAT_LABEL, formName } from '../export.js';
 import { analyzeTeam, defenseMatchups } from '../analysis.js';
 import { t, num } from '../i18n.js';
 
@@ -28,7 +28,7 @@ function badge(conf) {
 }
 
 function speciesLabel(sp) {
-  return esc(sp.name) + (sp.form ? ` <span class="form">(${esc(sp.form === '?' ? t('forma ?') : t(sp.form))})</span>` : '');
+  return esc(sp.name) + (sp.form ? ` <span class="form">(${esc(sp.form === '?' ? t('forma ?') : formName(sp.form))})</span>` : '');
 }
 
 function portrait(m, size = 96) {
@@ -142,7 +142,7 @@ export function trainerWin(d, fileName) {
     <div class="trainer-row">
       <p class="trainer-name pixel">${esc(tr.name || '—')}</p>
       <dl class="kv">
-        ${kv('ID', pad5(tr.tid))}${kv('SID', pad5(tr.sid))}${kv(t('Equipe'), `${d.party.length}/6`)}${kv('PC', pcTotal)}${kv(t('Save nº'), tr.saveIndex)}
+        ${kv('ID', pad5(tr.tid))}${kv('SID', pad5(tr.sid))}${kv(t('Equipe'), `${d.party.length}/6`)}${kv('PC', pcTotal)}${tr.saveIndex != null ? kv(t('Save nº'), tr.saveIndex) : ''}
       </dl>
     </div>
   </section>`;

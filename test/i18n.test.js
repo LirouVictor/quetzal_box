@@ -17,6 +17,10 @@ import T from '../src/data/tables.js';
 import G from '../src/data/gen3.json';
 import dex from '../src/data/dex.json';
 import overrides from '../src/data/quetzal-overrides.json';
+import U from '../src/data/unbound.json';
+import { makeUnboundSave } from './helpers/make-unbound.js';
+import N from '../src/data/nds.json';
+import { makeHgssSave, makeBwSave } from './helpers/make-nds.js';
 import { diffSaves } from '../src/history/diff.js';
 import { changesWin, historyStartWin, historyList } from '../src/history/view.js';
 
@@ -105,6 +109,18 @@ suite('telas em inglês (nenhum texto sem tradução)', () => {
     const q = loadSave(makeSave({ trainer, pc: { 0: { species: 1999, nickname: 'MYST', exp: 100 }, 1: { species: 1998, exp: 100 } } }), T, G);
     const { html } = renderAll(q.data, q.T);
     expect(html).toContain('Quetzal-specific ID not mapped yet');
+    // Unbound (tabelas próprias, contexto próprio na IA, aviso de versão nova)
+    const u = loadSave(makeUnboundSave({ trainer, signature: 0x01122000, party: [{ pid: 1, otId, species: 376, level: 50, moves: [[282, 20]] }], pc: { 0: { pid: 2, otId, species: 528, exp: 9000, moves: [387] } } }), T, G, U);
+    const ru = renderAll(u.data, u.T);
+    expect(ru.html).toContain('newer than 2.1');
+    expect(prepareAi('analyze', { all: ru.all, T: u.T, game: u.data.game }).system).toContain('CFRU engine');
+    // Jogos de DS (Gen 4 e Gen 5, inclusive o aviso do Black 2/White 2)
+    for (const bytes of [makeHgssSave({ trainer, party: [{ pid: 3, otId, species: 479, form: 1, level: 30 }] }),
+      makeBwSave({ trainer, version: 22, party: [{ pid: 3, otId, species: 25, level: 30 }], pc: { 0: { pid: 9, otId, species: 1, exp: 100 } } })]) {
+      const nd = loadSave(bytes, T, G, null, N);
+      const rn = renderAll(nd.data, nd.T);
+      expect(prepareAi('build', { all: rn.all, T: nd.T, game: nd.data.game }).system).toMatch(/official Generation [45] game/);
+    }
     expect([...missing]).toEqual([]);
   });
 });
