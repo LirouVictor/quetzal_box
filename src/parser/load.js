@@ -19,8 +19,10 @@ export const SUPPORTED = [
   'Pokémon FireRed / LeafGreen',
   'Pokémon Ruby / Sapphire (mesmo formato; ainda sem save real para testar)',
   'Pokémon Unbound (2.1)',
+  'Pokémon Platinum',
   'Pokémon HeartGold / SoulSilver',
   'Pokémon Black / White',
+  'Pokémon Black 2 / White 2',
 ];
 
 /** O save é do Unbound? (as tabelas dele são carregadas à parte, só quando precisa) */
@@ -28,9 +30,20 @@ export function isUnbound(input) {
   return unboundSignature(unwrap(input).bytes) !== null;
 }
 
+/**
+ * Save de DS: depois do cabeçalho do .duc ou, se não bater, no arquivo inteiro (com os 500 primeiros bytes
+ * apagados pelo cabeçalho; ver container.js).
+ */
+function ndsSource({ bytes, whole }) {
+  const id = detectNds(bytes);
+  if (id) return { id, bytes, lost: 0 };
+  const alt = whole && detectNds(whole);
+  return alt ? { id: alt, bytes: whole, lost: 500 } : null;
+}
+
 /** O save é de um jogo de DS? (idem) */
 export function isNds(input) {
-  return detectNds(unwrap(input).bytes) !== null;
+  return ndsSource(unwrap(input)) !== null;
 }
 
 const unsupported = () => t('Este save não é de um jogo suportado pelo savDex. Jogos suportados: {list}.', { list: SUPPORTED.map(s => s.replace(/ \(.*\)$/, '')).join(', ') });
@@ -60,11 +73,12 @@ function checkQuetzal(data) {
  * @returns {{ data: object, T: object }} dados descritos e as tabelas que valem para esse jogo
  */
 export function loadSave(input, T, G, U = null, N = null) {
-  const { bytes } = unwrap(input);
-  const nds = detectNds(bytes);
+  const box = unwrap(input);
+  const { bytes } = box;
+  const nds = ndsSource(box);
   if (nds) {
     if (!N) throw new Error('Tabelas dos jogos de DS não carregadas');
-    const raw = parseNds(bytes, nds);
+    const raw = parseNds(nds.bytes, nds.id, { lost: nds.lost });
     const TN = ndsTables(T, G, N, raw.game.gen);
     return { data: describeNds(raw, TN), T: TN };
   }

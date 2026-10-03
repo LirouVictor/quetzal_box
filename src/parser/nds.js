@@ -1,6 +1,6 @@
-// Jogos oficiais de DS: HeartGold/SoulSilver (Gen 4) e Black/White, Black 2/White 2 (Gen 5).
-// Formato público (Project Pokémon/PKHeX), conferido com saves reais de HeartGold/SoulSilver e Black
-// (exports do Action Replay, .duc): checksums de todos os Pokémon e os stats salvos da equipe.
+// Jogos oficiais de DS: Platinum, HeartGold/SoulSilver (Gen 4) e Black/White, Black 2/White 2 (Gen 5).
+// Formato público (Project Pokémon/PKHeX), conferido com saves reais de Platinum, HeartGold/SoulSilver,
+// Black e Black 2 (exports do Action Replay, .duc): checksums de todos os Pokémon e os stats salvos da equipe.
 //
 // Pokémon de 136 bytes (+ 100 de batalha na equipe; 84 na Gen 5): PID, checksum e 4 blocos de 32 bytes
 // embaralhados pela ordem ((PID >> 13) & 31) % 24 e criptografados com o gerador do jogo
@@ -17,12 +17,21 @@ const ORDERS = ['ABCD', 'ABDC', 'ACBD', 'ACDB', 'ADBC', 'ADCB', 'BACD', 'BADC', 
   'CABD', 'CADB', 'CBAD', 'CBDA', 'CDAB', 'CDBA', 'DABC', 'DACB', 'DBAC', 'DBCA', 'DCAB', 'DCBA'];
 const BOX = 136;
 export const NDS_GAMES = {
+  pt: { id: 'pt', name: 'Pokémon Platinum', short: 'Platinum', gen: 4 },
   hgss: { id: 'hgss', name: 'Pokémon HeartGold/SoulSilver', short: 'HG/SS', gen: 4 },
   bw: { id: 'bw', name: 'Pokémon Black/White', short: 'Black/White', gen: 5 },
   b2w2: { id: 'b2w2', name: 'Pokémon Black 2/White 2', short: 'Black 2/White 2', gen: 5 },
 };
-// HeartGold/SoulSilver: bloco geral e bloco das caixas, cada um com rodapé de 16 bytes e CRC-16
-const HGSS = { general: [0, 0xF628], storage: [0xF700, 0x12310], partition: 0x40000, magic: 0x20060623 };
+// Gen 4: bloco geral e bloco das caixas, cada um com rodapé (contador, ..., tamanho, assinatura, id, CRC-16);
+// duas cópias, em 0 e em 0x40000. Platinum: rodapé de 20 bytes, caixas seguidas (sem espaço entre elas).
+// HeartGold/SoulSilver: rodapé de 16 bytes, cada caixa em 0x1000 bytes.
+const GEN4 = {
+  pt: { general: [0, 0xCF2C], storage: [0xCF2C, 0x121E4], footer: 0x14, trainer: 0x68, party: 0x9C, boxes: 4, boxSize: 30 * BOX, names: 0x11EE4 },
+  hgss: { general: [0, 0xF628], storage: [0xF700, 0x12310], footer: 0x10, trainer: 0x64, party: 0x94, boxes: 0, boxSize: 0x1000, names: 0x12008 },
+};
+const PARTITION = 0x40000, MAGIC = 0x20060623;
+// Gen 5: cópia de segurança das caixas (e dos nomes delas)
+const GEN5_BACKUP = { bw: 0x24000, b2w2: 0x26000 };
 const BALLS = [null, 'Master Ball', 'Ultra Ball', 'Great Ball', 'Poké Ball', 'Safari Ball', 'Net Ball', 'Dive Ball', 'Nest Ball',
   'Repeat Ball', 'Timer Ball', 'Luxury Ball', 'Premier Ball', 'Dusk Ball', 'Heal Ball', 'Quick Ball', 'Cherish Ball', 'Fast Ball',
   'Level Ball', 'Lure Ball', 'Heavy Ball', 'Love Ball', 'Friend Ball', 'Moon Ball', 'Sport Ball', 'Park Ball', 'Dream Ball'];
@@ -63,7 +72,7 @@ function text(u8, o, len, gen) {
   let s = '';
   for (let i = 0; i < len; i += 2) {
     const c = dv.getUint16(o + i, true);
-    if (c === 0xFFFF || (gen === 5 && c === 0)) break;
+    if (c === 0xFFFF || c === 0) break;
     s += gen === 4 ? gen4Char(c) : String.fromCharCode(c);
   }
   return s.trim();
@@ -113,23 +122,23 @@ function decodeMon(src, gen) {
   return mon;
 }
 
-/** Blocos válidos do HeartGold/SoulSilver (o mais novo de cada um entre as duas metades do save). */
-function hgssBlocks(u8) {
+/** Blocos válidos de um jogo da Gen 4 (o mais novo de cada um entre as duas cópias do save). */
+function gen4Blocks(u8, L) {
   const dv = view(u8);
   const pick = ([off, size]) => {
     let best = null;
-    for (const base of [0, HGSS.partition]) {
+    for (const base of [0, PARTITION]) {
       const o = base + off;
       if (o + size > u8.length) continue;
-      const foot = o + size - 0x10;
-      if (dv.getUint32(foot + 4, true) !== size || dv.getUint32(foot + 8, true) !== HGSS.magic) continue;
-      if (crc16(u8.subarray(o, o + size - 0x10)) !== dv.getUint16(foot + 14, true)) continue;
-      const count = dv.getUint32(foot, true);
+      const end = o + size;
+      if (dv.getUint32(end - 12, true) !== size || dv.getUint32(end - 8, true) !== MAGIC) continue;
+      if (crc16(u8.subarray(o, end - L.footer)) !== dv.getUint16(end - 2, true)) continue;
+      const count = dv.getUint32(end - L.footer, true);
       if (!best || count > best.count) best = { o, count };
     }
     return best;
   };
-  const general = pick(HGSS.general), storage = pick(HGSS.storage);
+  const general = pick(L.general), storage = pick(L.storage);
   return general && storage ? { general: general.o, storage: storage.o, index: general.count } : null;
 }
 
@@ -150,11 +159,16 @@ function gen5Version(u8) {
 /** Qual jogo de DS é o save (ou null). */
 export function detectNds(u8) {
   if (u8.length < 0x40000) return null;
-  if (hgssBlocks(u8)) return 'hgss';
+  for (const id of Object.keys(GEN4)) if (gen4Blocks(u8, GEN4[id])) return id;
   return gen5Version(u8);
 }
 
-export function parseNds(u8, gameId) {
+/**
+ * @param {Uint8Array} u8 save
+ * @param {string} gameId de detectNds
+ * @param {{ lost?: number }} [opts] lost = bytes do começo do save que o cabeçalho do .duc apagou
+ */
+export function parseNds(u8, gameId, { lost = 0 } = {}) {
   const game = NDS_GAMES[gameId];
   const gen = game.gen;
   const dv = view(u8);
@@ -166,28 +180,35 @@ export function parseNds(u8, gameId) {
     return m;
   };
   let trainer, party = [], boxes = [];
-  if (gameId === 'hgss') {
-    const { general: g, storage: s, index } = hgssBlocks(u8);
-    trainer = { name: text(u8, g + 0x64, 16, 4), tid: dv.getUint16(g + 0x74, true), sid: dv.getUint16(g + 0x76, true), saveIndex: index };
-    const count = Math.min(6, dv.getUint32(g + 0x94, true));
-    for (let i = 0; i < count; i++) { const m = read(g + 0x98 + i * 236, 236); if (m) party.push({ ...m, slot: i + 1 }); }
+  if (GEN4[gameId]) {
+    const L = GEN4[gameId];
+    const { general: g, storage: s, index } = gen4Blocks(u8, L);
+    trainer = { name: text(u8, g + L.trainer, 16, 4), tid: dv.getUint16(g + L.trainer + 0x10, true), sid: dv.getUint16(g + L.trainer + 0x12, true), saveIndex: index };
+    const count = Math.min(6, dv.getUint32(g + L.party, true));
+    for (let i = 0; i < count; i++) { const m = read(g + L.party + 4 + i * 236, 236); if (m) party.push({ ...m, slot: i + 1 }); }
     for (let b = 0; b < 18; b++) {
       const slots = [];
-      for (let k = 0; k < 30; k++) { const m = read(s + b * 0x1000 + k * BOX, BOX); if (m) slots.push({ ...m, slot: k + 1 }); }
-      boxes.push({ index: b, name: text(u8, s + 0x12008 + b * 0x28, 0x28, 4) || `BOX ${b + 1}`, slots, partial: false });
+      const o = s + L.boxes + b * L.boxSize;
+      for (let k = 0; k < 30; k++) { const m = read(o + k * BOX, BOX); if (m) slots.push({ ...m, slot: k + 1 }); }
+      boxes.push({ index: b, name: text(u8, s + L.names + b * 0x28, 0x28, 4) || `BOX ${b + 1}`, slots, partial: false });
     }
   } else {
     trainer = { name: text(u8, 0x19404, 16, 5), tid: dv.getUint16(0x19414, true), sid: dv.getUint16(0x19416, true), saveIndex: null };
     const count = Math.min(6, dv.getUint32(0x18E04, true));
     for (let i = 0; i < count; i++) { const m = read(0x18E08 + i * 220, 220); if (m) party.push({ ...m, slot: i + 1 }); }
+    // Nomes apagados pelo cabeçalho do .duc: vale a cópia de segurança, se as caixas dela forem iguais às principais
+    const backup = GEN5_BACKUP[gameId];
+    const same = lost && u8.length >= backup + 0x400 + 24 * 0x1000
+      && u8.subarray(0x400, 0x400 + 24 * 0x1000).every((x, i) => x === u8[backup + 0x400 + i]);
     for (let b = 0; b < 24; b++) {
       const slots = [];
       for (let k = 0; k < 30; k++) { const m = read(0x400 + b * 0x1000 + k * BOX, BOX); if (m) slots.push({ ...m, slot: k + 1 }); }
-      boxes.push({ index: b, name: text(u8, 0x04 + b * 0x28, 0x28, 5) || `BOX ${b + 1}`, slots, partial: false });
+      const o = 0x04 + b * 0x28;
+      const name = o >= lost ? text(u8, o, 0x28, 5) : same ? text(u8, backup + o, 0x28, 5) : '';
+      boxes.push({ index: b, name: name || `BOX ${b + 1}`, slots, partial: false });
     }
   }
   if (bad) warnings.push(t('{n} Pokémon com checksum inválido (dados corrompidos) foram ignorados.', { n: bad }));
-  if (gameId === 'b2w2') warnings.push(t('Black 2/White 2 usa as mesmas posições do Black/White, mas ainda não foi conferido com um save real.'));
   return { game, trainer, warnings, party, pc: { boxes } };
 }
 

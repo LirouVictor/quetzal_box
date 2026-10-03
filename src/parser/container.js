@@ -31,12 +31,14 @@ export function unwrapSharkPort(u8) {
 
 /**
  * Save do Action Replay DS (.duc): cabeçalho de 500 bytes que começa com "ARDS000000000001" e depois o save.
- * Conferido com 2 arquivos (HeartGold/SoulSilver e Black/White, 256 KB de save cada).
+ * Conferido com 3 arquivos (Platinum, HeartGold/SoulSilver e Black/White, 256 KB de save cada).
+ * Num export de Black 2 (512 KB) o save começa no byte 0 do arquivo e o cabeçalho ocupa os 500 primeiros
+ * bytes dele: `whole` guarda o arquivo inteiro para essa segunda tentativa (feita em load.js).
  */
 export function unwrapActionReplay(u8) {
   if (u8.length <= 500) return null;
   const sig = new TextDecoder('latin1').decode(u8.subarray(0, 16));
-  return sig === 'ARDS000000000001' ? { bytes: u8.subarray(500) } : null;
+  return sig === 'ARDS000000000001' ? { bytes: u8.subarray(500), whole: u8 } : null;
 }
 
 /** Bytes do save, tirando o embrulho se houver. */
@@ -45,6 +47,6 @@ export function unwrap(input) {
   const sps = unwrapSharkPort(u8);
   if (sps) return { bytes: sps.bytes, container: 'SharkPort (.sps)', gameCode: sps.gameCode };
   const ards = unwrapActionReplay(u8);
-  if (ards) return { bytes: ards.bytes, container: 'Action Replay DS (.duc)', gameCode: null };
+  if (ards) return { bytes: ards.bytes, container: 'Action Replay DS (.duc)', gameCode: null, whole: ards.whole };
   return { bytes: u8, container: null, gameCode: null };
 }

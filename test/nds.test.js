@@ -2,7 +2,7 @@ import { describe as suite, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { loadSave, isNds } from '../src/parser/load.js';
 import { calcStats } from '../src/parser/stats.js';
-import { makeHgssSave, makeBwSave, wrapDuc } from './helpers/make-nds.js';
+import { makeHgssSave, makeGen4Save, makeBwSave, wrapDuc } from './helpers/make-nds.js';
 import T from '../src/data/tables.js';
 import G from '../src/data/gen3.json';
 import N from '../src/data/nds.json';
@@ -13,7 +13,7 @@ const shinyPid = (((trainer.tid ^ trainer.sid) << 16) | 3) >>> 0;
 const load = bytes => loadSave(bytes, T, G, null, N).data;
 const sameStats = m => calcStats(m.species.baseStats, m.ivs, m.evs, m.level, m.nature);
 
-suite('Jogos de DS: HeartGold/SoulSilver e Black/White', () => {
+suite('Jogos de DS: Platinum, HeartGold/SoulSilver, Black/White e Black 2/White 2', () => {
   it('HG/SS (.duc): treinador, equipe com stats salvos, PC, forma, gênero, natureza pelo PID e golpes da Gen 4', () => {
     const save = wrapDuc(makeHgssSave({
       trainer, boxNames: ['FAVES'],
@@ -41,7 +41,29 @@ suite('Jogos de DS: HeartGold/SoulSilver e Black/White', () => {
     expect(rotom.stats).toEqual(sameStats(rotom));
   });
 
-  it('Black/White: natureza e habilidade oculta guardadas no Pokémon; Black 2/White 2 com aviso', () => {
+  it('Platinum: rodapé de 20 bytes, treinador e equipe em outras posições, caixas seguidas', () => {
+    const save = wrapDuc(makeGen4Save({
+      game: 'pt', trainer, saveCount: 58, boxNames: ['HAVE FUN', 'TWO'],
+      party: [{ pid: 25, otId, species: 235, ability: 20, item: 234, exp: 1000000, level: 100, stats: [313, 79, 105, 249, 76, 128] }],
+      pc: { 0: { pid: 1, otId, species: 487, form: 1, ability: 46, exp: 1250000 }, 31: { pid: 2, otId, species: 201, form: 1, ability: 26, exp: 100 } },
+    }));
+    expect(isNds(save)).toBe(true);
+    const d = load(save);
+    expect(d.game).toMatchObject({ id: 'pt', name: 'Pokémon Platinum', gen: 4 });
+    expect(d.trainer).toMatchObject({ name: 'Lyra', tid: 12345, sid: 54321, saveIndex: 58 });
+    expect(d.party[0].species.name).toBe('Smeargle');
+    expect(d.party[0].ability.name).toBe('Own Tempo');
+    expect(Object.values(d.party[0].stats)).toEqual([313, 79, 105, 249, 76, 128]);
+    expect(d.pc.boxes).toHaveLength(18);
+    expect(d.pc.boxes.slice(0, 3).map(b => b.name)).toEqual(['HAVE FUN', 'TWO', 'BOX 3']);
+    expect(d.pc.boxes[0].slots[0].species).toMatchObject({ name: 'Giratina', form: 'Origin' });
+    expect(d.pc.boxes[1].slots[0]).toMatchObject({ slot: 2 });
+    expect(d.pc.boxes[1].slots[0].species).toMatchObject({ name: 'Unown', form: 'B' });
+    // HG/SS e Platinum não se confundem (tamanhos de bloco diferentes)
+    expect(load(wrapDuc(makeHgssSave({ trainer, party: [{ pid: 1, otId, species: 1, level: 5 }] }))).game.id).toBe('hgss');
+  });
+
+  it('Black/White: natureza e habilidade oculta guardadas no Pokémon', () => {
     const save = makeBwSave({
       trainer,
       party: [{ pid: 7, otId, species: 643, ability: 163, item: 267, exp: 1250000, level: 100, nature: 15, moves: [[406, 16]], stats: [341, 220, 236, 279, 438, 277], genderless: true }],
@@ -58,13 +80,25 @@ suite('Jogos de DS: HeartGold/SoulSilver e Black/White', () => {
     expect(b).toMatchObject({ slot: 2 });
     expect(b.ability).toMatchObject({ name: 'Rain Dish', hidden: true });
     expect(b.nature.name).toBe('Bold');
-    const b2 = load(makeBwSave({ trainer, version: 23, party: [{ pid: 1, otId, species: 1, level: 5 }] }));
-    expect(b2.game.id).toBe('b2w2');
-    expect(b2.warnings.join(' ')).toMatch(/ainda não foi conferido/);
+  });
+
+  it('Black 2 (.duc com o save no começo do arquivo): nomes das caixas apagados vêm da cópia de segurança', () => {
+    const save = makeBwSave({ trainer, version: 23, boxNames: ['HAVE FUN', 'EVENTS+'],
+      party: [{ pid: 1, otId, species: 646, form: 2, ability: 164, level: 100, exp: 1250000 }], pc: { 30: { pid: 5, otId, species: 1, exp: 100 } } });
+    const d = load(wrapDuc(save, { overlay: true }));
+    expect(d.game.id).toBe('b2w2');
+    expect(d.warnings).toEqual([]);
+    expect(d.party[0].species).toMatchObject({ name: 'Kyurem', form: 'Black' });
+    expect(d.pc.boxes.slice(0, 3).map(b => b.name)).toEqual(['HAVE FUN', 'EVENTS+', 'BOX 3']);
+    expect(d.pc.boxes[1].slots[0].species.name).toBe('Bulbasaur');
+    // Sem a cópia de segurança igual, os nomes apagados viram BOX n
+    const changed = wrapDuc(save, { overlay: true });
+    changed[0x26400] ^= 1;
+    expect(load(changed).pc.boxes[0].name).toBe('BOX 1');
   });
 });
 
-// Saves reais (exports do Action Replay DS): HeartGold/SoulSilver e Black
+// Saves reais (exports do Action Replay DS): HeartGold/SoulSilver, Black, Platinum e Black 2
 suite.skipIf(!existsSync('fixtures/hgss.duc') || !existsSync('fixtures/bw.duc'))('Jogos de DS com saves reais', () => {
   it('HG/SS: checksums, stats da equipe = fórmula, formas e 354 Pokémon no PC', () => {
     const d = load(readFileSync('fixtures/hgss.duc'));
@@ -86,5 +120,31 @@ suite.skipIf(!existsSync('fixtures/hgss.duc') || !existsSync('fixtures/bw.duc'))
     for (const m of d.party) expect(sameStats(m)).toEqual(m.stats);
     expect(d.pc.boxes.flatMap(b => b.slots)).toHaveLength(457);
     expect(d.pc.boxes[0].name).toBe('HAVE FUN');
+  });
+});
+
+suite.skipIf(!existsSync('fixtures/dppt.duc') || !existsSync('fixtures/b2w2.duc'))('Platinum e Black 2 com saves reais', () => {
+  it('Platinum: checksums, stats da equipe = fórmula, 354 Pokémon no PC', () => {
+    const d = load(readFileSync('fixtures/dppt.duc'));
+    expect(d.game.id).toBe('pt');
+    expect(d.trainer).toMatchObject({ name: 'Memory', tid: 55032, sid: 23455 });
+    expect(d.warnings).toEqual([]);
+    expect(d.party).toHaveLength(3);
+    for (const m of d.party) expect(sameStats(m)).toEqual(m.stats);
+    const pc = d.pc.boxes.flatMap(b => b.slots);
+    expect(pc).toHaveLength(354);
+    expect(d.pc.boxes.map(b => b.name).slice(0, 2)).toEqual(['HAVE FUN', 'COLLECTN']);
+    expect(pc.filter(m => m.species.confidence !== 'confirmado' || m.ability.confidence !== 'confirmado')).toEqual([]);
+  });
+
+  it('Black 2 (save no começo do .duc): stats da equipe = fórmula, formas da Gen 5 e 458 Pokémon no PC', () => {
+    const d = load(readFileSync('fixtures/b2w2.duc'));
+    expect(d.game.id).toBe('b2w2');
+    expect(d.trainer).toMatchObject({ name: 'Memory', tid: 39175, sid: 52713 });
+    expect(d.warnings).toEqual([]);
+    for (const m of d.party) expect(sameStats(m)).toEqual(m.stats);
+    expect(d.party.map(m => m.species.form).filter(Boolean)).toEqual(['Black', 'Therian', 'Therian', 'Therian']);
+    expect(d.pc.boxes.flatMap(b => b.slots)).toHaveLength(458);
+    expect(d.pc.boxes.map(b => b.name).slice(0, 2)).toEqual(['HAVE FUN', 'EVENTS+']);
   });
 });
