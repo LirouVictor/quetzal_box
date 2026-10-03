@@ -69,6 +69,18 @@ const GAME_CONTEXT = {
     '- O Unbound mudou stats e habilidades de algumas espécies; confie nos dados enviados, não na sua memória.',
     '- Só uma megaevolução pode ser usada por batalha.',
   ],
+  gen4: [
+    'um jogo oficial da Geração 4',
+    '(sem tipo Fairy, sem megaevoluções; a categoria física/especial é de cada golpe).',
+    '- Use os dados da época enviados (tipos, golpes, poder), não os de jogos mais novos.',
+    '- Não sugira itens, golpes ou mecânicas que não existem nesse jogo.',
+  ],
+  gen5: [
+    'um jogo oficial da Geração 5',
+    '(sem tipo Fairy, sem megaevoluções; a categoria física/especial é de cada golpe).',
+    '- Use os dados da época enviados (tipos, golpes, poder), não os de jogos mais novos.',
+    '- Não sugira itens, golpes ou mecânicas que não existem nesse jogo.',
+  ],
   gen3: [
     'um jogo oficial da Geração 3',
     '(sem tipo Fairy, sem megaevoluções; na Gen 3 a categoria física/especial depende do TIPO do golpe: Normal, Fighting, Flying, Poison, Ground, Rock, Bug, Ghost e Steel são físicos; os demais, especiais).',
@@ -79,9 +91,9 @@ const GAME_CONTEXT = {
 
 /** Instruções fixas para a IA, conforme o jogo do save. */
 export function systemPrompt(game) {
-  const key = game && GAME_CONTEXT[game.id] ? game.id : 'gen3';
+  const key = game && GAME_CONTEXT[game.id] ? game.id : game && game.gen ? `gen${game.gen}` : 'gen3';
   const [what, details, ...rules] = GAME_CONTEXT[key].map(line => t(line));
-  const name = key === 'gen3' && game ? `${game.name}, ${what}` : what;
+  const name = /^gen\d$/.test(key) && game ? `${game.name}, ${what}` : what;
   return [
     t('Você é um especialista em Pokémon ajudando quem joga {game}', { game: name }),
     details,

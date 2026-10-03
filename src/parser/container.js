@@ -1,4 +1,4 @@
-// Formatos de arquivo que embrulham o save do GBA: aqui só tiramos o embrulho e devolvemos os bytes do save.
+// Formatos de arquivo que embrulham o save (GBA ou DS): aqui só tiramos o embrulho e devolvemos os bytes do save.
 
 const SHARKPORT = 'SharkPortSave';
 
@@ -29,9 +29,22 @@ export function unwrapSharkPort(u8) {
   }
 }
 
+/**
+ * Save do Action Replay DS (.duc): cabeçalho de 500 bytes que começa com "ARDS000000000001" e depois o save.
+ * Conferido com 2 arquivos (HeartGold/SoulSilver e Black/White, 256 KB de save cada).
+ */
+export function unwrapActionReplay(u8) {
+  if (u8.length <= 500) return null;
+  const sig = new TextDecoder('latin1').decode(u8.subarray(0, 16));
+  return sig === 'ARDS000000000001' ? { bytes: u8.subarray(500) } : null;
+}
+
 /** Bytes do save, tirando o embrulho se houver. */
 export function unwrap(input) {
   const u8 = input instanceof Uint8Array ? input : new Uint8Array(input);
   const sps = unwrapSharkPort(u8);
-  return sps ? { bytes: sps.bytes, container: 'SharkPort (.sps)', gameCode: sps.gameCode } : { bytes: u8, container: null, gameCode: null };
+  if (sps) return { bytes: sps.bytes, container: 'SharkPort (.sps)', gameCode: sps.gameCode };
+  const ards = unwrapActionReplay(u8);
+  if (ards) return { bytes: ards.bytes, container: 'Action Replay DS (.duc)', gameCode: null };
+  return { bytes: u8, container: null, gameCode: null };
 }

@@ -8,6 +8,7 @@ import { calcStats } from './stats.js';
 import { unwrap } from './container.js';
 import { detectGen3, parseGen3, describeGen3, gen3Tables } from './gen3.js';
 import { unboundSignature, parseUnbound, describeUnbound } from './unbound.js';
+import { detectNds, parseNds, describeNds, ndsTables } from './nds.js';
 
 export const QUETZAL = { id: 'quetzal', name: 'Pokémon Quetzal', short: 'Quetzal', note: 'testado na Alpha 9 (PT-BR)' };
 
@@ -18,11 +19,18 @@ export const SUPPORTED = [
   'Pokémon FireRed / LeafGreen',
   'Pokémon Ruby / Sapphire (mesmo formato; ainda sem save real para testar)',
   'Pokémon Unbound (2.1)',
+  'Pokémon HeartGold / SoulSilver',
+  'Pokémon Black / White',
 ];
 
 /** O save é do Unbound? (as tabelas dele são carregadas à parte, só quando precisa) */
 export function isUnbound(input) {
   return unboundSignature(unwrap(input).bytes) !== null;
+}
+
+/** O save é de um jogo de DS? (idem) */
+export function isNds(input) {
+  return detectNds(unwrap(input).bytes) !== null;
 }
 
 const unsupported = () => t('Este save não é de um jogo suportado pelo savDex. Jogos suportados: {list}.', { list: SUPPORTED.map(s => s.replace(/ \(.*\)$/, '')).join(', ') });
@@ -48,10 +56,18 @@ function checkQuetzal(data) {
  * @param {object} T tabelas do app (src/data/tables.js)
  * @param {object} G tabelas da Gen 3 (src/data/gen3.json)
  * @param {object} [U] tabelas do Unbound (src/data/unbound.json), só para saves do Unbound
+ * @param {object} [N] tabelas dos jogos de DS (src/data/nds.json), só para saves de DS
  * @returns {{ data: object, T: object }} dados descritos e as tabelas que valem para esse jogo
  */
-export function loadSave(input, T, G, U = null) {
+export function loadSave(input, T, G, U = null, N = null) {
   const { bytes } = unwrap(input);
+  const nds = detectNds(bytes);
+  if (nds) {
+    if (!N) throw new Error('Tabelas dos jogos de DS não carregadas');
+    const raw = parseNds(bytes, nds);
+    const TN = ndsTables(T, G, N, raw.game.gen);
+    return { data: describeNds(raw, TN), T: TN };
+  }
   if (bytes.length < SAVE_SIZE) {
     throw new SaveError(t('O arquivo tem {n} bytes; um save de Pokémon de GBA tem {size} (128 KB).', { n: bytes.length, size: SAVE_SIZE }));
   }

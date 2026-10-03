@@ -6,6 +6,10 @@ import { t } from './i18n.js';
 export const SHOWDOWN_ORDER = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
 export const STAT_LABEL = { hp: 'HP', atk: 'Atk', def: 'Def', spa: 'SpA', spd: 'SpD', spe: 'Spe' };
 
+/** Nome da forma para mostrar: só as escritas em português passam pela tradução (as demais são nomes próprios). */
+const PT_FORMS = new Set(['ovo', 'estilo Red']);
+export const formName = f => (PT_FORMS.has(f) ? t(f) : f);
+
 export const allMons = d => [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
 
 /** CSV com BOM e separador ';' (padrão do Excel em português). */
@@ -23,7 +27,7 @@ export function toCSV(d) {
   const rows = allMons(d).map(m => {
     const per = (obj) => SHOWDOWN_ORDER.map(k => (obj ? obj[k] : ''));
     return [
-      m.location === 'party' ? t('Equipe') : m.where, m.slot, m.species.name, m.species.form ? t(m.species.form) : '', m.speciesId, t(m.species.confidence), m.nickname,
+      m.location === 'party' ? t('Equipe') : m.where, m.slot, m.species.name, m.species.form ? formName(m.species.form) : '', m.speciesId, t(m.species.confidence), m.nickname,
       m.species.types[0] || '', m.species.types[1] || '',
       m.level ?? '', m.exp ?? '', m.nature ? m.nature.name : '', m.item ? m.item.name + probable(m.item.confidence) : '',
       m.ability ? m.ability.name + (m.ability.hidden ? ` (${t('oculta')})` : '') : '',
