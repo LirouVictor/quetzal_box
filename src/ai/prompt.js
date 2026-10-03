@@ -3,6 +3,7 @@
 
 import { STAT_LABEL, SHOWDOWN_ORDER } from '../export.js';
 import { analyzeTeam } from '../analysis.js';
+import { t } from '../i18n.js';
 
 const CATEGORY = ['Físico', 'Especial', 'Status'];
 /** Limite de candidatos enviados (os de maior total de stats base primeiro). */
@@ -22,17 +23,17 @@ export const speciesKey = m => `${m.species.name}|${m.species.form || ''}`;
 export function monLine(m) {
   const sp = m.species;
   const name = sp.name + (sp.form ? ` (${sp.form})` : '') + (m.hasNickname ? ` "${m.nickname}"` : '');
-  const parts = [refOf(m), name, sp.types.map(cap).join('/') || 'tipo desconhecido'];
-  if (m.ability) parts.push(`Hab: ${m.ability.name}${m.ability.hidden ? ' (oculta)' : ''}`);
+  const parts = [refOf(m), name, sp.types.map(cap).join('/') || t('tipo desconhecido')];
+  if (m.ability) parts.push(`${t('Hab')}: ${m.ability.name}${m.ability.hidden ? ` (${t('oculta')})` : ''}`);
   parts.push(`Item: ${m.item ? m.item.name : '—'}`);
-  if (m.nature) parts.push(`Natureza: ${m.nature.name}${m.nature.plus ? ` (+${STAT_LABEL[m.nature.plus]} −${STAT_LABEL[m.nature.minus]})` : ''}`);
+  if (m.nature) parts.push(`${t('Natureza')}: ${m.nature.name}${m.nature.plus ? ` (+${STAT_LABEL[m.nature.plus]} −${STAT_LABEL[m.nature.minus]})` : ''}`);
   if (sp.baseStats) parts.push(`Base ${sp.baseStats.join('/')} = ${bst(m)}`);
   if (m.ivs) parts.push(`IVs ${SHOWDOWN_ORDER.map(k => m.ivs[k]).join('/')}`);
   const moves = m.moves.map(mv => {
-    const cat = mv.category !== null && mv.category !== undefined ? CATEGORY[mv.category] : '?';
+    const cat = mv.category !== null && mv.category !== undefined ? t(CATEGORY[mv.category]) : '?';
     return `${mv.name} [${cap(mv.type) || '?'}, ${cat}${mv.power ? ', ' + mv.power : ''}]`;
   });
-  parts.push(`Golpes: ${moves.join('; ') || '—'}`);
+  parts.push(`${t('Golpes')}: ${moves.join('; ') || '—'}`);
   return parts.join(' | ');
 }
 
@@ -73,21 +74,29 @@ const GAME_CONTEXT = {
 /** Instruções fixas para a IA, conforme o jogo do save. */
 export function systemPrompt(game) {
   const key = game && game.id === 'quetzal' ? 'quetzal' : 'gen3';
-  const [what, details, ...rules] = GAME_CONTEXT[key];
+  const [what, details, ...rules] = GAME_CONTEXT[key].map(line => t(line));
   const name = game && game.id !== 'quetzal' ? `${game.name}, ${what}` : what;
   return [
-    `Você é um especialista em Pokémon ajudando quem joga ${name}`,
+    t('Você é um especialista em Pokémon ajudando quem joga {game}', { game: name }),
     details,
-    'O jogador quer montar e avaliar equipes para jogar o jogo (batalhas em singles contra treinadores e líderes).',
-    'Regras:',
-    '- Use SOMENTE os dados enviados: espécies, tipos, habilidades, itens, naturezas, stats base, IVs e golpes. Não invente Pokémon, golpes ou habilidades que não estejam na lista.',
+    t('O jogador quer montar e avaliar equipes para jogar o jogo (batalhas em singles contra treinadores e líderes).'),
+    t('Regras:'),
+    t('- Use SOMENTE os dados enviados: espécies, tipos, habilidades, itens, naturezas, stats base, IVs e golpes. Não invente Pokémon, golpes ou habilidades que não estejam na lista.'),
     ...rules,
-    '- Cite Pokémon SEMPRE pela referência do começo de cada linha (ex.: E1, C3-12), também dentro dos textos, e SEM escrever o nome junto (o app troca a referência pelo nome). Certo: "C3-12 resiste a Ice". Errado: "Garchomp (C3-12) resiste a Ice".',
-    '- Ignore o nível: o jogador pode treinar qualquer Pokémon.',
-    '- Se sugerir um golpe que o Pokémon ainda não tem, diga que é sugestão e que ele precisa aprender o golpe.',
-    '- Escreva em português do Brasil, de forma direta e específica. Nomes de Pokémon, golpes, itens, habilidades e tipos ficam em inglês.',
-    '- Frases curtas: cada item de lista com no máximo 2 frases.',
+    t('- Cite Pokémon SEMPRE pela referência do começo de cada linha (ex.: E1, C3-12), também dentro dos textos, e SEM escrever o nome junto (o app troca a referência pelo nome). Certo: "C3-12 resiste a Ice". Errado: "Garchomp (C3-12) resiste a Ice".'),
+    t('- Ignore o nível: o jogador pode treinar qualquer Pokémon.'),
+    t('- Se sugerir um golpe que o Pokémon ainda não tem, diga que é sugestão e que ele precisa aprender o golpe.'),
+    t('- Escreva em português do Brasil, de forma direta e específica. Nomes de Pokémon, golpes, itens, habilidades e tipos ficam em inglês.'),
+    t('- Frases curtas: cada item de lista com no máximo 2 frases.'),
   ].join('\n');
+}
+
+/** Cópia do schema com as descrições dos campos no idioma da interface. */
+export function localizedSchema(schema) {
+  const walk = v => (Array.isArray(v) ? v.map(walk)
+    : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, k === 'description' ? t(x) : walk(x)]))
+    : v);
+  return walk(schema);
 }
 
 const str = { type: 'STRING' };
@@ -154,37 +163,37 @@ export function schemaHint(schema) {
   };
   const ex = example(schema, '');
   return [
-    'Responda APENAS com um objeto JSON válido, sem texto antes ou depois, neste formato:',
+    t('Responda APENAS com um objeto JSON válido, sem texto antes ou depois, neste formato:'),
     JSON.stringify(ex),
-    ...(notes.length ? ['Observações sobre os campos:', ...notes] : []),
+    ...(notes.length ? [t('Observações sobre os campos:'), ...notes] : []),
   ].join('\n');
 }
 
 function typeSummary(party, T) {
   const a = analyzeTeam(party, { types: T.types, chart: T.typechart });
-  const weak = a.defense.filter(r => r.alert).map(r => `${cap(r.type)} (${r.weak.length} fracos, ${r.resist.length + r.immune.length} resistem/imunes)`);
+  const weak = a.defense.filter(r => r.alert).map(r => `${cap(r.type)} (${t('{weak} fracos, {resist} resistem/imunes', { weak: r.weak.length, resist: r.resist.length + r.immune.length })})`);
   return [
-    `Tipos que acertam muitos membros em cheio: ${weak.join(', ') || 'nenhum'}.`,
-    `Tipos sem nenhum golpe super efetivo da equipe: ${a.gaps.map(cap).join(', ') || 'nenhum'}.`,
+    t('Tipos que acertam muitos membros em cheio: {list}.', { list: weak.join(', ') || t('nenhum') }),
+    t('Tipos sem nenhum golpe super efetivo da equipe: {list}.', { list: a.gaps.map(cap).join(', ') || t('nenhum') }),
   ].join('\n');
 }
 
-const wish = text => (text && text.trim() ? `\nPedido do jogador: ${text.trim().slice(0, 300)}\n` : '');
+const wish = text => (text && text.trim() ? `\n${t('Pedido do jogador:')} ${text.trim().slice(0, 300)}\n` : '');
 
 export function analysisPrompt(all, T, note = '', max = MAX_CANDIDATES) {
   const party = all.filter(m => m.location === 'party');
   const pool = candidates(all, max).filter(m => m.location !== 'party');
   return [
-    'Avalie a EQUIPE ATUAL: sinergia, fraquezas em comum, cobertura de golpes, papéis e itens. Dê uma nota de 0 a 10.',
-    'Sugira até 3 trocas com Pokémon do PC que melhorem a equipe (só se valer a pena) e dicas por membro.',
+    t('Avalie a EQUIPE ATUAL: sinergia, fraquezas em comum, cobertura de golpes, papéis e itens. Dê uma nota de 0 a 10.'),
+    t('Sugira até 3 trocas com Pokémon do PC que melhorem a equipe (só se valer a pena) e dicas por membro.'),
     wish(note),
-    'EQUIPE ATUAL:',
+    t('EQUIPE ATUAL:'),
     ...party.map(monLine),
     '',
-    'Cálculo do app (só tipos, sem habilidades):',
+    t('Cálculo do app (só tipos, sem habilidades):'),
     typeSummary(party, T),
     '',
-    `PC (${pool.length} candidatos):`,
+    t('PC ({n} candidatos):', { n: pool.length }),
     ...pool.map(monLine),
   ].join('\n');
 }
@@ -192,10 +201,10 @@ export function analysisPrompt(all, T, note = '', max = MAX_CANDIDATES) {
 export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES) {
   const pool = candidates(all, max);
   return [
-    'Monte a MELHOR EQUIPE de 6 Pokémon com os disponíveis abaixo (equipe atual + PC), sem repetir espécie.',
-    'Busque boa sinergia de tipos, cobertura de golpes, papéis variados e no máximo um Pokémon com megapedra.',
+    t('Monte a MELHOR EQUIPE de 6 Pokémon com os disponíveis abaixo (equipe atual + PC), sem repetir espécie.'),
+    t('Busque boa sinergia de tipos, cobertura de golpes, papéis variados e no máximo um Pokémon com megapedra.'),
     wish(note),
-    `DISPONÍVEIS (${pool.length}):`,
+    t('DISPONÍVEIS ({n}):', { n: pool.length }),
     ...pool.map(monLine),
   ].join('\n');
 }
@@ -207,11 +216,11 @@ export function checkAnalysis(data, byRef) {
   const dropped = [];
   const isParty = r => byRef.has(r) && byRef.get(r).location === 'party';
   const isPc = r => byRef.has(r) && byRef.get(r).location !== 'party';
-  const trocas = (Array.isArray(data.trocas) ? data.trocas : []).filter(t => {
-    const ok = t && isParty(String(t.sai).trim()) && isPc(String(t.entra).trim());
-    if (!ok && t) dropped.push(`${t.sai} → ${t.entra}`);
+  const trocas = (Array.isArray(data.trocas) ? data.trocas : []).filter(x => {
+    const ok = x && isParty(String(x.sai).trim()) && isPc(String(x.entra).trim());
+    if (!ok && x) dropped.push(`${x.sai} → ${x.entra}`);
     return ok;
-  }).slice(0, 3).map(t => ({ sai: String(t.sai).trim(), entra: String(t.entra).trim(), motivo: String(t.motivo || '').trim() }));
+  }).slice(0, 3).map(x => ({ sai: String(x.sai).trim(), entra: String(x.entra).trim(), motivo: String(x.motivo || '').trim() }));
   const dicas = (Array.isArray(data.dicas) ? data.dicas : []).filter(d => {
     const ok = d && byRef.has(String(d.ref).trim()) && String(d.texto || '').trim();
     if (!ok && d && d.ref) dropped.push(String(d.ref));
@@ -242,7 +251,7 @@ export function checkBuild(data, byRef) {
     membros.push({ ref, papel: String(x.papel || '').trim(), motivo: String(x.motivo || '').trim() });
   }
   return {
-    nome: String(data.nome || '').trim() || 'Equipe sugerida',
+    nome: String(data.nome || '').trim() || t('Equipe sugerida'),
     resumo: String(data.resumo || '').trim(),
     membros,
     pontos_fortes: texts(data.pontos_fortes),

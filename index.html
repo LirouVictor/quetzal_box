@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>savDex</title>
-  <meta name="description" content="savDex: veja a equipe e o PC do seu save de Pokémon (Quetzal, Emerald, FireRed/LeafGreen, Ruby/Sapphire) e exporte em CSV, Showdown ou JSON. Tudo roda no navegador.">
+  <meta name="description" data-i18n-attr="content" content="savDex: veja a equipe e o PC do seu save de Pokémon (Quetzal, Emerald, FireRed/LeafGreen, Ruby/Sapphire) e exporte em CSV, Showdown ou JSON. Tudo roda no navegador.">
   <meta name="theme-color" content="#2b3350" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#10131f" media="(prefers-color-scheme: dark)">
   <link rel="manifest" href="./manifest.webmanifest">
@@ -14,18 +14,31 @@
   <script>
     // Aplica o tema salvo antes da primeira pintura (evita piscar).
     try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}
+    // Idioma: em inglês, esconde a página até main.js trocar os textos (no máximo 3 s, por segurança).
+    let lang = null;
+    try { lang = localStorage.getItem('lang'); } catch {}
+    if (lang ? lang === 'en' : !/^pt\b/i.test(navigator.language || 'pt')) {
+      const r = document.documentElement;
+      r.lang = 'en';
+      r.dataset.langWait = '';
+      setTimeout(() => { delete r.dataset.langWait; }, 3000);
+    }
   </script>
 </head>
 <body>
-  <a class="skip" href="#main">Pular para o conteúdo</a>
+  <a class="skip" href="#main" data-i18n>Pular para o conteúdo</a>
   <header class="topbar">
     <div class="brand">
       <svg class="brand-mark" viewBox="0 0 32 32" width="32" height="32" aria-hidden="true" shape-rendering="crispEdges"><use href="#logo"/></svg>
       <span class="brand-name">sav<b>Dex</b></span>
     </div>
     <div class="topbar-actions">
-      <label class="btn btn-small btn-ghost hidden" id="reopen" for="file">Trocar save</label>
-      <button class="btn btn-small btn-ghost btn-icon" id="theme" type="button" aria-label="Alternar tema claro/escuro" title="Alternar tema">
+      <label class="btn btn-small btn-ghost hidden" id="reopen" for="file" title="Trocar save" data-i18n-attr="title">
+        <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" shape-rendering="crispEdges"><use href="#folder"/></svg>
+        <span class="reopen-text" data-i18n>Trocar save</span>
+      </label>
+      <button class="btn btn-small btn-ghost lang-btn" id="lang" type="button"></button>
+      <button class="btn btn-small btn-ghost btn-icon" id="theme" type="button" aria-label="Alternar tema claro/escuro" title="Alternar tema" data-i18n-attr="title">
         <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" shape-rendering="crispEdges"><use href="#moon"/></svg>
       </button>
     </div>
@@ -33,39 +46,39 @@
 
   <main id="main">
     <section class="win intro" id="intro">
-      <h1 class="pixel">Abra seu save</h1>
-      <p>Veja treinador, equipe e PC, e exporte para planilha, Showdown ou JSON. A leitura acontece no seu aparelho: o arquivo não é enviado para lugar nenhum. Uma cópia do último save fica guardada neste navegador para abrir sozinha na próxima visita.</p>
+      <h1 class="pixel" data-i18n>Abra seu save</h1>
+      <p data-i18n>Veja treinador, equipe e PC, e exporte para planilha, Showdown ou JSON. A leitura acontece no seu aparelho: o arquivo não é enviado para lugar nenhum. Uma cópia do último save fica guardada neste navegador para abrir sozinha na próxima visita.</p>
       <div class="drop" id="drop">
         <label class="btn btn-big" for="file">
           <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" shape-rendering="crispEdges"><use href="#folder"/></svg>
-          Abrir arquivo .sav
+          <span data-i18n>Abrir arquivo .sav</span>
         </label>
         <!-- Sem "accept": no Android, filtrar por .sav costuma deixar o arquivo acinzentado no seletor. O conteúdo é validado ao abrir. -->
         <input type="file" id="file">
-        <p class="hint">No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui. Aceita .sav e exports do GameShark (.sps).</p>
+        <p class="hint" data-i18n>No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui. Aceita .sav e exports do GameShark (.sps).</p>
       </div>
       <div class="demo-row">
-        <button class="btn btn-ghost" type="button" id="demo">Ver um save de exemplo</button>
-        <p class="hint">Sem jogo, sem arquivo: um save do Quetzal com Pokémon fictícios para experimentar o savDex.</p>
+        <button class="btn btn-ghost" type="button" id="demo" data-i18n>Ver um save de exemplo</button>
+        <p class="hint" data-i18n>Sem jogo, sem arquivo: um save do Quetzal com Pokémon fictícios para experimentar o savDex.</p>
       </div>
       <div class="supported">
-        <h2 class="pixel">Jogos suportados</h2>
+        <h2 class="pixel" data-i18n>Jogos suportados</h2>
         <ul>
-          <li>Pokémon Quetzal <small>(testado na Alpha 9 PT-BR)</small></li>
+          <li data-i18n>Pokémon Quetzal <small>(testado na Alpha 9 PT-BR)</small></li>
           <li>Pokémon Emerald</li>
           <li>Pokémon FireRed / LeafGreen</li>
-          <li>Pokémon Ruby / Sapphire <small>(mesmo formato do Emerald; ainda sem save real para testar)</small></li>
+          <li data-i18n>Pokémon Ruby / Sapphire <small>(mesmo formato do Emerald; ainda sem save real para testar)</small></li>
         </ul>
-        <p class="hint">Hacks que mantêm o formato desses jogos também abrem, mas nomes de espécies, golpes e itens podem não bater se o hack os mudou. Save de outro jogo mostra um aviso em vez de dados errados.</p>
+        <p class="hint" data-i18n>Hacks que mantêm o formato desses jogos também abrem, mas nomes de espécies, golpes e itens podem não bater se o hack os mudou. Save de outro jogo mostra um aviso em vez de dados errados.</p>
       </div>
       <p class="error hidden" id="err" role="alert"></p>
     </section>
 
-    <section class="win saved-note hidden" id="saved-note" aria-label="Save guardado">
+    <section class="win saved-note hidden" id="saved-note" aria-label="Save guardado" data-i18n-attr="aria-label">
       <p id="saved-text" role="status"></p>
       <div class="export-btns">
         <label class="btn btn-small" for="file" id="saved-open">Abrir save atualizado</label>
-        <button class="btn btn-small btn-ghost" type="button" id="forget">Esquecer este save</button>
+        <button class="btn btn-small btn-ghost" type="button" id="forget" data-i18n>Esquecer este save</button>
       </div>
     </section>
 
@@ -73,7 +86,7 @@
   </main>
 
   <footer class="foot">
-    <p>Projeto de fã, sem vínculo com Nintendo, Game Freak, The Pokémon Company ou com os autores dos hacks (como o Quetzal). Sprites do repositório <a href="https://github.com/PokeAPI/sprites" rel="noopener">PokeAPI/sprites</a>.</p>
+    <p data-i18n>Projeto de fã, sem vínculo com Nintendo, Game Freak, The Pokémon Company ou com os autores dos hacks (como o Quetzal). Sprites do repositório <a href="https://github.com/PokeAPI/sprites" rel="noopener">PokeAPI/sprites</a>.</p>
   </footer>
 
   <dialog id="detail" class="win sheet" aria-labelledby="detail-title"></dialog>

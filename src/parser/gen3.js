@@ -2,6 +2,7 @@
 // Formato público e documentado (Bulbapedia, PKHeX): Pokémon de 80 bytes (PC) e 100 bytes (equipe),
 // com os 48 bytes de dados criptografados (XOR com PID ^ OT ID) e embaralhados em 4 blocos (PID % 24).
 
+import { t } from '../i18n.js';
 import { decodeText } from './charset.js';
 import { natureFromId } from './natures.js';
 import { calcStats, hiddenPowerType } from './stats.js';
@@ -140,7 +141,7 @@ export function parseGen3(u8, found) {
   const { slot, layout } = found;
   const S = slot.sections;
   const warnings = [];
-  if (slot.badChecksums.length) warnings.push(`Checksum inválido nos setores ${slot.badChecksums.join(', ')}; os dados podem estar corrompidos.`);
+  if (slot.badChecksums.length) warnings.push(t('Checksum inválido nos setores {list}; os dados podem estar corrompidos.', { list: slot.badChecksums.join(', ') }));
   const T0 = S[0];
   const trainer = {
     name: decodeText(u8, T0 + GEN3.trainer.name, 7),
@@ -166,7 +167,7 @@ export function parseGen3(u8, found) {
     }
     boxes.push({ index: b, name: decodeText(pc, P.boxNames + b * P.boxNameLen, P.boxNameLen) || `BOX ${b + 1}`, slots, partial: false });
   }
-  if (bad) warnings.push(`${bad} Pokémon do PC com checksum inválido (dados corrompidos) foram ignorados.`);
+  if (bad) warnings.push(t('{n} Pokémon do PC com checksum inválido (dados corrompidos) foram ignorados.', { n: bad }));
   return {
     slot: { index: slot.slot, saveIndex: slot.saveIndex },
     warnings, trainer, party,
@@ -222,7 +223,7 @@ export function describeGen3(raw, T, game) {
 
   function species(id, isEgg) {
     const row = G.species[id];
-    if (!row) return { name: `Espécie ${id}`, form: null, showdown: null, confidence: 'desconhecido', evidence: null, spriteId: null, dexId: null, hasIcon: false, types: [], abilities: [null, null, null], baseStats: null, growth: 0, genderByte: 255 };
+    if (!row) return { name: t('Espécie {id}', { id }), form: null, showdown: null, confidence: 'desconhecido', evidence: null, spriteId: null, dexId: null, hasIcon: false, types: [], abilities: [null, null, null], baseStats: null, growth: 0, genderByte: 255 };
     const [national, t1, t2, a1, a2, genderByte, growth, ...base] = row;
     const name = T.species[national] ? T.species[national][0] : `#${national}`;
     return {
@@ -240,9 +241,9 @@ export function describeGen3(raw, T, game) {
   const item = id => (id ? { id, name: G.items[id] || `Item ${id}`, confidence: G.items[id] ? 'confirmado' : 'desconhecido', evidence: null } : null);
   const ability = (sp, num) => {
     const name = sp.abilities[num] || sp.abilities[0];
-    return { num, name: name || `Habilidade ${num + 1}`, hidden: false, confidence: name ? 'confirmado' : 'desconhecido' };
+    return { num, name: name || t('Habilidade {n}', { n: num + 1 }), hidden: false, confidence: name ? 'confirmado' : 'desconhecido' };
   };
-  const ball = id => ({ id, name: G.balls[id] || `Bola ${id}`, confidence: G.balls[id] ? 'confirmado' : 'desconhecido', evidence: null });
+  const ball = id => ({ id, name: G.balls[id] || t('Bola {id}', { id }), confidence: G.balls[id] ? 'confirmado' : 'desconhecido', evidence: null });
   const gender = (sp, pid) => {
     const g = sp.genderByte;
     if (g === 255) return { symbol: null, name: 'sem gênero', confidence: 'confirmado' };
@@ -256,7 +257,7 @@ export function describeGen3(raw, T, game) {
     const nature = natureFromId(p.pid % 25);
     const level = p.level ?? levelForExp(sp.growth, p.exp);
     const stats = p.stats || (sp.baseStats ? calcStats(sp.baseStats, p.ivs, p.evs, level, nature) : null);
-    const nick = p.isEgg ? 'Ovo' : p.nickname;
+    const nick = p.isEgg ? t('Ovo') : p.nickname;
     return {
       location, where: box ? box.name : 'Equipe', boxIndex: box ? box.index : null, slot: p.slot,
       speciesId: p.speciesId, species: sp,

@@ -1,6 +1,7 @@
 // Cliente mínimo da API do Gemini (Google AI Studio), chamado direto do navegador.
 // A chave é do próprio usuário e fica só neste aparelho (localStorage).
 
+import { t } from '../i18n.js';
 import { AiError, store, call as httpCall, wait, transient } from './http.js';
 
 export { AiError };
@@ -32,12 +33,12 @@ export function errorMessage(status, body) {
   const e = body && body.error ? body.error : {};
   const reason = (e.details || []).map(d => d.reason).find(Boolean) || '';
   const msg = String(e.message || '');
-  if (reason === 'API_KEY_INVALID' || /API key not valid/i.test(msg)) return new AiError('A chave do Gemini não é válida. Confira se copiou a chave inteira.', 'key');
-  if (status === 403) return new AiError('A chave não tem permissão para usar o Gemini. Crie uma chave nova no Google AI Studio.', 'key');
-  if (status === 429) return new AiError('Limite do plano grátis do Gemini atingido. Espere um minuto e tente de novo.', 'quota');
-  if (status === 404) return new AiError(`O modelo não foi encontrado (${msg || 'erro 404'}).`, 'model');
-  if (status >= 500) return new AiError(`O Gemini está sobrecarregado ou fora do ar. Tente de novo daqui a pouco. (${status}${msg ? ': ' + msg : ''})`, 'server');
-  return new AiError(`O Gemini recusou o pedido (${status}${msg ? ': ' + msg : ''}).`, 'other');
+  if (reason === 'API_KEY_INVALID' || /API key not valid/i.test(msg)) return new AiError(t('A chave do Gemini não é válida. Confira se copiou a chave inteira.'), 'key');
+  if (status === 403) return new AiError(t('A chave não tem permissão para usar o Gemini. Crie uma chave nova no Google AI Studio.'), 'key');
+  if (status === 429) return new AiError(t('Limite do plano grátis do Gemini atingido. Espere um minuto e tente de novo.'), 'quota');
+  if (status === 404) return new AiError(t('O modelo não foi encontrado ({msg}).', { msg: msg || t('erro {status}', { status: 404 }) }), 'model');
+  if (status >= 500) return new AiError(t('O Gemini está sobrecarregado ou fora do ar. Tente de novo daqui a pouco. ({detail})', { detail: `${status}${msg ? ': ' + msg : ''}` }), 'server');
+  return new AiError(t('O Gemini recusou o pedido ({detail}).', { detail: `${status}${msg ? ': ' + msg : ''}` }), 'other');
 }
 
 /**
@@ -70,7 +71,7 @@ export function fallbackOrder(names) {
 /** Escolhe um modelo "flash" disponível para a chave (quando o padrão não existe mais). */
 export async function pickModel(key, fetchImpl = (...a) => fetch(...a), exclude = []) {
   const name = (await listFlashModels(key, fetchImpl)).find(n => !exclude.includes(n));
-  if (!name) throw new AiError('Não encontrei um modelo Gemini Flash disponível para esta chave.', 'model');
+  if (!name) throw new AiError(t('Não encontrei um modelo Gemini Flash disponível para esta chave.'), 'model');
   return name;
 }
 
@@ -95,7 +96,7 @@ async function request({ system, prompt, schema, key, model, fetchImpl }) {
  * @returns {Promise<{ data: object, model: string }>}
  */
 export async function generateJSON({ system, prompt, schema, key = getKey(), model = getModel(), fetchImpl = (...a) => fetch(...a), sleep = wait }) {
-  if (!key) throw new AiError('Cole sua chave do Gemini primeiro.', 'key');
+  if (!key) throw new AiError(t('Cole sua chave do Gemini primeiro.'), 'key');
   const args = { system, prompt, schema, key, fetchImpl };
   const tried = [model];
   let r = await request({ ...args, model });
@@ -120,19 +121,19 @@ export async function generateJSON({ system, prompt, schema, key = getKey(), mod
   }
   if (!r.ok) {
     const err = errorMessage(r.status, r.body);
-    if (transient(r.status) && tried.length > 1) err.message += ` Modelos tentados: ${tried.join(', ')}.`;
+    if (transient(r.status) && tried.length > 1) err.message += ' ' + t('Modelos tentados: {list}.', { list: tried.join(', ') });
     throw err;
   }
   const body = r.body;
   const cand = body && body.candidates && body.candidates[0];
   const text = cand && cand.content && (cand.content.parts || []).map(p => p.text || '').join('');
   if (!text) {
-    const why = (body && body.promptFeedback && body.promptFeedback.blockReason) || (cand && cand.finishReason) || 'resposta vazia';
-    throw new AiError(`O Gemini não devolveu uma resposta (${why}). Tente de novo.`, 'empty');
+    const why = (body && body.promptFeedback && body.promptFeedback.blockReason) || (cand && cand.finishReason) || t('resposta vazia');
+    throw new AiError(t('O Gemini não devolveu uma resposta ({why}). Tente de novo.', { why }), 'empty');
   }
   try {
     return { data: JSON.parse(text), model };
   } catch {
-    throw new AiError('A resposta do Gemini veio incompleta. Tente de novo.', 'parse');
+    throw new AiError(t('A resposta do Gemini veio incompleta. Tente de novo.'), 'parse');
   }
 }

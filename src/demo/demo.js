@@ -7,6 +7,7 @@ import { makeResolver, mediumSlow } from '../parser/describe.js';
 import { NATURES, natureFromId } from '../parser/natures.js';
 import { calcStats } from '../parser/stats.js';
 import { STAT_ORDER } from '../parser/save.js';
+import { t } from '../i18n.js';
 
 // IDs próprios do Quetzal (conferidos no jogo; ver CLAUDE.md)
 const FORMS = { 'Raichu-Alola': 951, 'Weezing-Galar': 973, Basculegion: 1210, 'Arcanine-Hisui': 1224, Annihilape: 1308, Baxcalibur: 1327 };
@@ -94,7 +95,7 @@ export function buildDemoSave(T) {
     trainer: { name: 'DEMO', tid: 12345, sid: 54321 },
     party: PARTY.map((d, i) => mon(d, i, true)),
     pc,
-    boxNames: ['FAVORITOS', 'INICIAIS'],
+    boxNames: [t('FAVORITOS'), t('INICIAIS')],
     saveIndex: 42,
   });
 }

@@ -4,11 +4,12 @@ import { esc, typeChips, typeChip, monShort } from '../ui/render.js';
 import { spriteSrc } from '../ui/sprites.js';
 import { analyzeTeam } from '../analysis.js';
 import { REF_RE } from './prompt.js';
+import { t, num } from '../i18n.js';
 
 const where = m => (m.hasNickname ? m.species.name + ' · ' : '')
-  + (m.location === 'party' ? `Equipe ${m.slot}` : `${m.where} · ${m.slot}`);
+  + (m.location === 'party' ? `${t('Equipe')} ${m.slot}` : `${m.where} · ${m.slot}`);
 
-const VERDICT = n => (n >= 10 ? 'Excelente' : n >= 8 ? 'Muito boa' : n >= 6 ? 'Boa' : n >= 4 ? 'Mediana' : 'Fraca');
+const VERDICT = n => t(n >= 10 ? 'Excelente' : n >= 8 ? 'Muito boa' : n >= 6 ? 'Boa' : n >= 4 ? 'Mediana' : 'Fraca');
 
 const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -56,38 +57,38 @@ const typeClass = m => (m.species.types[0] ? ` t-${esc(m.species.types[0])}` : '
 
 /** Pokémon pequeno e clicável (trocas e dicas). */
 function mini(m, ref, tag = '') {
-  return `<button class="ai-mon${typeClass(m)}" type="button" data-ref="${esc(ref)}" aria-label="Ver ${esc(monShort(m))}">
+  return `<button class="ai-mon${typeClass(m)}" type="button" data-ref="${esc(ref)}" aria-label="${esc(t('Ver {name}', { name: monShort(m) }))}">
     <span class="ai-mon-art">${sprite(m, 56)}</span>
-    <span class="ai-mon-text">${tag ? `<span class="ai-tag ${tag === 'Sai' ? 'out' : 'in'}">${tag}</span>` : ''}<b>${monShort(m)}</b><small>${esc(where(m))}</small></span>
+    <span class="ai-mon-text">${tag ? `<span class="ai-tag ${tag === 'Sai' ? 'out' : 'in'}">${t(tag)}</span>` : ''}<b>${monShort(m)}</b><small>${esc(where(m))}</small></span>
   </button>`;
 }
 
 function panel(title, kind, inner) {
   if (!inner) return '';
-  return `<section class="ai-panel ${kind}"><h3><span class="ai-ico" aria-hidden="true"></span>${title}</h3>${inner}</section>`;
+  return `<section class="ai-panel ${kind}"><h3><span class="ai-ico" aria-hidden="true"></span>${t(title)}</h3>${inner}</section>`;
 }
 
-const bullets = (items, byRef) => (items.length ? `<ul class="ai-list">${items.map(t => `<li>${rich(t, byRef)}</li>`).join('')}</ul>` : '');
+const bullets = (items, byRef) => (items.length ? `<ul class="ai-list">${items.map(x => `<li>${rich(x, byRef)}</li>`).join('')}</ul>` : '');
 
 function footer(model, dropped) {
   const lost = dropped.length
-    ? `<p class="hint">A IA citou Pokémon que não existem no save (${esc(dropped.join(', '))}); essas partes foram ignoradas.</p>`
+    ? `<p class="hint">${esc(t('A IA citou Pokémon que não existem no save ({list}); essas partes foram ignoradas.', { list: dropped.join(', ') }))}</p>`
     : '';
-  return `${lost}<p class="hint ai-foot">Gerado pelo ${esc(model)}. A IA pode errar: confira golpes e habilidades antes de seguir a sugestão.</p>`;
+  return `${lost}<p class="hint ai-foot">${esc(t('Gerado pelo {model}. A IA pode errar: confira golpes e habilidades antes de seguir a sugestão.', { model }))}</p>`;
 }
 
 export function analysisView(r, byRef, model) {
   const pips = Array.from({ length: 10 }, (_, i) => `<i class="${i < r.nota ? 'on' : ''}"></i>`).join('');
-  const trocas = r.trocas.map(t => `<li class="ai-swap">
-      <div class="ai-pair">${mini(byRef.get(t.sai), t.sai, 'Sai')}<span class="ai-arrow" aria-label="troca por"></span>${mini(byRef.get(t.entra), t.entra, 'Entra')}</div>
-      <p>${rich(t.motivo, byRef)}</p>
+  const trocas = r.trocas.map(x => `<li class="ai-swap">
+      <div class="ai-pair">${mini(byRef.get(x.sai), x.sai, 'Sai')}<span class="ai-arrow" aria-label="${t('troca por')}"></span>${mini(byRef.get(x.entra), x.entra, 'Entra')}</div>
+      <p>${rich(x.motivo, byRef)}</p>
     </li>`).join('');
   const dicas = r.dicas.map(d => `<li class="ai-tip">${mini(byRef.get(d.ref), d.ref)}<p>${rich(d.texto, byRef)}</p></li>`).join('');
   return `<div class="ai-result">
     <div class="ai-hero">
-      <div class="ai-medal" role="img" aria-label="Nota ${r.nota} de 10"><b>${r.nota}</b><small>/10</small></div>
+      <div class="ai-medal" role="img" aria-label="${t('Nota {n} de 10', { n: r.nota })}"><b>${r.nota}</b><small>/10</small></div>
       <div class="ai-hero-text">
-        <p class="ai-kicker">Avaliação da equipe</p>
+        <p class="ai-kicker">${t('Avaliação da equipe')}</p>
         <p class="ai-verdict">${VERDICT(r.nota)}</p>
         <div class="ai-pips" aria-hidden="true">${pips}</div>
       </div>
@@ -108,7 +109,7 @@ export function buildView(r, byRef, model, T) {
   const mons = r.membros.map(x => byRef.get(x.ref));
   const cards = r.membros.map((x, i) => {
     const m = mons[i];
-    return `<li><button class="ai-member${typeClass(m)}" type="button" data-ref="${esc(x.ref)}" aria-label="Ver ${esc(monShort(m))}">
+    return `<li><button class="ai-member${typeClass(m)}" type="button" data-ref="${esc(x.ref)}" aria-label="${esc(t('Ver {name}', { name: monShort(m) }))}">
       <span class="ai-member-art">${sprite(m, 80)}<span class="ai-num">${i + 1}</span></span>
       <span class="ai-member-body">
         ${x.papel ? `<span class="ai-role">${esc(x.papel)}</span>` : ''}
@@ -122,17 +123,17 @@ export function buildView(r, byRef, model, T) {
   // Conferência do próprio app (só tipos), para não depender só do texto da IA
   const a = analyzeTeam(mons, { types: T.types, chart: T.typechart });
   const alerts = a.defense.filter(d => d.alert).map(d => d.type);
-  const check = `<p class="k-line">Tipos que acertam vários em cheio: ${alerts.map(typeChip).join(' ') || 'nenhum'}</p>
-    <p class="k-line">Sem golpe super efetivo contra: ${a.gaps.map(typeChip).join(' ') || 'nenhum'}</p>`;
-  const short = r.membros.length < 6 ? `<p class="hint">A IA sugeriu só ${r.membros.length} Pokémon válidos.</p>` : '';
-  const dicas = r.dicas.length ? `<ol class="ai-steps-list">${r.dicas.map(t => `<li>${rich(t, byRef)}</li>`).join('')}</ol>` : '';
+  const check = `<p class="k-line">${t('Tipos que acertam vários em cheio:')} ${alerts.map(typeChip).join(' ') || t('nenhum')}</p>
+    <p class="k-line">${t('Sem golpe super efetivo contra:')} ${a.gaps.map(typeChip).join(' ') || t('nenhum')}</p>`;
+  const short = r.membros.length < 6 ? `<p class="hint">${t('A IA sugeriu só {n} Pokémon válidos.', { n: r.membros.length })}</p>` : '';
+  const dicas = r.dicas.length ? `<ol class="ai-steps-list">${r.dicas.map(x => `<li>${rich(x, byRef)}</li>`).join('')}</ol>` : '';
   return `<div class="ai-result">
     <div class="ai-hero build">
       <div class="ai-hero-text">
-        <p class="ai-kicker">Equipe sugerida</p>
+        <p class="ai-kicker">${t('Equipe sugerida')}</p>
         <p class="ai-team-name">${esc(r.nome)}</p>
       </div>
-      <button class="btn btn-ghost btn-small" type="button" data-ai-copy>Copiar (Showdown)</button>
+      <button class="btn btn-ghost btn-small" type="button" data-ai-copy>${t('Copiar (Showdown)')}</button>
     </div>
     ${r.resumo ? `<p class="ai-summary">${rich(r.resumo, byRef)}</p>` : ''}
     <ul class="ai-members">${cards}</ul>
@@ -150,36 +151,36 @@ export function buildView(r, byRef, model, T) {
 /** Janela "o que vai ser enviado à IA", com o texto exato do pedido. */
 export function confirmView(prep) {
   const { P, counts, note, kind, system, prompt } = prep;
-  const model = P.getModel() || 'escolhido automaticamente';
+  const model = P.getModel() || t('escolhido automaticamente');
   const pc = counts.pc
-    ? `${counts.pc} do PC${counts.pc < counts.pcTotal ? ` (de ${counts.pcTotal}: os de maior total de stats base, no máximo 2 da mesma espécie)` : ''}`
-    : 'nenhum do PC';
+    ? t('{n} do PC', { n: counts.pc }) + (counts.pc < counts.pcTotal ? ' ' + t('(de {total}: os de maior total de stats base, no máximo 2 da mesma espécie)', { total: counts.pcTotal }) : '')
+    : t('nenhum do PC');
   const text = `${system}\n\n${prompt}`;
-  return `<h2 class="pixel" id="ai-confirm-title">Enviar ao ${esc(P.service)}?</h2>
-  <p class="hint">Serviço: <b>${esc(P.label)}</b> · modelo ${esc(model)}</p>
+  return `<h2 class="pixel" id="ai-confirm-title">${esc(t('Enviar ao {service}?', { service: P.service }))}</h2>
+  <p class="hint">${t('Serviço:')} <b>${esc(P.label)}</b> · ${t('modelo')} ${esc(model)}</p>
   <div class="ai-cols">
-    <section class="ai-panel good"><h3><span class="ai-ico" aria-hidden="true"></span>Vai junto</h3>
+    <section class="ai-panel good"><h3><span class="ai-ico" aria-hidden="true"></span>${t('Vai junto')}</h3>
       <ul class="ai-list">
-        <li>${counts.party} Pokémon da equipe e ${esc(pc)}.</li>
-        <li>De cada um: espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes (tipo, categoria e poder).</li>
-        ${kind === 'analyze' ? '<li>A análise de tipos da equipe feita pelo app.</li>' : ''}
-        ${note ? `<li>Seu pedido: “${esc(note)}”.</li>` : ''}
-        <li>As instruções do savDex para a IA (como responder).</li>
+        <li>${esc(t('{n} Pokémon da equipe e {pc}.', { n: counts.party, pc }))}</li>
+        <li>${t('De cada um: espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes (tipo, categoria e poder).')}</li>
+        ${kind === 'analyze' ? `<li>${t('A análise de tipos da equipe feita pelo app.')}</li>` : ''}
+        ${note ? `<li>${t('Seu pedido:')} “${esc(note)}”.</li>` : ''}
+        <li>${t('As instruções do savDex para a IA (como responder).')}</li>
       </ul>
     </section>
-    <section class="ai-panel bad"><h3><span class="ai-ico" aria-hidden="true"></span>Não vai</h3>
+    <section class="ai-panel bad"><h3><span class="ai-ico" aria-hidden="true"></span>${t('Não vai')}</h3>
       <ul class="ai-list">
-        <li>O arquivo .sav.</li>
-        <li>Seu nome de treinador, ID e SID, e o nome do arquivo.</li>
-        <li>Nível, EVs, PID e os demais dados do save.</li>
+        <li>${t('O arquivo .sav.')}</li>
+        <li>${t('Seu nome de treinador, ID e SID, e o nome do arquivo.')}</li>
+        <li>${t('Nível, EVs, PID e os demais dados do save.')}</li>
       </ul>
     </section>
   </div>
-  ${P.privacy ? `<p class="hint">${esc(P.privacy)}</p>` : ''}
-  <details class="ai-raw"><summary>Ver o texto exato (${text.length.toLocaleString('pt-BR')} caracteres)</summary><pre>${esc(text)}</pre></details>
-  <label class="ai-skip"><input type="checkbox" data-skip> Não perguntar de novo neste aparelho</label>
+  ${P.privacy ? `<p class="hint">${esc(t(P.privacy))}</p>` : ''}
+  <details class="ai-raw"><summary>${t('Ver o texto exato ({n} caracteres)', { n: num(text.length) })}</summary><pre>${esc(text)}</pre></details>
+  <label class="ai-skip"><input type="checkbox" data-skip> ${t('Não perguntar de novo neste aparelho')}</label>
   <div class="export-btns ai-confirm-btns">
-    <button class="btn btn-ghost" type="button" data-cancel>Cancelar</button>
-    <button class="btn" type="button" data-send>Enviar ao ${esc(P.service)}</button>
+    <button class="btn btn-ghost" type="button" data-cancel>${t('Cancelar')}</button>
+    <button class="btn" type="button" data-send>${esc(t('Enviar ao {service}', { service: P.service }))}</button>
   </div>`;
 }

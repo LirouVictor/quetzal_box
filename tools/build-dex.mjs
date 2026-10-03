@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Gera src/data/dex.json: linhas evolutivas (com o método em português) e golpes por nível.
+// Gera src/data/dex.json: linhas evolutivas (com o método em português e em inglês) e golpes por nível.
 // Fonte: CSVs da PokeAPI (jogos oficiais). O Quetzal pode ter mudado evoluções e golpes,
 // por isso a UI mostra esses dados como "provável".
 //
@@ -95,58 +95,89 @@ async function main() {
   const chainOf = new Map(species.map(r => [+r.id, +r.evolution_chain_id]));
   const fromOf = new Map(species.map(r => [+r.id, r.evolves_from_species_id ? +r.evolves_from_species_id : 0]));
 
-  // Método de evolução em português
-  const TIME = { day: 'de dia', night: 'de noite', dusk: 'ao entardecer', 'full-moon': 'na lua cheia' };
-  function method(r) {
+  // Método de evolução em português e em inglês (mesmas peças, frases de cada idioma)
+  const PHRASES = {
+    pt: {
+      female: 'fêmea', male: 'macho', holding: x => `segurando ${x}`, knowing: x => `sabendo ${x}`, knowingType: x => `sabendo um golpe ${x}`,
+      happiness: 'com amizade alta', affection: 'com afeto alto', beauty: 'com beleza alta',
+      time: { day: 'de dia', night: 'de noite', dusk: 'ao entardecer', 'full-moon': 'na lua cheia' },
+      location: 'num local específico', party: x => `com ${x} na equipe`, partyType: x => `com um Pokémon ${x} na equipe`,
+      stats: { 1: 'com Atk > Def', '-1': 'com Atk < Def', 0: 'com Atk = Def' }, rain: 'com chuva', upside: 'com o aparelho de cabeça para baixo',
+      level: n => `Nv. ${n}`, levelUp: 'Subir de nível', trade: 'Troca', tradeFor: x => ` por ${x}`, use: x => `Usar ${x}`,
+      shedinja: 'Nv. 20 com espaço na equipe', spin: 'Girar segurando um doce', crits: '3 golpes críticos na mesma batalha',
+      damage: 'Receber dano sem desmaiar', style: (x, agile) => `Usar ${x} em estilo ${agile ? 'ágil' : 'forte'}`,
+      recoil: 'Receber dano de recuo', times: n => ` ${n} vezes`, bisharp: 'Derrotar 3 Bisharp que seguram Leader\'s Crest',
+      coins: 'Juntar 999 moedas de Gimmighoul', battleLevel: n => `Nv. ${n} em batalha`, battleLevelUp: 'Subir de nível em batalha',
+      special: 'Condição especial', or: ' ou ',
+    },
+    en: {
+      female: 'female', male: 'male', holding: x => `holding ${x}`, knowing: x => `knowing ${x}`, knowingType: x => `knowing a ${x} move`,
+      happiness: 'with high friendship', affection: 'with high affection', beauty: 'with high beauty',
+      time: { day: 'during the day', night: 'at night', dusk: 'at dusk', 'full-moon': 'under a full moon' },
+      location: 'at a specific place', party: x => `with ${x} in the party`, partyType: x => `with a ${x} Pokémon in the party`,
+      stats: { 1: 'with Atk > Def', '-1': 'with Atk < Def', 0: 'with Atk = Def' }, rain: 'while raining', upside: 'holding the console upside down',
+      level: n => `Lv. ${n}`, levelUp: 'Level up', trade: 'Trade', tradeFor: x => ` for ${x}`, use: x => `Use ${x}`,
+      shedinja: 'Lv. 20 with room in the party', spin: 'Spin while holding a Sweet', crits: '3 critical hits in one battle',
+      damage: 'Take damage without fainting', style: (x, agile) => `Use ${x} in ${agile ? 'Agile' : 'Strong'} Style`,
+      recoil: 'Take recoil damage', times: n => ` ${n} times`, bisharp: 'Defeat 3 Bisharp holding Leader\'s Crest',
+      coins: 'Collect 999 Gimmighoul Coins', battleLevel: n => `Lv. ${n} in battle`, battleLevelUp: 'Level up in battle',
+      special: 'Special condition', or: ' or ',
+    },
+  };
+  function method(r, P) {
     const t = +r.evolution_trigger_id;
     const extra = [];
-    if (+r.gender_id === 1) extra.push('fêmea');
-    if (+r.gender_id === 2) extra.push('macho');
-    if (r.held_item_id) extra.push(`segurando ${itemName.get(+r.held_item_id)}`);
-    if (r.known_move_id) extra.push(`sabendo ${moveLabel(+r.known_move_id)}`);
-    if (r.known_move_type_id) extra.push(`sabendo um golpe ${typeName.get(+r.known_move_type_id)}`);
-    if (r.minimum_happiness) extra.push('com amizade alta');
-    if (r.minimum_affection) extra.push('com afeto alto');
-    if (r.minimum_beauty) extra.push('com beleza alta');
-    if (r.time_of_day && TIME[r.time_of_day]) extra.push(TIME[r.time_of_day]);
-    if (r.location_id) extra.push('num local específico');
-    if (r.party_species_id) extra.push(`com ${speciesName.get(+r.party_species_id)} na equipe`);
-    if (r.party_type_id) extra.push(`com um Pokémon ${typeName.get(+r.party_type_id)} na equipe`);
-    if (r.relative_physical_stats !== '') extra.push({ 1: 'com Atk > Def', '-1': 'com Atk < Def', 0: 'com Atk = Def' }[r.relative_physical_stats]);
-    if (+r.needs_overworld_rain) extra.push('com chuva');
-    if (+r.turn_upside_down) extra.push('com o aparelho de cabeça para baixo');
+    if (+r.gender_id === 1) extra.push(P.female);
+    if (+r.gender_id === 2) extra.push(P.male);
+    if (r.held_item_id) extra.push(P.holding(itemName.get(+r.held_item_id)));
+    if (r.known_move_id) extra.push(P.knowing(moveLabel(+r.known_move_id)));
+    if (r.known_move_type_id) extra.push(P.knowingType(typeName.get(+r.known_move_type_id)));
+    if (r.minimum_happiness) extra.push(P.happiness);
+    if (r.minimum_affection) extra.push(P.affection);
+    if (r.minimum_beauty) extra.push(P.beauty);
+    if (r.time_of_day && P.time[r.time_of_day]) extra.push(P.time[r.time_of_day]);
+    if (r.location_id) extra.push(P.location);
+    if (r.party_species_id) extra.push(P.party(speciesName.get(+r.party_species_id)));
+    if (r.party_type_id) extra.push(P.partyType(typeName.get(+r.party_type_id)));
+    if (r.relative_physical_stats !== '') extra.push(P.stats[r.relative_physical_stats]);
+    if (+r.needs_overworld_rain) extra.push(P.rain);
+    if (+r.turn_upside_down) extra.push(P.upside);
     const tail = extra.length ? ' ' + extra.join(', ') : '';
     switch (t) {
-      case 1: return (r.minimum_level ? `Nv. ${r.minimum_level}` : 'Subir de nível') + tail;
-      case 2: return 'Troca' + (r.trade_species_id ? ` por ${speciesName.get(+r.trade_species_id)}` : '') + tail;
-      case 3: return `Usar ${itemName.get(+r.trigger_item_id)}` + tail;
-      case 4: return 'Nv. 20 com espaço na equipe';
-      case 5: return 'Girar segurando um doce';
-      case 8: return '3 golpes críticos na mesma batalha';
-      case 9: return 'Receber dano sem desmaiar';
-      case 11: case 12: return `Usar ${moveLabel(+r.known_move_id)} em estilo ${t === 11 ? 'ágil' : 'forte'}`;
-      case 13: return 'Receber dano de recuo';
-      case 14: return `Usar ${moveLabel(+r.used_move_id || +r.known_move_id)}${r.minimum_move_count ? ` ${r.minimum_move_count} vezes` : ''}` + tail;
-      case 15: return 'Derrotar 3 Bisharp que seguram Leader\'s Crest';
-      case 16: return 'Juntar 999 moedas de Gimmighoul';
-      case 10: return (r.minimum_level ? `Nv. ${r.minimum_level} em batalha` : 'Subir de nível em batalha') + tail;
-      default: return 'Condição especial';
+      case 1: return (r.minimum_level ? P.level(r.minimum_level) : P.levelUp) + tail;
+      case 2: return P.trade + (r.trade_species_id ? P.tradeFor(speciesName.get(+r.trade_species_id)) : '') + tail;
+      case 3: return P.use(itemName.get(+r.trigger_item_id)) + tail;
+      case 4: return P.shedinja;
+      case 5: return P.spin;
+      case 8: return P.crits;
+      case 9: return P.damage;
+      case 11: case 12: return P.style(moveLabel(+r.known_move_id), t === 11);
+      case 13: return P.recoil;
+      case 14: return P.use(moveLabel(+r.used_move_id || +r.known_move_id)) + (r.minimum_move_count ? P.times(r.minimum_move_count) : '') + tail;
+      case 15: return P.bisharp;
+      case 16: return P.coins;
+      case 10: return (r.minimum_level ? P.battleLevel(r.minimum_level) : P.battleLevelUp) + tail;
+      default: return P.special;
     }
   }
-  const evoMethods = new Map(); // espécie evoluída -> textos (sem repetir)
+  const evoMethods = new Map(); // espécie evoluída -> { pt: [textos], en: [textos] } (sem repetir)
   for (const r of csv(pEvo)) {
     const id = +r.evolved_species_id;
     if (id > MAX_SPECIES) continue;
-    if (!evoMethods.has(id)) evoMethods.set(id, []);
-    const text = method(r);
-    if (text && !evoMethods.get(id).includes(text)) evoMethods.get(id).push(text);
+    if (!evoMethods.has(id)) evoMethods.set(id, { pt: [], en: [] });
+    for (const lang of ['pt', 'en']) {
+      const text = method(r, PHRASES[lang]);
+      const list = evoMethods.get(id)[lang];
+      if (text && !list.includes(text)) list.push(text);
+    }
   }
+  const methodText = (id, lang) => ((evoMethods.get(id) || {})[lang] || []).join(PHRASES[lang].or);
 
-  // Linhas: [espécie, de quem evolui (0 = início), método]
+  // Linhas: [espécie, de quem evolui (0 = início), método em português, método em inglês]
   const chains = {};
   for (const r of species) {
     const id = +r.id, c = chainOf.get(id);
-    (chains[c] ||= []).push([id, fromOf.get(id), (evoMethods.get(id) || []).join(' ou ')]);
+    (chains[c] ||= []).push([id, fromOf.get(id), methodText(id, 'pt'), methodText(id, 'en')]);
   }
   const chainList = [];
   const speciesChain = {};

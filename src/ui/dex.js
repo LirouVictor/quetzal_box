@@ -1,11 +1,12 @@
 // Detalhe do Pokémon: linha evolutiva e golpes por nível (dados dos jogos oficiais, src/data/dex.json,
 // carregado sob demanda). O Quetzal pode ter mudado evoluções e golpes: tudo aparece como "provável".
 
-import { esc, typeChip } from './render.js';
+import { esc, typeChip, categoryName } from './render.js';
+import { t, getLang } from '../i18n.js';
 import { SILHOUETTE, iconUrl, spriteUrl } from './sprites.js';
 
-const CATEGORY = ['Físico', 'Especial', 'Status'];
 const LAST_GEN8_ICON = 898;
+const probable = () => `<span class="badge" title="${t('Dos jogos oficiais; o Quetzal pode ter mudado')}">${t('provável')}</span>`;
 
 /** IDs do Pokémon na PokeAPI: o do "Pokémon" (forma) e o da espécie (linha evolutiva). */
 export function dexIds(m, dex) {
@@ -33,9 +34,11 @@ export function evolutionHtml(m, dex, T) {
   const { pid, sid } = dexIds(m, dex);
   if (!pid) return '';
   const ci = dex.speciesChain[sid];
-  if (ci === undefined) return `<section class="dsec"><h3>Evolução</h3><p class="hint">Não evolui (nos jogos oficiais).</p></section>`;
+  if (ci === undefined) return `<section class="dsec"><h3>${t('Evolução')}</h3><p class="hint">${t('Não evolui (nos jogos oficiais).')}</p></section>`;
   const chain = dex.chains[ci];
-  const cols = stages(chain).map(level => `<div class="evo-stage">${level.map(([id, , how]) => {
+  const en = getLang() === 'en';
+  const cols = stages(chain).map(level => `<div class="evo-stage">${level.map(([id, , pt, eng]) => {
+    const how = en ? eng : pt;
     const icon = id <= LAST_GEN8_ICON ? iconUrl(id) : spriteUrl(id);
     return `<div class="evo-node${id === sid ? ' here' : ''}">
       <img data-sprite="1" src="${esc(icon)}" data-next="${esc(SILHOUETTE)}" alt="" width="48" height="40" decoding="async" loading="lazy" crossorigin="anonymous"${id <= LAST_GEN8_ICON ? ' class="ico"' : ''}>
@@ -43,7 +46,7 @@ export function evolutionHtml(m, dex, T) {
       ${how ? `<small>${esc(how)}</small>` : ''}
     </div>`;
   }).join('')}</div>`).join('<span class="evo-arrow" aria-hidden="true"></span>');
-  return `<section class="dsec"><h3>Evolução <span class="badge" title="Dos jogos oficiais; o Quetzal pode ter mudado">provável</span></h3>
+  return `<section class="dsec"><h3>${t('Evolução')} ${probable()}</h3>
     <div class="evo">${cols}</div></section>`;
 }
 
@@ -60,18 +63,18 @@ export function learnsetHtml(m, dex, T) {
     const det = typeof mv === 'number' ? T.moveDetails[mv] : null;
     const name = row ? row[0] : String(mv);
     const type = row ? T.types[row[1]] : null;
-    const cat = det && det[3] !== null && det[3] !== undefined ? CATEGORY[det[3]] : '';
+    const cat = det ? categoryName(det[3]) : '';
     const has = typeof mv === 'number' && known.has(mv);
     const future = m.level && lv > m.level;
     rows.push(`<tr class="${has ? 'has' : ''}${future ? ' future' : ''}">
-      <td class="lv-col">${lv === 0 ? 'Evo.' : lv}</td>
-      <td>${esc(name)}${has ? ' <span class="known" title="Já conhece">✓</span>' : ''}</td>
+      <td class="lv-col">${lv === 0 ? t('Evo.') : lv}</td>
+      <td>${esc(name)}${has ? ` <span class="known" title="${t('Já conhece')}">✓</span>` : ''}</td>
       <td>${type ? typeChip(type) : ''}</td>
       <td class="k">${esc(cat)}${det && det[0] ? ' · ' + det[0] : ''}</td>
     </tr>`);
   }
-  return `<details class="dsec learn"><summary>Golpes por nível <span class="badge" title="Dos jogos oficiais; o Quetzal pode ter mudado">provável</span></summary>
-    <p class="hint">Lista de ${esc(dex.versions[vi] || 'jogo oficial')}. ✓ = já conhece. Evo. = aprende ao evoluir. Em cinza, níveis acima do atual.</p>
+  return `<details class="dsec learn"><summary>${t('Golpes por nível')} ${probable()}</summary>
+    <p class="hint">${esc(t('Lista de {game}. ✓ = já conhece. Evo. = aprende ao evoluir. Em cinza, níveis acima do atual.', { game: dex.versions[vi] || t('jogo oficial') }))}</p>
     <table class="learn-tab"><tbody>${rows.join('')}</tbody></table>
   </details>`;
 }

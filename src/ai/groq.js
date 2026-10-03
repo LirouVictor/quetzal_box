@@ -1,6 +1,7 @@
 // Cliente mínimo da API do Groq (compatível com a da OpenAI), chamado direto do navegador.
 // A chave é do próprio usuário e fica só neste aparelho (localStorage).
 
+import { t } from '../i18n.js';
 import { AiError, store, call as httpCall, wait, transient } from './http.js';
 import { schemaHint } from './prompt.js';
 
@@ -35,13 +36,13 @@ export function errorMessage(status, body) {
   const e = body && body.error ? body.error : {};
   const code = String(e.code || '');
   const msg = String(e.message || '');
-  if (status === 401 || code === 'invalid_api_key') return new AiError('A chave do Groq não é válida. Confira se copiou a chave inteira.', 'key');
-  if (status === 403) return new AiError('A chave não tem permissão para usar o Groq. Crie uma chave nova no console do Groq.', 'key');
-  if (status === 413 || /too large|tokens per minute|TPM/i.test(msg)) return new AiError('O pedido ficou grande demais para o limite grátis do Groq. Espere um minuto e tente de novo.', 'quota');
-  if (status === 429) return new AiError('Limite do plano grátis do Groq atingido. Espere um minuto e tente de novo.', 'quota');
-  if (status === 404 || code === 'model_not_found' || code === 'model_decommissioned') return new AiError(`O modelo não foi encontrado (${msg || 'erro ' + status}).`, 'model');
-  if (status >= 500) return new AiError(`O Groq está sobrecarregado ou fora do ar. Tente de novo daqui a pouco. (${status}${msg ? ': ' + msg : ''})`, 'server');
-  return new AiError(`O Groq recusou o pedido (${status}${msg ? ': ' + msg : ''}).`, 'other');
+  if (status === 401 || code === 'invalid_api_key') return new AiError(t('A chave do Groq não é válida. Confira se copiou a chave inteira.'), 'key');
+  if (status === 403) return new AiError(t('A chave não tem permissão para usar o Groq. Crie uma chave nova no console do Groq.'), 'key');
+  if (status === 413 || /too large|tokens per minute|TPM/i.test(msg)) return new AiError(t('O pedido ficou grande demais para o limite grátis do Groq. Espere um minuto e tente de novo.'), 'quota');
+  if (status === 429) return new AiError(t('Limite do plano grátis do Groq atingido. Espere um minuto e tente de novo.'), 'quota');
+  if (status === 404 || code === 'model_not_found' || code === 'model_decommissioned') return new AiError(t('O modelo não foi encontrado ({msg}).', { msg: msg || t('erro {status}', { status }) }), 'model');
+  if (status >= 500) return new AiError(t('O Groq está sobrecarregado ou fora do ar. Tente de novo daqui a pouco. ({detail})', { detail: `${status}${msg ? ': ' + msg : ''}` }), 'server');
+  return new AiError(t('O Groq recusou o pedido ({detail}).', { detail: `${status}${msg ? ': ' + msg : ''}` }), 'other');
 }
 
 /** Modelos de texto disponíveis para a chave, os preferidos primeiro. */
@@ -83,13 +84,13 @@ const missingModel = r => r.status === 404 || (r.body && r.body.error && /model_
  * @returns {Promise<{ data: object, model: string }>}
  */
 export async function generateJSON({ system, prompt, schema, key = getKey(), model = getModel(), fetchImpl = defaultFetch, sleep = wait }) {
-  if (!key) throw new AiError('Cole sua chave do Groq primeiro.', 'key');
+  if (!key) throw new AiError(t('Cole sua chave do Groq primeiro.'), 'key');
   const args = { system, prompt, schema, key, fetchImpl };
   let names = null;
   const list = async () => (names = names || await listModels(key, fetchImpl));
   if (!model) {
     model = (await list())[0];
-    if (!model) throw new AiError('Não encontrei um modelo de texto disponível para esta chave do Groq.', 'model');
+    if (!model) throw new AiError(t('Não encontrei um modelo de texto disponível para esta chave do Groq.'), 'model');
     setModel(model);
   }
   const tried = [model];
@@ -116,15 +117,15 @@ export async function generateJSON({ system, prompt, schema, key = getKey(), mod
   }
   if (!r.ok) {
     const err = errorMessage(r.status, r.body);
-    if (transient(r.status) && tried.length > 1) err.message += ` Modelos tentados: ${tried.join(', ')}.`;
+    if (transient(r.status) && tried.length > 1) err.message += ' ' + t('Modelos tentados: {list}.', { list: tried.join(', ') });
     throw err;
   }
   const choice = r.body && r.body.choices && r.body.choices[0];
   const text = choice && choice.message && choice.message.content;
-  if (!text) throw new AiError(`O Groq não devolveu uma resposta (${(choice && choice.finish_reason) || 'resposta vazia'}). Tente de novo.`, 'empty');
+  if (!text) throw new AiError(t('O Groq não devolveu uma resposta ({why}). Tente de novo.', { why: (choice && choice.finish_reason) || t('resposta vazia') }), 'empty');
   try {
     return { data: JSON.parse(text.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, '')), model };
   } catch {
-    throw new AiError('A resposta do Groq veio incompleta. Tente de novo.', 'parse');
+    throw new AiError(t('A resposta do Groq veio incompleta. Tente de novo.'), 'parse');
   }
 }

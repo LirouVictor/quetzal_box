@@ -1,6 +1,7 @@
 // Abre um save de qualquer jogo suportado: tira o embrulho (.sps), identifica o formato e só então lê.
 // Save que não bate com nenhum formato conhecido gera erro claro, em vez de dados parecidos com os certos.
 
+import { t } from '../i18n.js';
 import { parseSave, SaveError, SAVE_SIZE, isQuetzalLayout } from './save.js';
 import { describe } from './describe.js';
 import { calcStats } from './stats.js';
@@ -17,7 +18,7 @@ export const SUPPORTED = [
   'Pokémon Ruby / Sapphire (mesmo formato; ainda sem save real para testar)',
 ];
 
-const UNSUPPORTED = `Este save não é de um jogo suportado pelo savDex. Jogos suportados: ${SUPPORTED.map(s => s.replace(/ \(.*\)$/, '')).join(', ')}.`;
+const unsupported = () => t('Este save não é de um jogo suportado pelo savDex. Jogos suportados: {list}.', { list: SUPPORTED.map(s => s.replace(/ \(.*\)$/, '')).join(', ') });
 
 /**
  * Confere se o save com o layout do Quetzal tem dados coerentes: os stats salvos da equipe precisam
@@ -31,7 +32,7 @@ function checkQuetzal(data) {
   });
   const levelsOk = data.party.every(m => m.level >= 1 && m.level <= 100);
   if (!levelsOk || (known.length && ok.length * 2 < known.length)) {
-    throw new SaveError('Este save tem o mesmo layout do Quetzal, mas os dados não batem com o formato dele (talvez seja outro hack ou outra versão). Ele não é suportado.');
+    throw new SaveError(t('Este save tem o mesmo layout do Quetzal, mas os dados não batem com o formato dele (talvez seja outro hack ou outra versão). Ele não é suportado.'));
   }
 }
 
@@ -44,7 +45,7 @@ function checkQuetzal(data) {
 export function loadSave(input, T, G) {
   const { bytes } = unwrap(input);
   if (bytes.length < SAVE_SIZE) {
-    throw new SaveError(`O arquivo tem ${bytes.length} bytes; um save de Pokémon de GBA tem ${SAVE_SIZE} (128 KB).`);
+    throw new SaveError(t('O arquivo tem {n} bytes; um save de Pokémon de GBA tem {size} (128 KB).', { n: bytes.length, size: SAVE_SIZE }));
   }
   if (isQuetzalLayout(bytes)) {
     const data = describe(parseSave(bytes), T);
@@ -57,5 +58,5 @@ export function loadSave(input, T, G) {
     const T3 = gen3Tables(T, G);
     return { data: describeGen3(parseGen3(bytes, g3), T3, g3.game), T: T3 };
   }
-  throw new SaveError(UNSUPPORTED);
+  throw new SaveError(unsupported());
 }
