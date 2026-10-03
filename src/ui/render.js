@@ -145,7 +145,23 @@ export function trainerWin(d, fileName) {
         ${kv('ID', pad5(tr.tid))}${kv('SID', pad5(tr.sid))}${kv(t('Equipe'), `${d.party.length}/6`)}${kv('PC', pcTotal)}${tr.saveIndex != null ? kv(t('Save nº'), tr.saveIndex) : ''}
       </dl>
     </div>
+    ${summaryHtml(d.summary)}
   </section>`;
+}
+
+/** Resumo do save (só os campos lidos neste jogo): tempo, dinheiro, insígnias e Pokédex com barra. */
+export function summaryHtml(s) {
+  if (!s || !Object.keys(s).length) return '';
+  const row = (label, value, f, bar = null) => `<div class="sum-row">
+    <dt>${label}</dt><dd><span class="sum-v">${value}</span>${badge(f.confidence)}${bar == null ? ''
+      : `<span class="sum-bar" aria-hidden="true"><span style="width:${Math.round(Math.min(1, bar) * 100)}%"></span></span>`}</dd>
+  </div>`;
+  const rows = [];
+  if (s.playTime) rows.push(row(t('Tempo de jogo'), `${s.playTime.h}h ${String(s.playTime.m).padStart(2, '0')}m`, s.playTime));
+  if (s.money) rows.push(row(t('Dinheiro'), `₽ ${num(s.money.value)}`, s.money));
+  if (s.badges) rows.push(row(t('Insígnias'), `${s.badges.count} / ${s.badges.total}`, s.badges, s.badges.count / s.badges.total));
+  if (s.dex) rows.push(row(t('Pokédex (capturados)'), `${num(s.dex.owned)} / ${num(s.dex.total)}`, s.dex, s.dex.owned / s.dex.total));
+  return `<dl class="sum">${rows.join('')}</dl>`;
 }
 
 /** Exportar: no fim da página, compacto. */

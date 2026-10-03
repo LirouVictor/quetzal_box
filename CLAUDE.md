@@ -21,6 +21,7 @@ Site estático (Vite + JS puro) que lê saves de GBA — **Pokémon Quetzal** (R
 - `src/parser/gen3.js`: leitura e descrição dos **jogos oficiais da Gen 3** (formato público: Pokémon de 80/100 bytes criptografados com PID ^ OT ID e embaralhados por PID % 24; checksums por Pokémon e por setor). Produz o mesmo formato de `describe()`; `gen3Tables()` adapta as tabelas do app (golpes 1–354 com tipo/poder da Gen 3, tabela de tipos sem Fairy).
 - `src/parser/nds.js`: leitura e descrição dos **jogos de DS** (ver a seção abaixo); `nds.json` só é carregado quando o save é de DS (`isNds`). `container.js` tira o cabeçalho do Action Replay DS (`.duc`); se o save não bater depois dele, `load.js` tenta o arquivo inteiro (ver abaixo).
 - `src/parser/unbound.js`: leitura e descrição do **Pokémon Unbound** (ver a seção abaixo); as tabelas (`src/data/unbound.json`) só são carregadas quando o save é do Unbound (`isUnbound` em `load.js`, `extraTables` em `app.js`).
+- `src/parser/summary.js`: peças do **resumo do save** (`data.summary`: `playTime`, `money`, `badges`, `dex`, cada um com `confidence`; campo não lido não existe). Cada leitor preenche o que conhece; `summaryHtml` (render.js) mostra no card do treinador, com barras para insígnias e Pokédex. Local atual: fora do escopo (decisão do autor).
 - `src/parser/describe.js`: resolve nomes, tipos, natureza, habilidade, nível (pela exp) e marca a confiança de cada dado.
 - `src/parser/stats.js`: stats pela fórmula (stats base da PokeAPI), conferência da natureza contra os stats salvos e Hidden Power. `src/parser/natures.js`: tabela de naturezas e natureza pelo PID (byte baixo).
 - `src/analysis.js`: fraquezas/resistências e cobertura da equipe (tabela de tipos em `src/data/typechart.json`).
@@ -56,6 +57,7 @@ Implementado a partir da documentação pública (Bulbapedia/PKHeX) e conferido 
 - PC: seções 5–13 concatenadas (8 × 3968 + 2000 bytes): caixa atual (u32), 420 Pokémon de 80 bytes, nomes das 14 caixas em `0x8344`.
 - Natureza = PID % 25; shiny pela fórmula (TID ^ SID ^ PID alto ^ PID baixo) < 8; gênero pelo byte baixo do PID contra a taxa da espécie; habilidade pelo bit 31 da palavra de IVs; nível do PC pela curva de experiência da espécie.
 - O save guarda a **numeração interna** da Gen 3 (Treecko = 277); a tabela `gen3.json` converte para a Dex Nacional (sprites, evoluções, nomes).
+- **Resumo**: tempo de jogo na seção 0 (`0x0E` horas u16, `0x10` min, `0x11` s); Pokédex capturados = bits 0–385 em `0x28` da seção 0; dinheiro e flags no SaveBlock1 (seções 1–4, 0xF80 cada): dinheiro em `0x490` (Emerald/RS) ou `0x290` (FR/LG), com XOR da chave da seção 0 (`0xAC` Emerald, `0xF20` FR/LG; RS sem chave); insígnias = 8 flags a partir de `0x867` (Emerald, flags em `0x1270`), `0x807` (RS, `0x1220`), `0x820` (FR/LG, `0xEE0`). Conferido com os saves reais de Emerald e FireRed (999h59m59s, ₽ 999 999 só sai com a chave certa, 8/8, 386/386); Ruby/Sapphire provável.
 
 ## Jogos de DS (Gen 4 e Gen 5) — CONFIRMADO com saves reais de Diamond/Pearl, Platinum, HeartGold/SoulSilver, Black e Black 2
 
@@ -68,6 +70,7 @@ Formato público (Project Pokémon/PKHeX), conferido com 5 exports do Action Rep
 - **Diamond/Pearl**: igual ao Platinum, mas bloco geral com 0xC100 bytes e caixas em `0xC100` (0x121E0); treinador `0x64` (TID `0x74`, SID `0x76`) e equipe `0x94`/`0x98`, como no HG/SS; caixas a partir de `0xC104`, nomes em `0xC100 + 0x11EE4`. O save não diz se é Diamond ou Pearl.
 - **HeartGold/SoulSilver**: bloco geral em `0x0` (0xF628 bytes) e caixas em `0xF700` (0x12310), cada um com rodapé de 16 bytes (contador, tamanho, `0x20060623`, id, CRC-16-CCITT dos dados); metades em `0x0` e `0x40000`, vale a mais nova de cada bloco. Treinador `0x64` (nome, texto da Gen 4), TID `0x74`, SID `0x76`; equipe: contagem `0x94`, Pokémon de 236 bytes em `0x98`; 18 caixas de `0x1000` a partir de `0xF700`, nomes em `0xF700 + 0x12008` (0x28 cada).
 - **Black/White**: treinador em `0x19404` (UTF-16), TID `0x19414`, SID `0x19416`, versão em `0x1941F` (20 White, 21 Black, 22/23 White 2/Black 2); equipe: contagem `0x18E04`, Pokémon de 220 bytes em `0x18E08`; 24 caixas de `0x1000` a partir de `0x400`, nomes em `0x04` (0x28 cada). **Black 2/White 2**: mesmas posições (conferido com o save real do Black 2, versão 23; formas como Kyurem-Black e as Therian).
+- **Resumo**: depois do treinador (Gen 4) vêm dinheiro (+0x14, u32), insígnias (+0x1A, bits; HG/SS: Kanto em +0x1F, total 16) e tempo de jogo (+0x22 horas u16, +0x24 min, +0x25 s). Pokédex: marca `0xBEEFCAFE` e capturados logo depois (D/P `0x12DC`, Pt `0x1328`, HG/SS `0x12B8`; bits 0–492). Gen 5: dinheiro em `0x21200` (B/W) / `0x21100` (B2/W2) com as insígnias 4 bytes depois; tempo em `0x19424`; Pokédex com a marca em `0x21600` / `0x21400` e capturados em +8 (bits 0–648). Conferido nos 5 saves reais (a marca está nas posições indicadas; D/P 24h49m27s, os outros com os valores máximos). Bits além do total da geração (saves editados) não contam.
 - Texto da Gen 4: tabela de 16 bits própria; só os caracteres conferidos (A–Z, a–z, 0–9, espaço, `.` `’` `-` `?`), o resto vira `?` (ex.: Pokémon japoneses de evento). Gen 5: UTF-16.
 - Shiny = (TID ^ SID ^ PID alto ^ PID baixo) < 8; nível do PC pela curva da espécie; tipos, stats base e golpes **da época** (`nds.json`: Clefairy Normal, Rotom-Wash Electric/Ghost na Gen 4, Charm Normal, sem Fairy); tabela de tipos da Gen 2–5 (a mesma de `gen3.json`). Formas pelo número da forma = `form_order − 1` da PokeAPI.
 
@@ -76,7 +79,7 @@ Formato público (Project Pokémon/PKHeX), conferido com 5 exports do Action Rep
 Conferido com 2 saves reais (2.1.1, mesmo treinador): os stats salvos dos 8 Pokémon de equipe batem exatamente com a fórmula usando os stats base do Unbound, o que valida espécie, stats base, natureza (PID % 25), IVs e EVs. Formato e posições das caixas também conferidos com o leitor do Unbound Cloud (Skeli789/Unbound-Cloud, do autor do Unbound; sem licença declarada, usado só como referência).
 
 - 2 slots de **14 setores** (como o FireRed). Assinatura `0x01121999` = Unbound 2.1.0–2.1.1.1 (suportado); `0x01122000` = versões seguintes (abre com aviso: as tabelas são as da 2.1, que só ganharam itens no fim nas versões novas; 31 espécies tiveram stats/habilidades ajustados); `0x01121998` = 2.0 (erro claro, não suportado). Checksum com 0xFF0 bytes (seções 0, 4 e 13: 0xF24, 0xD98, 0x450).
-- Treinador na seção 0 (nome, TID `0xA`, SID `0xC`).
+- Treinador na seção 0 (nome, TID `0xA`, SID `0xC`). Tempo de jogo na posição do FireRed (`0x0E`), **provável** (os 2 saves reais têm o máximo, 999h59m59s). Dinheiro, insígnias e Pokédex ainda não (o CFRU guarda a Pokédex expandida em outro lugar; precisa de saves pareados).
 - **Equipe**: seção 1, contagem `0x34` (u32), Pokémon de 100 bytes em `0x38`, **sem criptografia** e com os blocos sempre na ordem Growth/Attacks/EVs/Misc (checksum 0). Poké Ball no byte 10 do bloco Growth; IVs/ovo/habilidade oculta na palavra em +4 do bloco Misc (bit 30 ovo, bit 31 oculta). Nível e stats salvos.
 - **PC**: 25 caixas de Pokémon de **58 bytes** ("comprimidos", sem criptografia): PID, OT ID, apelido, OT, espécie (28), item (30), exp (32), PP Ups (36), amizade (37), bola (38), 4 golpes de 10 bits (39–43), EVs (44–49), origem (52), IVs/ovo/oculta (54). Sem PP (calculado com o PP oficial e os PP Ups) nem stats (fórmula). Caixas 1–19 nas seções 5–13 (depois da caixa atual, u32); 20–22 nos setores **físicos** 30 (`0xB0C`–`0xFF0`) e 31 (`0`–`0xF80`); 23–24 nas seções 2 (`0xF18`–`0xFF0`) e 3 (`0`–`0xCC0`); 25 na seção 0 (`0xB0`). Nomes das caixas na seção 13, `0x361`, 9 bytes cada. **Conferidos com dados**: caixas 1–7 e 25 (3 Eternatus); 20–24 estavam vazias nos saves vistos.
 - Natureza = PID % 25; shiny = (TID ^ SID ^ PID alto ^ PID baixo) < **16** (1/4096); habilidade: oculta pelo bit, senão PID & 1 (1ª/2ª); gênero pelo byte baixo do PID contra a taxa da espécie; nível do PC pela curva da espécie.
@@ -107,6 +110,11 @@ Arquivo de 128 KB (0x20000) = 2 slots × 16 setores de 4 KB (0x1000).
 | 0x00 | 7 bytes texto | nome |
 | 0x0A | u16 | TID |
 | 0x0C | u16 | SID |
+| 0x10 | u16 | **tempo de jogo, horas** (provável) |
+| 0x14 | u8 | minutos (provável) |
+| 0x15 | u8 | segundos (provável); `0x16` parece o contador de quadros (< 60) |
+
+- Tempo de jogo 2 bytes depois da posição da Gen 3 oficial (`0x0E` fica 0). **Provável**: cresce na ordem dos 3 saves reais (51h55m16s → 52h04m00s → 52h26m41s) e o autor tinha 57h45m39s depois; falta um save com o tempo exato do jogo.
 
 ### Texto
 
@@ -213,6 +221,7 @@ Resolvidas: habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade 
 1. Tabela de itens: achar onde começa o deslocamento (faixa 511–860) e mapear os itens ≥ 829.
 2. Tabela de espécies > 905 (hipótese Gen 9 = Nacional + 329: precisa de um terceiro Pokémon da Gen 9).
 3. PC: bits 45–47, 154–159 e 168–191 (candidatos: local/nível de captura; precisa de um Pokémon recém-capturado).
-4. Equipe: confirmar o HP atual em `0x23` (precisa de um Pokémon ferido); significado de `0x59`, `0x66`, do bit 1 de `0x13` e do bit 30 de `0x54`.
+4. Resumo do save: confirmar o tempo de jogo (save + tempo mostrado no jogo); achar dinheiro, insígnias e Pokédex (pares: antes/depois de comprar algo, de ganhar uma insígnia, de capturar uma espécie nova).
+5. Equipe: confirmar o HP atual em `0x23` (precisa de um Pokémon ferido); significado de `0x59`, `0x66`, do bit 1 de `0x13` e do bit 30 de `0x54`.
 
 Método: saves pareados com uma única mudança no jogo + `tools/diff-saves.mjs`.

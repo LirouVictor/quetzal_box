@@ -12,6 +12,7 @@ import { natureFromId } from './natures.js';
 import { calcStats, hiddenPowerType } from './stats.js';
 import { STAT_ORDER } from './save.js';
 import { levelForExp } from './gen3.js';
+import { countBits, playTime, summary } from './summary.js';
 
 const ORDERS = ['ABCD', 'ABDC', 'ACBD', 'ACDB', 'ADBC', 'ADCB', 'BACD', 'BADC', 'BCAD', 'BCDA', 'BDAC', 'BDCA',
   'CABD', 'CADB', 'CBAD', 'CBDA', 'CDAB', 'CDBA', 'DABC', 'DACB', 'DBAC', 'DBCA', 'DCAB', 'DCBA'];
@@ -32,6 +33,12 @@ const GEN4 = {
   hgss: { general: [0, 0xF628], storage: [0xF700, 0x12310], footer: 0x10, trainer: 0x64, party: 0x94, boxes: 0, boxSize: 0x1000, names: 0x12008 },
 };
 const PARTITION = 0x40000, MAGIC = 0x20060623;
+// Resumo: dinheiro, insígnias e tempo de jogo logo depois do treinador; Pokédex com a marca 0xBEEFCAFE
+// e os capturados logo depois (Gen 4: +4; Gen 5: +8). HG/SS também guarda as 8 insígnias de Kanto.
+// Conferido com os saves reais (D/P 24h49m; nos outros, os valores máximos do jogo).
+const DEX_MAGIC = 0xBEEFCAFE;
+const GEN4_DEX = { dp: 0x12DC, pt: 0x1328, hgss: 0x12B8 };
+const GEN5_MISC = { bw: { money: 0x21200, dex: 0x21600 }, b2w2: { money: 0x21100, dex: 0x21400 } };
 // Gen 5: cópia de segurança das caixas (e dos nomes delas)
 const GEN5_BACKUP = { bw: 0x24000, b2w2: 0x26000 };
 const BALLS = [null, 'Master Ball', 'Ultra Ball', 'Great Ball', 'Poké Ball', 'Safari Ball', 'Net Ball', 'Dive Ball', 'Nest Ball',
@@ -181,13 +188,21 @@ export function parseNds(u8, gameId, { lost = 0 } = {}) {
     if (m && m.bad) { bad++; return null; }
     return m;
   };
-  let trainer, party = [], boxes = [];
+  let trainer, info, party = [], boxes = [];
   if (GEN4[gameId]) {
     const L = GEN4[gameId];
     const { general: g, storage: s, index } = gen4Blocks(u8, L);
     trainer = { name: text(u8, g + L.trainer, 16, 4), tid: dv.getUint16(g + L.trainer + 0x10, true), sid: dv.getUint16(g + L.trainer + 0x12, true), saveIndex: index };
     const count = Math.min(6, dv.getUint32(g + L.party, true));
     for (let i = 0; i < count; i++) { const m = read(g + L.party + 4 + i * 236, 236); if (m) party.push({ ...m, slot: i + 1 }); }
+    const tr = g + L.trainer, dex = g + GEN4_DEX[gameId];
+    const badges = countBits(u8, tr + 0x1A, 8) + (gameId === 'hgss' ? countBits(u8, tr + 0x1F, 8) : 0);
+    info = summary({
+      playTime: playTime(dv.getUint16(tr + 0x22, true), u8[tr + 0x24], u8[tr + 0x25], 'confirmado'),
+      money: { value: dv.getUint32(tr + 0x14, true), confidence: 'confirmado' },
+      badges: { count: badges, total: gameId === 'hgss' ? 16 : 8, confidence: 'confirmado' },
+      dex: dv.getUint32(dex, true) === DEX_MAGIC ? { owned: countBits(u8, dex + 4, 493), total: 493, confidence: 'confirmado' } : null,
+    });
     for (let b = 0; b < 18; b++) {
       const slots = [];
       const o = s + L.boxes + b * L.boxSize;
@@ -198,6 +213,13 @@ export function parseNds(u8, gameId, { lost = 0 } = {}) {
     trainer = { name: text(u8, 0x19404, 16, 5), tid: dv.getUint16(0x19414, true), sid: dv.getUint16(0x19416, true), saveIndex: null };
     const count = Math.min(6, dv.getUint32(0x18E04, true));
     for (let i = 0; i < count; i++) { const m = read(0x18E08 + i * 220, 220); if (m) party.push({ ...m, slot: i + 1 }); }
+    const M = GEN5_MISC[gameId];
+    info = summary({
+      playTime: playTime(dv.getUint16(0x19424, true), u8[0x19426], u8[0x19427], 'confirmado'),
+      money: { value: dv.getUint32(M.money, true), confidence: 'confirmado' },
+      badges: { count: countBits(u8, M.money + 4, 8), total: 8, confidence: 'confirmado' },
+      dex: dv.getUint32(M.dex, true) === DEX_MAGIC ? { owned: countBits(u8, M.dex + 8, 649), total: 649, confidence: 'confirmado' } : null,
+    });
     // Nomes apagados pelo cabeçalho do .duc: vale a cópia de segurança, se as caixas dela forem iguais às principais
     const backup = GEN5_BACKUP[gameId];
     const same = lost && u8.length >= backup + 0x400 + 24 * 0x1000
@@ -211,7 +233,7 @@ export function parseNds(u8, gameId, { lost = 0 } = {}) {
     }
   }
   if (bad) warnings.push(t('{n} Pokémon com checksum inválido (dados corrompidos) foram ignorados.', { n: bad }));
-  return { game, trainer, warnings, party, pc: { boxes } };
+  return { game, trainer, warnings, summary: info, party, pc: { boxes } };
 }
 
 /** Tabelas do app com os golpes da geração do save e a tabela de tipos sem Fairy. */
@@ -287,7 +309,7 @@ export function describeNds(raw, T) {
 
   const boxes = raw.pc.boxes.map(b => ({ ...b, slots: b.slots.map(s => mon(s, 'pc', b)) }));
   return {
-    game: raw.game, trainer: raw.trainer, warnings: raw.warnings,
+    game: raw.game, trainer: raw.trainer, warnings: raw.warnings, summary: raw.summary || {},
     party: raw.party.map(p => mon(p, 'party', null)),
     pc: { ...raw.pc, boxes },
   };

@@ -66,6 +66,20 @@ suite('Gen 3 oficial: detecção e leitura', () => {
     expect(fr.party[0].species.name).toBe('Swampert');
   });
 
+  it('resumo: tempo de jogo, dinheiro (com a chave), insígnias e Pokédex nos 3 layouts', () => {
+    const summary = { hours: 38, minutes: 12, seconds: 5, money: 124560, badges: 5, owned: [1, 25, 151, 386] };
+    for (const game of ['emerald', 'frlg', 'rs']) {
+      const { data } = loadSave(makeGen3Save({ game, trainer, party, summary }), T, G);
+      const conf = game === 'rs' ? 'provável' : 'confirmado';
+      expect(data.summary).toEqual({
+        playTime: { h: 38, m: 12, s: 5, confidence: conf },
+        money: { value: 124560, confidence: conf },
+        badges: { count: 5, total: 8, confidence: conf },
+        dex: { owned: 4, total: 386, confidence: conf },
+      });
+    }
+  });
+
   it('Pokémon do PC com checksum errado é ignorado, com aviso', () => {
     const u8 = makeGen3Save({ game: 'emerald', trainer, party, pc });
     // corrompe um byte criptografado do Pikachu (PC começa na seção 5, setor 5; +4 do cabeçalho; +32 até os dados)
@@ -130,6 +144,8 @@ for (const [file, id] of [['emerald.sav', 'emerald'], ['firered.sav', 'frlg']]) 
       }
       expect(data.pc.boxes).toHaveLength(14);
       expect(data.warnings).toEqual([]);
+      // Saves completos: os valores máximos do jogo (o dinheiro só dá 999999 com a chave certa)
+      expect(data.summary).toMatchObject({ playTime: { h: 999, m: 59, s: 59 }, money: { value: 999999 }, badges: { count: 8 }, dex: { owned: 386, total: 386 } });
     });
   });
 }

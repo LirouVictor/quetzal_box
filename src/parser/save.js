@@ -4,6 +4,7 @@
 
 import { t } from '../i18n.js';
 import { decodeText } from './charset.js';
+import { playTime, summary } from './summary.js';
 
 export const SAVE_SIZE = 0x20000;
 export const SECTOR_SIZE = 0x1000;
@@ -228,10 +229,15 @@ export function parseSave(input) {
     boxes.push({ index: b, name: boxNames[b], slots: slotsOut, partial: (b + 1) * PC.perBox > capacity });
   }
 
+  // Tempo de jogo: 2 bytes depois da posição da Gen 3 oficial (horas em 0x10, minutos 0x14, segundos 0x15).
+  // Provável: cresce na ordem dos 3 saves reais (51h55m16s → 52h04m → 52h26m41s), falta bater com o jogo.
+  const info = summary({ playTime: playTime(dv.getUint16(s0 + 0x10, true), u8[s0 + 0x14], u8[s0 + 0x15], 'provável') });
+
   return {
     slot: { index: active.slot, saveIndex: active.saveIndex },
     warnings,
     trainer,
+    summary: info,
     party,
     pc: { currentBox: pc[PC.currentBox], boxCount: PC.boxCount, capacity, boxes },
   };

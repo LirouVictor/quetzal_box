@@ -16,6 +16,7 @@ import { natureFromId } from './natures.js';
 import { calcStats, hiddenPowerType } from './stats.js';
 import { SaveError, STAT_ORDER } from './save.js';
 import { levelForExp } from './gen3.js';
+import { playTime, summary } from './summary.js';
 
 export const UNBOUND_SIGNATURES = { 0x01121999: '2.1', 0x01122000: '2.1.1.2+' };
 const OLD_SIGNATURE = 0x01121998; // Unbound 2.0
@@ -153,6 +154,8 @@ export function parseUnbound(u8) {
 
   return {
     trainer: { name: decodeText(s0, 0, 7), tid: s0v.getUint16(0xA, true), sid: s0v.getUint16(0xC, true), saveIndex: slot.index },
+    // Tempo de jogo na posição do FireRed (provável: os 2 saves reais têm o máximo, 999h59m59s)
+    summary: summary({ playTime: playTime(s0v.getUint16(0x0E, true), s0[0x10], s0[0x11], 'provável') }),
     version: UNBOUND_SIGNATURES[sig], warnings, party, pc: { currentBox: sec(5)[0], boxes },
   };
 }
@@ -240,6 +243,7 @@ export function describeUnbound(raw, T, U) {
     game: { ...UNBOUND, note: raw.version },
     trainer: raw.trainer,
     warnings: raw.warnings,
+    summary: raw.summary || {},
     party: raw.party.map(p => mon(p, 'party', null)),
     pc: { ...raw.pc, boxes },
   };

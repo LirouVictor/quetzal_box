@@ -93,6 +93,7 @@ export function buildDemoSave(T) {
   BOX2.forEach((d, i) => { pc[30 + i] = mon(d, 30 + i, false); });
   return makeSave({
     trainer: { name: 'DEMO', tid: 12345, sid: 54321 },
+    playTime: [38, 12, 5],
     party: PARTY.map((d, i) => mon(d, i, true)),
     pc,
     boxNames: [t('FAVORITOS'), t('INICIAIS')],

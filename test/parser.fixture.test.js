@@ -16,6 +16,8 @@ suite.skipIf(!has)('save real (fixtures/PokemonQuetzalPtBrAlpha9v0.sav)', () => 
     expect(raw.trainer).toEqual({ name: 'Victor', tid: 9653, sid: 25806 });
     expect(raw.slot.saveIndex).toBe(80);
     expect(raw.warnings.filter(w => w.includes('Checksum'))).toEqual([]);
+    // Tempo de jogo (provável): cresce na ordem dos 3 saves (ver os testes dos outros dois)
+    expect(raw.summary).toEqual({ playTime: { h: 51, m: 55, s: 16, confidence: 'provável' } });
   });
 
   it('equipe', () => {
@@ -151,6 +153,11 @@ suite.skipIf(!has3)('PC → equipe: shiny, gênero e natureza (fixtures/PokemonQ
   const raw = has3 ? parseSave(readFileSync(FILE_3)) : null;
   const d = has3 ? describe(raw, T) : null;
   const before = has3 ? describe(parseSave(readFileSync(FILE_PC)), T) : null;
+
+  it('tempo de jogo cresce de um save para o outro (51h55m16s → 52h04m00s → 52h26m41s)', () => {
+    expect(before.summary.playTime).toMatchObject({ h: 52, m: 4, s: 0 });
+    expect(d.summary.playTime).toMatchObject({ h: 52, m: 26, s: 41 });
+  });
 
   it('shiny (byte 0x13, bit 3) e gênero (byte baixo do PID) na equipe', () => {
     expect(d.party.map(m => m.species.name)).toEqual(['Tyranitar', 'Scorbunny', 'Corviknight', 'Basculegion', 'Arcanine']);

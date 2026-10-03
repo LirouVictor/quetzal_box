@@ -252,6 +252,7 @@ export function describe(raw, T) {
       saveIndex: raw.slot.saveIndex,
     },
     warnings: raw.warnings,
+    summary: raw.summary || {},
     party,
     pc: { currentBox: raw.pc.currentBox, boxCount: raw.pc.boxCount, capacity: raw.pc.capacity, boxes },
   };

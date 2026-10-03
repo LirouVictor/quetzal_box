@@ -83,7 +83,7 @@ const GEN4 = {
 };
 
 /** Gen 4 (game 'dp', 'pt' ou 'hgss'): só a primeira metade (256 KB), como nos exports do Action Replay. */
-export function makeGen4Save({ game = 'hgss', trainer, party = [], pc = {}, boxNames = [], saveCount = 5 }) {
+export function makeGen4Save({ game = 'hgss', trainer, party = [], pc = {}, boxNames = [], saveCount = 5, summary = null }) {
   const L = GEN4[game];
   const u8 = new Uint8Array(0x40000);
   const dv = new DataView(u8.buffer);
@@ -95,6 +95,18 @@ export function makeGen4Save({ game = 'hgss', trainer, party = [], pc = {}, boxN
   const S = L.storage[0];
   for (const [i, m] of Object.entries(pc)) u8.set(encodeMon(m, 4), S + L.box(Math.floor(i / 30)) + (i % 30) * 136);
   boxNames.forEach((n, b) => putText(dv, S + L.names + b * 0x28, n, 0x28, 4));
+  // Resumo: dinheiro, insígnias e tempo depois do treinador; Pokédex (marca + capturados)
+  if (summary) {
+    const tr = L.trainer, dex = { dp: 0x12DC, pt: 0x1328, hgss: 0x12B8 }[game];
+    dv.setUint32(tr + 0x14, summary.money, true);
+    u8[tr + 0x1A] = (1 << Math.min(8, summary.badges)) - 1;
+    if (game === 'hgss') u8[tr + 0x1F] = (1 << Math.max(0, summary.badges - 8)) - 1;
+    dv.setUint16(tr + 0x22, summary.hours, true);
+    u8[tr + 0x24] = summary.minutes;
+    u8[tr + 0x25] = summary.seconds;
+    dv.setUint32(dex, 0xBEEFCAFE, true);
+    for (const n of summary.owned) u8[dex + 4 + ((n - 1) >> 3)] |= 1 << ((n - 1) & 7);
+  }
   // Rodapé: contador no começo; tamanho, assinatura, id e CRC no fim
   for (const [o, size] of [[0, L.general], L.storage]) {
     const end = o + size;

@@ -451,6 +451,10 @@ export default {
   'Este arquivo é um save state do DeSmuME (.dst), não o save do jogo. No DeSmuME, use o arquivo .dsv da pasta Battery ou exporte o save em Arquivo › Export Backup Memory.':
     'This file is a DeSmuME save state (.dst), not the game save. In DeSmuME, use the .dsv file in the Battery folder or export the save with File › Export Backup Memory.',
   'Páginas dos resultados': 'Result pages',
+  'Tempo de jogo': 'Play time',
+  'Dinheiro': 'Money',
+  'Insígnias': 'Badges',
+  'Pokédex (capturados)': 'Pokédex (caught)',
   'Anterior': 'Previous',
   'Próxima': 'Next',
   'Página {p} de {n}': 'Page {p} of {n}',
