@@ -257,7 +257,7 @@ export function monDetail(m, T) {
     ${T ? matchupTable(m, T) : ''}
     <div class="dex-slot" data-dex></div>
     <div class="export-btns"><button class="btn btn-ghost" type="button" data-copy="mon">${t('Copiar (Showdown)')}</button></div>
-    <details><summary>${t('Bytes do registro')}</summary><p class="raw">${esc(m.raw)}</p></details>
+    <details class="fold"><summary>${t('Bytes do registro')}</summary><p class="raw">${esc(m.raw)}</p></details>
   </div>`;
 }
 
@@ -283,7 +283,7 @@ export function analysisWin(d, T) {
   }).join('');
   return `<section class="win" aria-labelledby="analysis-h">
     <div class="win-title"><h2 id="analysis-h">${t('Análise da equipe')}</h2><small>${t('tipos')}</small></div>
-    <details class="analysis">
+    <details class="analysis fold">
       <summary>${t('Fraquezas e resistências')}</summary>
       <table class="typetab">
         <thead><tr><th scope="col">${t('Ataque')}</th><th scope="col">${t('Fracos')}</th><th scope="col">${t('Resistem')}</th><th scope="col">${t('Imunes')}</th></tr></thead>
@@ -292,7 +292,7 @@ export function analysisWin(d, T) {
       <p class="type-info" id="type-info" role="status">${t('Toque num número para ver quem.')}</p>
       <p class="hint">${t('Linhas destacadas: tipos que acertam muitos membros em cheio. Não considera habilidades (Levitate etc.) nem itens.')}</p>
     </details>
-    <details class="analysis">
+    <details class="analysis fold">
       <summary>${t('Cobertura dos golpes')}</summary>
       <p class="k-line">${t('Golpes de dano da equipe:')} ${a.moveTypes.map(typeChip).join(' ') || '—'}</p>
       <p class="k-line">${t('Super efetivo contra:')} ${a.coverage.map(typeChip).join(' ') || '—'}</p>
@@ -336,7 +336,7 @@ export function aiWin(d, providers) {
         <button class="btn" type="button" data-ai="build">${t('Montar equipe')}</button>
       </div>
       <p class="hint" id="ai-privacy"></p>
-      <details class="ai-settings">
+      <details class="ai-settings fold">
         <summary>${t('Configurações da IA')}</summary>
         <div class="ai-form">
           <label class="ai-label" for="ai-model">${t('Modelo')}</label>

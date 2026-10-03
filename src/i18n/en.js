@@ -28,6 +28,10 @@ export default {
     'savDex: see the party and PC of your Pokémon save (Quetzal, Emerald, FireRed/LeafGreen, Ruby/Sapphire) and export to CSV, Showdown or JSON. Everything runs in the browser.',
   'Alternar tema': 'Toggle theme',
   'Save guardado': 'Saved copy',
+  'Sobre o savDex': 'About savDex',
+  'Novidades': 'What’s new',
+  'Privacidade': 'Privacy',
+  'Termos de uso': 'Terms of use',
 
   // main.js
   'Usar tema claro': 'Use light theme',
