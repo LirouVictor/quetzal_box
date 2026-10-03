@@ -309,8 +309,9 @@ export function analysisWin(d, T) {
 export function aiWin(d, providers) {
   const noParty = !d.party.length;
   const opts = providers.map(p => `<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
-  return `<section class="win" aria-labelledby="ai-h">
-    <div class="win-title"><h2 id="ai-h">${t('Assistente')}</h2><small id="ai-svc">${t('IA')}</small></div>
+  // Fechada até o usuário abrir (app.js lembra a escolha neste aparelho)
+  return `<details class="win win-fold" id="ai-win">
+    <summary class="win-title"><h2 id="ai-h">${t('Assistente')}</h2><small id="ai-svc">${t('IA')}</small></summary>
     <p class="ai-intro">${t('A IA avalia sua equipe e monta uma equipe com os Pokémon que você tem.')}</p>
     <div class="ai-form ai-provider">
       <label class="ai-label" for="ai-provider">${t('Serviço de IA')}</label>
@@ -352,14 +353,14 @@ export function aiWin(d, providers) {
       </details>
     </div>
     <div id="ai-out" class="ai-out" aria-live="polite"></div>
-  </section>`;
+  </details>`;
 }
 
-/** Busca na equipe e em todas as caixas do PC. */
+/** Busca na equipe e em todas as caixas do PC (fechada até o usuário abrir; resultados em páginas). */
 export function searchWin(d, T) {
   const typeOpts = T.types.filter(t => t && t !== 'stellar').map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
-  return `<section class="win" aria-labelledby="search-h">
-    <div class="win-title"><h2 id="search-h">${t('Buscar')}</h2><small>${t('equipe + PC')}</small></div>
+  return `<details class="win win-fold" id="search-win">
+    <summary class="win-title"><h2 id="search-h">${t('Buscar')}</h2><small>${t('equipe + PC')}</small></summary>
     <div class="search-form">
       <label class="sr" for="q">${t('Buscar')}</label>
       <input id="q" type="search" placeholder="${t('Nome, espécie, golpe, habilidade ou item')}" autocomplete="off" enterkeyhint="search">
@@ -384,8 +385,12 @@ export function searchWin(d, T) {
     </div>
     <p class="hint" id="search-count" role="status"></p>
     <ul class="results" id="results"></ul>
-    <button class="btn btn-ghost hidden" type="button" id="more">${t('Mostrar mais')}</button>
-  </section>`;
+    <nav class="pager hidden" id="pager" aria-label="${t('Páginas dos resultados')}">
+      <button class="btn btn-ghost btn-small" type="button" data-page="-1">‹ ${t('Anterior')}</button>
+      <span id="page-info"></span>
+      <button class="btn btn-ghost btn-small" type="button" data-page="1">${t('Próxima')} ›</button>
+    </nav>
+  </details>`;
 }
 
 export function resultRow(m, i) {

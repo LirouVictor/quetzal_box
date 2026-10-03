@@ -1,5 +1,5 @@
-// Jogos oficiais de DS: Platinum, HeartGold/SoulSilver (Gen 4) e Black/White, Black 2/White 2 (Gen 5).
-// Formato público (Project Pokémon/PKHeX), conferido com saves reais de Platinum, HeartGold/SoulSilver,
+// Jogos oficiais de DS: Diamond/Pearl, Platinum, HeartGold/SoulSilver (Gen 4) e Black/White, Black 2/White 2 (Gen 5).
+// Formato público (Project Pokémon/PKHeX), conferido com saves reais de Diamond/Pearl, Platinum, HeartGold/SoulSilver,
 // Black e Black 2 (exports do Action Replay, .duc): checksums de todos os Pokémon e os stats salvos da equipe.
 //
 // Pokémon de 136 bytes (+ 100 de batalha na equipe; 84 na Gen 5): PID, checksum e 4 blocos de 32 bytes
@@ -17,15 +17,17 @@ const ORDERS = ['ABCD', 'ABDC', 'ACBD', 'ACDB', 'ADBC', 'ADCB', 'BACD', 'BADC', 
   'CABD', 'CADB', 'CBAD', 'CBDA', 'CDAB', 'CDBA', 'DABC', 'DACB', 'DBAC', 'DBCA', 'DCAB', 'DCBA'];
 const BOX = 136;
 export const NDS_GAMES = {
+  dp: { id: 'dp', name: 'Pokémon Diamond/Pearl', short: 'Diamond/Pearl', gen: 4 },
   pt: { id: 'pt', name: 'Pokémon Platinum', short: 'Platinum', gen: 4 },
   hgss: { id: 'hgss', name: 'Pokémon HeartGold/SoulSilver', short: 'HG/SS', gen: 4 },
   bw: { id: 'bw', name: 'Pokémon Black/White', short: 'Black/White', gen: 5 },
   b2w2: { id: 'b2w2', name: 'Pokémon Black 2/White 2', short: 'Black 2/White 2', gen: 5 },
 };
 // Gen 4: bloco geral e bloco das caixas, cada um com rodapé (contador, ..., tamanho, assinatura, id, CRC-16);
-// duas cópias, em 0 e em 0x40000. Platinum: rodapé de 20 bytes, caixas seguidas (sem espaço entre elas).
+// duas cópias, em 0 e em 0x40000. Diamond/Pearl e Platinum: rodapé de 20 bytes, caixas seguidas (sem espaço entre elas).
 // HeartGold/SoulSilver: rodapé de 16 bytes, cada caixa em 0x1000 bytes.
 const GEN4 = {
+  dp: { general: [0, 0xC100], storage: [0xC100, 0x121E0], footer: 0x14, trainer: 0x64, party: 0x94, boxes: 4, boxSize: 30 * BOX, names: 0x11EE4 },
   pt: { general: [0, 0xCF2C], storage: [0xCF2C, 0x121E4], footer: 0x14, trainer: 0x68, party: 0x9C, boxes: 4, boxSize: 30 * BOX, names: 0x11EE4 },
   hgss: { general: [0, 0xF628], storage: [0xF700, 0x12310], footer: 0x10, trainer: 0x64, party: 0x94, boxes: 0, boxSize: 0x1000, names: 0x12008 },
 };

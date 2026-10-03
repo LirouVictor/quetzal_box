@@ -10,8 +10,8 @@ export default {
   'Veja treinador, equipe e PC, e exporte para planilha, Showdown ou JSON. A leitura acontece no seu aparelho: o arquivo não é enviado para lugar nenhum. Uma cópia do último save fica guardada neste navegador para abrir sozinha na próxima visita.':
     'See your trainer, party and PC, and export to a spreadsheet, Showdown or JSON. Everything is read on your device: the file is never uploaded anywhere. A copy of the last save is kept in this browser so it opens by itself on your next visit.',
   'Abrir arquivo .sav': 'Open .sav file',
-  'No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui. Aceita .sav e exports do GameShark (.sps) e do Action Replay DS (.duc).':
-    'On Android, look in your emulator’s save folder (My Boy!, Pizza Boy, RetroArch…). On a computer, you can drag the file here. Accepts .sav files and GameShark (.sps) and Action Replay DS (.duc) exports.',
+  'No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui. Aceita .sav, o .dsv do DeSmuME e exports do GameShark (.sps) e do Action Replay DS (.duc).':
+    'On Android, look in your emulator’s save folder (My Boy!, Pizza Boy, RetroArch…). On a computer, you can drag the file here. Accepts .sav files, DeSmuME .dsv files and GameShark (.sps) and Action Replay DS (.duc) exports.',
   'Ver um save de exemplo': 'See an example save',
   'Sem jogo, sem arquivo: um save do Quetzal com Pokémon fictícios para experimentar o savDex.':
     'No game, no file: a Quetzal save with made-up Pokémon to try savDex.',
@@ -24,8 +24,8 @@ export default {
   'Esquecer este save': 'Forget this save',
   'Projeto de fã, sem vínculo com Nintendo, Game Freak, The Pokémon Company ou com os autores dos hacks (como o Quetzal). Sprites do repositório <a href="https://github.com/PokeAPI/sprites" rel="noopener">PokeAPI/sprites</a>.':
     'Fan project, not affiliated with Nintendo, Game Freak, The Pokémon Company or the authors of the hacks (such as Quetzal). Sprites from the <a href="https://github.com/PokeAPI/sprites" rel="noopener">PokeAPI/sprites</a> repository.',
-  'savDex: veja a equipe e o PC do seu save de Pokémon (Quetzal, Unbound, Emerald, FireRed/LeafGreen, Ruby/Sapphire, Platinum, HeartGold/SoulSilver, Black/White, Black 2/White 2) e exporte em CSV, Showdown ou JSON. Tudo roda no navegador.':
-    'savDex: see the party and PC of your Pokémon save (Quetzal, Unbound, Emerald, FireRed/LeafGreen, Ruby/Sapphire, Platinum, HeartGold/SoulSilver, Black/White, Black 2/White 2) and export to CSV, Showdown or JSON. Everything runs in the browser.',
+  'savDex: veja a equipe e o PC do seu save de Pokémon (Quetzal, Unbound, Emerald, FireRed/LeafGreen, Ruby/Sapphire, Diamond/Pearl, Platinum, HeartGold/SoulSilver, Black/White, Black 2/White 2) e exporte em CSV, Showdown ou JSON. Tudo roda no navegador.':
+    'savDex: see the party and PC of your Pokémon save (Quetzal, Unbound, Emerald, FireRed/LeafGreen, Ruby/Sapphire, Diamond/Pearl, Platinum, HeartGold/SoulSilver, Black/White, Black 2/White 2) and export to CSV, Showdown or JSON. Everything runs in the browser.',
   'Pokémon Unbound <small>(versão 2.1 em diante)</small>': 'Pokémon Unbound <small>(version 2.1 onward)</small>',
   'Alternar tema': 'Toggle theme',
   'Save guardado': 'Saved copy',
@@ -195,7 +195,6 @@ export default {
   'Fêmeas': 'Females',
   'Machos': 'Males',
   '6 IVs 31': '6×31 IVs',
-  'Mostrar mais': 'Show more',
 
   // Detalhe: evolução e golpes por nível (ui/dex.js)
   'Dos jogos oficiais mais recentes; o jogo do save pode ser diferente': 'From the latest official games; the save’s game may differ',
@@ -446,7 +445,15 @@ export default {
   '- O Unbound mudou stats e habilidades de algumas espécies; confie nos dados enviados, não na sua memória.': '- Unbound changed the stats and abilities of some species; trust the data sent, not your memory.',
   // Jogos de DS
   'Pokémon HeartGold / SoulSilver <small>(DS)</small>': 'Pokémon HeartGold / SoulSilver <small>(DS)</small>',
-  'Pokémon Platinum <small>(DS)</small>': 'Pokémon Platinum <small>(DS)</small>',
+  'Pokémon Diamond / Pearl e Platinum <small>(DS)</small>': 'Pokémon Diamond / Pearl and Platinum <small>(DS)</small>',
+  'Não consegui abrir o save': 'Couldn’t open the save',
+  'Escolher outro arquivo': 'Choose another file',
+  'Este arquivo é um save state do DeSmuME (.dst), não o save do jogo. No DeSmuME, use o arquivo .dsv da pasta Battery ou exporte o save em Arquivo › Export Backup Memory.':
+    'This file is a DeSmuME save state (.dst), not the game save. In DeSmuME, use the .dsv file in the Battery folder or export the save with File › Export Backup Memory.',
+  'Páginas dos resultados': 'Result pages',
+  'Anterior': 'Previous',
+  'Próxima': 'Next',
+  'Página {p} de {n}': 'Page {p} of {n}',
   'Pokémon Black / White e Black 2 / White 2 <small>(DS)</small>': 'Pokémon Black / White and Black 2 / White 2 <small>(DS)</small>',
   '{n} Pokémon com checksum inválido (dados corrompidos) foram ignorados.': '{n} Pokémon with an invalid checksum (corrupted data) were skipped.',
   'um jogo oficial da Geração 4': 'an official Generation 4 game',

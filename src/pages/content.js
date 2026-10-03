@@ -9,7 +9,9 @@ export const NEWS = [
     date: '2026-10-03',
     pt: [
       'Suporte ao Pokémon Unbound (versão 2.1 em diante): equipe e as 25 caixas do PC, com as espécies, formas, stats e itens do Unbound.',
-      'Jogos de DS: Platinum, HeartGold/SoulSilver, Black/White e Black 2/White 2 (e exports do Action Replay DS, .duc), com tipos, stats e golpes como eram na época.',
+      'Jogos de DS: Diamond/Pearl, Platinum, HeartGold/SoulSilver, Black/White e Black 2/White 2 (.dsv do DeSmuME e exports do Action Replay DS, .duc), com tipos, stats e golpes como eram na época.',
+      'Erro ao abrir um save aparece numa janela no meio da tela, com o motivo.',
+      'Assistente e Buscar ficam recolhidos até você abrir; a busca mostra os resultados em páginas.',
       'O que mudou: ao abrir o save depois de jogar, o app mostra quem chegou, evoluiu, subiu de nível, aprendeu golpes ou saiu, comparando com a versão anterior. O histórico fica só neste aparelho.',
       'Imagem da equipe: gera um PNG da equipe para compartilhar ou baixar.',
       'Versão em inglês: segue o idioma do navegador, ou use o botão EN/PT.',
@@ -17,7 +19,9 @@ export const NEWS = [
     ],
     en: [
       'Pokémon Unbound support (version 2.1 onward): party and all 25 PC boxes, with Unbound’s species, forms, stats and items.',
-      'DS games: Platinum, HeartGold/SoulSilver, Black/White and Black 2/White 2 (and Action Replay DS exports, .duc), with types, stats and moves as they were back then.',
+      'DS games: Diamond/Pearl, Platinum, HeartGold/SoulSilver, Black/White and Black 2/White 2 (DeSmuME .dsv files and Action Replay DS exports, .duc), with types, stats and moves as they were back then.',
+      'An error opening a save shows up in a window in the middle of the screen, with the reason.',
+      'Assistant and Search stay collapsed until you open them; search shows results in pages.',
       'What changed: when you open the save after playing, the app shows who arrived, evolved, leveled up, learned moves or left, compared with the previous version. The history stays on this device only.',
       'Party image: creates a PNG of your party to share or download.',
       'English version: follows your browser language, or use the EN/PT button.',
@@ -75,7 +79,7 @@ const PRIVACY = {
 </ul>
 <h3>O que fica guardado neste aparelho</h3>
 <ul>
-  <li>Preferências: tema, idioma e as configurações do assistente (serviço, modelo e se deve mostrar o que vai ser enviado).</li>
+  <li>Preferências: tema, idioma, quais janelas (Assistente, Buscar) ficam abertas e as configurações do assistente (serviço, modelo e se deve mostrar o que vai ser enviado).</li>
   <li>As chaves de IA que você colar (localStorage). O botão <b>Apagar chave deste aparelho</b> remove a chave.</li>
   <li>Os arquivos do app e os sprites já vistos (cache), para funcionar offline.</li>
 </ul>
@@ -102,7 +106,7 @@ const PRIVACY = {
 </ul>
 <h3>What is stored on this device</h3>
 <ul>
-  <li>Preferences: theme, language and the assistant settings (service, model and whether to show what will be sent).</li>
+  <li>Preferences: theme, language, which panels (Assistant, Search) stay open and the assistant settings (service, model and whether to show what will be sent).</li>
   <li>The AI keys you paste (localStorage). The <b>Delete key from this device</b> button removes a key.</li>
   <li>The app files and the sprites you have already seen (cache), so it works offline.</li>
 </ul>

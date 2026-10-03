@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>savDex</title>
-  <meta name="description" data-i18n-attr="content" content="savDex: veja a equipe e o PC do seu save de Pokémon (Quetzal, Unbound, Emerald, FireRed/LeafGreen, Ruby/Sapphire, Platinum, HeartGold/SoulSilver, Black/White, Black 2/White 2) e exporte em CSV, Showdown ou JSON. Tudo roda no navegador.">
+  <meta name="description" data-i18n-attr="content" content="savDex: veja a equipe e o PC do seu save de Pokémon (Quetzal, Unbound, Emerald, FireRed/LeafGreen, Ruby/Sapphire, Diamond/Pearl, Platinum, HeartGold/SoulSilver, Black/White, Black 2/White 2) e exporte em CSV, Showdown ou JSON. Tudo roda no navegador.">
   <meta name="theme-color" content="#2b3350" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#10131f" media="(prefers-color-scheme: dark)">
   <link rel="manifest" href="./manifest.webmanifest">
@@ -55,7 +55,7 @@
         </label>
         <!-- Sem "accept": no Android, filtrar por .sav costuma deixar o arquivo acinzentado no seletor. O conteúdo é validado ao abrir. -->
         <input type="file" id="file">
-        <p class="hint" data-i18n>No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui. Aceita .sav e exports do GameShark (.sps) e do Action Replay DS (.duc).</p>
+        <p class="hint" data-i18n>No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui. Aceita .sav, o .dsv do DeSmuME e exports do GameShark (.sps) e do Action Replay DS (.duc).</p>
       </div>
       <div class="demo-row">
         <button class="btn btn-ghost" type="button" id="demo" data-i18n>Ver um save de exemplo</button>
@@ -69,13 +69,12 @@
           <li>Pokémon FireRed / LeafGreen</li>
           <li data-i18n>Pokémon Ruby / Sapphire <small>(mesmo formato do Emerald; ainda sem save real para testar)</small></li>
           <li data-i18n>Pokémon Unbound <small>(versão 2.1 em diante)</small></li>
-          <li data-i18n>Pokémon Platinum <small>(DS)</small></li>
+          <li data-i18n>Pokémon Diamond / Pearl e Platinum <small>(DS)</small></li>
           <li data-i18n>Pokémon HeartGold / SoulSilver <small>(DS)</small></li>
           <li data-i18n>Pokémon Black / White e Black 2 / White 2 <small>(DS)</small></li>
         </ul>
         <p class="hint" data-i18n>Hacks que mantêm o formato desses jogos também abrem, mas nomes de espécies, golpes e itens podem não bater se o hack os mudou. Save de outro jogo mostra um aviso em vez de dados errados.</p>
       </div>
-      <p class="error hidden" id="err" role="alert"></p>
     </section>
 
     <section class="win saved-note hidden" id="saved-note" aria-label="Save guardado" data-i18n-attr="aria-label">
@@ -103,6 +102,7 @@
   <dialog id="page" class="win sheet page-sheet" aria-labelledby="page-title"></dialog>
   <dialog id="history" class="win sheet page-sheet" aria-labelledby="history-title"></dialog>
   <dialog id="image" class="win sheet page-sheet" aria-labelledby="image-title"></dialog>
+  <dialog id="err" class="win sheet page-sheet err-sheet" aria-labelledby="err-title"></dialog>
 
   <!-- Ícones originais em pixel art (logo 32×32 gerado por tools/make-icons.mjs; demais 16×16) -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">

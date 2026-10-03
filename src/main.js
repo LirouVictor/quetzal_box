@@ -66,10 +66,19 @@ systemDark.addEventListener('change', syncThemeButton);
 syncThemeButton();
 
 // Abrir arquivo
+// Erro ao abrir: janela no meio da tela (a mensagem no fim da página passava despercebida)
 function showError(msg) {
-  const el = $('#err');
-  el.textContent = msg;
-  el.classList.remove('hidden');
+  const dlg = $('#err');
+  dlg.innerHTML = `<button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button>
+    <h2 class="pixel" id="err-title">${t('Não consegui abrir o save')}</h2>
+    <p class="err-msg" role="alert"></p>
+    <div class="export-btns">
+      <label class="btn" for="file" data-close>${t('Escolher outro arquivo')}</label>
+      <button class="btn btn-ghost" type="button" data-close>${t('Fechar')}</button>
+    </div>`;
+  dlg.querySelector('.err-msg').textContent = msg;
+  dlg.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => dlg.close()));
+  dlg.showModal();
 }
 
 function showSavedNote(name, savedAt) {
@@ -107,7 +116,6 @@ async function openBytes(buf, name, opts = {}) {
 }
 
 async function load(file) {
-  $('#err').classList.add('hidden');
   try {
     const buf = await file.arrayBuffer();
     await openBytes(buf, file.name);
@@ -118,13 +126,12 @@ async function load(file) {
     showError(e && e.name === 'SaveError'
       ? e.message
       : t('Não consegui ler este arquivo. Confira se é o .sav (ou .sps) de um jogo suportado e tente de novo.'));
-    $('#intro').classList.remove('hidden');
+    if ($('#out').classList.contains('hidden')) $('#intro').classList.remove('hidden');
   }
 }
 
 // Save de exemplo: montado na hora (Pokémon fictícios); não fica guardado como "último save"
 async function openDemo() {
-  $('#err').classList.add('hidden');
   try {
     const app = await loadApp();
     await openBytes(await app.demoBytes(), t('exemplo-savdex.sav'), { demo: true });
