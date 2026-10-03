@@ -24,8 +24,8 @@ export default {
   'Esquecer este save': 'Forget this save',
   'Projeto de fã, sem vínculo com Nintendo, Game Freak, The Pokémon Company ou com os autores dos hacks (como o Quetzal). Sprites do repositório <a href="https://github.com/PokeAPI/sprites" rel="noopener">PokeAPI/sprites</a>.':
     'Fan project, not affiliated with Nintendo, Game Freak, The Pokémon Company or the authors of the hacks (such as Quetzal). Sprites from the <a href="https://github.com/PokeAPI/sprites" rel="noopener">PokeAPI/sprites</a> repository.',
-  'savDex: veja a equipe e o PC do seu save de Pokémon (Quetzal, Unbound, Emerald, FireRed/LeafGreen, Ruby/Sapphire, HeartGold/SoulSilver, Black/White) e exporte em CSV, Showdown ou JSON. Tudo roda no navegador.':
-    'savDex: see the party and PC of your Pokémon save (Quetzal, Unbound, Emerald, FireRed/LeafGreen, Ruby/Sapphire, HeartGold/SoulSilver, Black/White) and export to CSV, Showdown or JSON. Everything runs in the browser.',
+  'savDex: veja a equipe e o PC do seu save de Pokémon (Quetzal, Unbound, Emerald, FireRed/LeafGreen, Ruby/Sapphire, Platinum, HeartGold/SoulSilver, Black/White, Black 2/White 2) e exporte em CSV, Showdown ou JSON. Tudo roda no navegador.':
+    'savDex: see the party and PC of your Pokémon save (Quetzal, Unbound, Emerald, FireRed/LeafGreen, Ruby/Sapphire, Platinum, HeartGold/SoulSilver, Black/White, Black 2/White 2) and export to CSV, Showdown or JSON. Everything runs in the browser.',
   'Pokémon Unbound <small>(versão 2.1 em diante)</small>': 'Pokémon Unbound <small>(version 2.1 onward)</small>',
   'Alternar tema': 'Toggle theme',
   'Save guardado': 'Saved copy',
@@ -446,9 +446,9 @@ export default {
   '- O Unbound mudou stats e habilidades de algumas espécies; confie nos dados enviados, não na sua memória.': '- Unbound changed the stats and abilities of some species; trust the data sent, not your memory.',
   // Jogos de DS
   'Pokémon HeartGold / SoulSilver <small>(DS)</small>': 'Pokémon HeartGold / SoulSilver <small>(DS)</small>',
-  'Pokémon Black / White <small>(DS; Black 2 / White 2 ainda sem save real para testar)</small>': 'Pokémon Black / White <small>(DS; Black 2 / White 2 not yet tested with a real save)</small>',
+  'Pokémon Platinum <small>(DS)</small>': 'Pokémon Platinum <small>(DS)</small>',
+  'Pokémon Black / White e Black 2 / White 2 <small>(DS)</small>': 'Pokémon Black / White and Black 2 / White 2 <small>(DS)</small>',
   '{n} Pokémon com checksum inválido (dados corrompidos) foram ignorados.': '{n} Pokémon with an invalid checksum (corrupted data) were skipped.',
-  'Black 2/White 2 usa as mesmas posições do Black/White, mas ainda não foi conferido com um save real.': 'Black 2/White 2 uses the same positions as Black/White, but it hasn’t been checked with a real save yet.',
   'um jogo oficial da Geração 4': 'an official Generation 4 game',
   'um jogo oficial da Geração 5': 'an official Generation 5 game',
   '(sem tipo Fairy, sem megaevoluções; a categoria física/especial é de cada golpe).': '(no Fairy type, no Mega Evolutions; the physical/special category belongs to each move).',

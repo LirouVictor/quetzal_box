@@ -20,7 +20,7 @@ import overrides from '../src/data/quetzal-overrides.json';
 import U from '../src/data/unbound.json';
 import { makeUnboundSave } from './helpers/make-unbound.js';
 import N from '../src/data/nds.json';
-import { makeHgssSave, makeBwSave } from './helpers/make-nds.js';
+import { makeHgssSave, makeGen4Save, makeBwSave } from './helpers/make-nds.js';
 import { diffSaves } from '../src/history/diff.js';
 import { changesWin, historyStartWin, historyList } from '../src/history/view.js';
 
@@ -114,8 +114,9 @@ suite('telas em inglês (nenhum texto sem tradução)', () => {
     const ru = renderAll(u.data, u.T);
     expect(ru.html).toContain('newer than 2.1');
     expect(prepareAi('analyze', { all: ru.all, T: u.T, game: u.data.game }).system).toContain('CFRU engine');
-    // Jogos de DS (Gen 4 e Gen 5, inclusive o aviso do Black 2/White 2)
+    // Jogos de DS (Gen 4 e Gen 5)
     for (const bytes of [makeHgssSave({ trainer, party: [{ pid: 3, otId, species: 479, form: 1, level: 30 }] }),
+      makeGen4Save({ game: 'pt', trainer, party: [{ pid: 4, otId, species: 487, form: 1, level: 50 }], pc: { 0: { pid: 5, otId, species: 25, exp: 100 } } }),
       makeBwSave({ trainer, version: 22, party: [{ pid: 3, otId, species: 25, level: 30 }], pc: { 0: { pid: 9, otId, species: 1, exp: 100 } } })]) {
       const nd = loadSave(bytes, T, G, null, N);
       const rn = renderAll(nd.data, nd.T);
