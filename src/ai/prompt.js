@@ -63,6 +63,12 @@ const GAME_CONTEXT = {
     '- O Quetzal pode ter mudado algumas espécies e golpes; confie nos tipos e dados enviados, não na sua memória.',
     '- Só uma megaevolução pode ser usada por batalha.',
   ],
+  unbound: [
+    'Pokémon Unbound, uma ROM hack de Pokémon FireRed com o motor CFRU',
+    '(tipo Fairy, divisão físico/especial por golpe, megaevoluções, Pokémon até a geração 8 e formas regionais).',
+    '- O Unbound mudou stats e habilidades de algumas espécies; confie nos dados enviados, não na sua memória.',
+    '- Só uma megaevolução pode ser usada por batalha.',
+  ],
   gen3: [
     'um jogo oficial da Geração 3',
     '(sem tipo Fairy, sem megaevoluções; na Gen 3 a categoria física/especial depende do TIPO do golpe: Normal, Fighting, Flying, Poison, Ground, Rock, Bug, Ghost e Steel são físicos; os demais, especiais).',
@@ -73,9 +79,9 @@ const GAME_CONTEXT = {
 
 /** Instruções fixas para a IA, conforme o jogo do save. */
 export function systemPrompt(game) {
-  const key = game && game.id === 'quetzal' ? 'quetzal' : 'gen3';
+  const key = game && GAME_CONTEXT[game.id] ? game.id : 'gen3';
   const [what, details, ...rules] = GAME_CONTEXT[key].map(line => t(line));
-  const name = game && game.id !== 'quetzal' ? `${game.name}, ${what}` : what;
+  const name = key === 'gen3' && game ? `${game.name}, ${what}` : what;
   return [
     t('Você é um especialista em Pokémon ajudando quem joga {game}', { game: name }),
     details,

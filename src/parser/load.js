@@ -7,6 +7,7 @@ import { describe } from './describe.js';
 import { calcStats } from './stats.js';
 import { unwrap } from './container.js';
 import { detectGen3, parseGen3, describeGen3, gen3Tables } from './gen3.js';
+import { unboundSignature, parseUnbound, describeUnbound } from './unbound.js';
 
 export const QUETZAL = { id: 'quetzal', name: 'Pokémon Quetzal', short: 'Quetzal', note: 'testado na Alpha 9 (PT-BR)' };
 
@@ -16,7 +17,13 @@ export const SUPPORTED = [
   'Pokémon Emerald',
   'Pokémon FireRed / LeafGreen',
   'Pokémon Ruby / Sapphire (mesmo formato; ainda sem save real para testar)',
+  'Pokémon Unbound (2.1)',
 ];
+
+/** O save é do Unbound? (as tabelas dele são carregadas à parte, só quando precisa) */
+export function isUnbound(input) {
+  return unboundSignature(unwrap(input).bytes) !== null;
+}
 
 const unsupported = () => t('Este save não é de um jogo suportado pelo savDex. Jogos suportados: {list}.', { list: SUPPORTED.map(s => s.replace(/ \(.*\)$/, '')).join(', ') });
 
@@ -40,9 +47,10 @@ function checkQuetzal(data) {
  * @param {ArrayBuffer|Uint8Array} input
  * @param {object} T tabelas do app (src/data/tables.js)
  * @param {object} G tabelas da Gen 3 (src/data/gen3.json)
+ * @param {object} [U] tabelas do Unbound (src/data/unbound.json), só para saves do Unbound
  * @returns {{ data: object, T: object }} dados descritos e as tabelas que valem para esse jogo
  */
-export function loadSave(input, T, G) {
+export function loadSave(input, T, G, U = null) {
   const { bytes } = unwrap(input);
   if (bytes.length < SAVE_SIZE) {
     throw new SaveError(t('O arquivo tem {n} bytes; um save de Pokémon de GBA tem {size} (128 KB).', { n: bytes.length, size: SAVE_SIZE }));
@@ -52,6 +60,10 @@ export function loadSave(input, T, G) {
     checkQuetzal(data);
     data.game = QUETZAL;
     return { data, T };
+  }
+  if (unboundSignature(bytes) !== null) {
+    if (!U) throw new Error('Tabelas do Unbound não carregadas');
+    return { data: describeUnbound(parseUnbound(bytes), T, U), T };
   }
   const g3 = detectGen3(bytes);
   if (g3) {

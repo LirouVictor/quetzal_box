@@ -6,7 +6,7 @@ import { t, getLang } from '../i18n.js';
 import { SILHOUETTE, iconUrl, spriteUrl } from './sprites.js';
 
 const LAST_GEN8_ICON = 898;
-const probable = () => `<span class="badge" title="${t('Dos jogos oficiais; o Quetzal pode ter mudado')}">${t('provável')}</span>`;
+const probable = () => `<span class="badge" title="${t('Dos jogos oficiais mais recentes; o jogo do save pode ser diferente')}">${t('provável')}</span>`;
 
 /** IDs do Pokémon na PokeAPI: o do "Pokémon" (forma) e o da espécie (linha evolutiva). */
 export function dexIds(m, dex) {

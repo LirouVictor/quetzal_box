@@ -12,6 +12,7 @@
     "tables": "node tools/build-tables.mjs",
     "dex": "node tools/build-dex.mjs",
     "gen3": "node tools/build-gen3.mjs",
+    "unbound": "node tools/build-unbound.mjs",
     "diff-saves": "node tools/diff-saves.mjs"
   },
   "devDependencies": {

@@ -17,6 +17,8 @@ import T from '../src/data/tables.js';
 import G from '../src/data/gen3.json';
 import dex from '../src/data/dex.json';
 import overrides from '../src/data/quetzal-overrides.json';
+import U from '../src/data/unbound.json';
+import { makeUnboundSave } from './helpers/make-unbound.js';
 import { diffSaves } from '../src/history/diff.js';
 import { changesWin, historyStartWin, historyList } from '../src/history/view.js';
 
@@ -105,6 +107,11 @@ suite('telas em inglês (nenhum texto sem tradução)', () => {
     const q = loadSave(makeSave({ trainer, pc: { 0: { species: 1999, nickname: 'MYST', exp: 100 }, 1: { species: 1998, exp: 100 } } }), T, G);
     const { html } = renderAll(q.data, q.T);
     expect(html).toContain('Quetzal-specific ID not mapped yet');
+    // Unbound (tabelas próprias, contexto próprio na IA, aviso de versão nova)
+    const u = loadSave(makeUnboundSave({ trainer, signature: 0x01122000, party: [{ pid: 1, otId, species: 376, level: 50, moves: [[282, 20]] }], pc: { 0: { pid: 2, otId, species: 528, exp: 9000, moves: [387] } } }), T, G, U);
+    const ru = renderAll(u.data, u.T);
+    expect(ru.html).toContain('newer than 2.1');
+    expect(prepareAi('analyze', { all: ru.all, T: u.T, game: u.data.game }).system).toContain('CFRU engine');
     expect([...missing]).toEqual([]);
   });
 });

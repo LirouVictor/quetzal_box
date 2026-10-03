@@ -24,8 +24,9 @@ export default {
   'Esquecer este save': 'Forget this save',
   'Projeto de fã, sem vínculo com Nintendo, Game Freak, The Pokémon Company ou com os autores dos hacks (como o Quetzal). Sprites do repositório <a href="https://github.com/PokeAPI/sprites" rel="noopener">PokeAPI/sprites</a>.':
     'Fan project, not affiliated with Nintendo, Game Freak, The Pokémon Company or the authors of the hacks (such as Quetzal). Sprites from the <a href="https://github.com/PokeAPI/sprites" rel="noopener">PokeAPI/sprites</a> repository.',
-  'savDex: veja a equipe e o PC do seu save de Pokémon (Quetzal, Emerald, FireRed/LeafGreen, Ruby/Sapphire) e exporte em CSV, Showdown ou JSON. Tudo roda no navegador.':
-    'savDex: see the party and PC of your Pokémon save (Quetzal, Emerald, FireRed/LeafGreen, Ruby/Sapphire) and export to CSV, Showdown or JSON. Everything runs in the browser.',
+  'savDex: veja a equipe e o PC do seu save de Pokémon (Quetzal, Unbound, Emerald, FireRed/LeafGreen, Ruby/Sapphire) e exporte em CSV, Showdown ou JSON. Tudo roda no navegador.':
+    'savDex: see the party and PC of your Pokémon save (Quetzal, Unbound, Emerald, FireRed/LeafGreen, Ruby/Sapphire) and export to CSV, Showdown or JSON. Everything runs in the browser.',
+  'Pokémon Unbound <small>(versão 2.1 em diante)</small>': 'Pokémon Unbound <small>(version 2.1 onward)</small>',
   'Alternar tema': 'Toggle theme',
   'Save guardado': 'Saved copy',
   'Sobre o savDex': 'About savDex',
@@ -197,7 +198,7 @@ export default {
   'Mostrar mais': 'Show more',
 
   // Detalhe: evolução e golpes por nível (ui/dex.js)
-  'Dos jogos oficiais; o Quetzal pode ter mudado': 'From the official games; Quetzal may have changed it',
+  'Dos jogos oficiais mais recentes; o jogo do save pode ser diferente': 'From the latest official games; the save’s game may differ',
   'Evolução': 'Evolution',
   'Não evolui (nos jogos oficiais).': 'Doesn’t evolve (in the official games).',
   'Evo.': 'Evo.',
@@ -436,4 +437,11 @@ export default {
   'Baixar imagem': 'Download image',
   'Não consegui gerar a imagem.': 'Couldn’t create the image.',
   'Feito com savDex · savdex.pages.dev': 'Made with savDex · savdex.pages.dev',
+  // Unbound
+  'Este save é do Pokémon Unbound 2.0, que o savDex ainda não lê. Saves da versão 2.1 em diante são suportados.': 'This save is from Pokémon Unbound 2.0, which savDex can’t read yet. Saves from version 2.1 onward are supported.',
+  'Este save parece ser do Pokémon Unbound, mas está incompleto ou corrompido.': 'This save looks like Pokémon Unbound, but it is incomplete or corrupted.',
+  'Save de uma versão do Unbound mais nova que a 2.1: espécies, golpes e itens novos podem aparecer como não mapeados.': 'Save from an Unbound version newer than 2.1: new species, moves and items may show as unmapped.',
+  'Pokémon Unbound, uma ROM hack de Pokémon FireRed com o motor CFRU': 'Pokémon Unbound, a ROM hack of Pokémon FireRed built on the CFRU engine',
+  '(tipo Fairy, divisão físico/especial por golpe, megaevoluções, Pokémon até a geração 8 e formas regionais).': '(Fairy type, physical/special split per move, Mega Evolutions, Pokémon up to Generation 8 and regional forms).',
+  '- O Unbound mudou stats e habilidades de algumas espécies; confie nos dados enviados, não na sua memória.': '- Unbound changed the stats and abilities of some species; trust the data sent, not your memory.',
 };
